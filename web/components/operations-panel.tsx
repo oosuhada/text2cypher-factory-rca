@@ -8,11 +8,19 @@ import {
   LoaderCircle,
   Network,
   ShieldCheck,
+  UserCheck,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { getHealth, getMetrics } from "@/lib/api";
-import type { HealthResponse } from "@/lib/types";
+import {
+  getFeedbackSummary,
+  getHealth,
+  getMetrics,
+} from "@/lib/api";
+import type {
+  FeedbackSummary,
+  HealthResponse,
+} from "@/lib/types";
 
 type Dashboard = {
   totals?: { nodes?: number; relationships?: number };
@@ -33,13 +41,15 @@ function percent(value: unknown) {
 export function OperationsPanel() {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
+  const [feedback, setFeedback] = useState<FeedbackSummary | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    Promise.all([getHealth(), getMetrics()])
-      .then(([healthResult, metricResult]) => {
+    Promise.all([getHealth(), getMetrics(), getFeedbackSummary()])
+      .then(([healthResult, metricResult, feedbackResult]) => {
         setHealth(healthResult);
         setDashboard(metricResult as Dashboard);
+        setFeedback(feedbackResult);
       })
       .catch((reason) =>
         setError(
@@ -49,7 +59,7 @@ export function OperationsPanel() {
   }, []);
 
   if (error) return <div className="inline-error">{error}</div>;
-  if (!health || !dashboard) {
+  if (!health || !dashboard || !feedback) {
     return (
       <div className="loading-state">
         <LoaderCircle className="spin" />
@@ -89,6 +99,14 @@ export function OperationsPanel() {
           <span>Runtime success</span>
           <strong>{percent(runtime.success_rate)}</strong>
           <small>{String(runtime.query_count ?? 0)} audited queries</small>
+        </article>
+        <article className="metric-card card">
+          <UserCheck size={19} />
+          <span>Expert reviews</span>
+          <strong>{feedback.total_reviews.toLocaleString()}</strong>
+          <small>
+            {feedback.unique_queries_reviewed.toLocaleString()} unique queries
+          </small>
         </article>
       </div>
 
@@ -149,6 +167,49 @@ export function OperationsPanel() {
           </dl>
         </section>
       </div>
+
+      <section className="distribution-card card">
+        <div className="operations-card-title">
+          <UserCheck size={18} />
+          <div>
+            <h2>Domain expert verification</h2>
+            <p>append-only 감사기록에 남은 HITL 판정</p>
+          </div>
+        </div>
+        <div className="distribution-grid">
+          <div>
+            <h3>Decision counts</h3>
+            {(
+              [
+                ["검증 완료", feedback.decision_counts.verified],
+                ["추가 확인", feedback.decision_counts.needs_followup],
+                ["이견 있음", feedback.decision_counts.disputed],
+              ] as const
+            ).map(([label, count]) => (
+              <div className="distribution-row" key={label}>
+                <span>{label}</span>
+                <strong>{count.toLocaleString()}</strong>
+              </div>
+            ))}
+          </div>
+          <div>
+            <h3>Recent reviews</h3>
+            {feedback.recent.slice(0, 5).map((review) => (
+              <div className="distribution-row" key={review.review_id}>
+                <span>
+                  {review.reviewer} · {review.decision}
+                </span>
+                <strong>{review.row_count} rows</strong>
+              </div>
+            ))}
+            {feedback.recent.length === 0 && (
+              <p className="local-data-note">
+                아직 기록된 전문가 판정이 없습니다.
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
 
       <section className="distribution-card card">
         <div className="operations-card-title">

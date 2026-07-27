@@ -1,4 +1,7 @@
 import type {
+  FeedbackDecision,
+  FeedbackRecord,
+  FeedbackSummary,
   GraphSchema,
   HealthResponse,
   NodeSearchResponse,
@@ -43,6 +46,26 @@ export function getHealth() {
 
 export function getMetrics() {
   return request<Record<string, unknown>>("/api/v1/metrics");
+}
+
+export function submitExpertFeedback(payload: {
+  question: string;
+  cypher: string;
+  query_status: string;
+  provider: string;
+  row_count: number;
+  decision: FeedbackDecision;
+  reviewer: string;
+  note: string;
+}) {
+  return request<FeedbackRecord>("/api/v1/feedback", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getFeedbackSummary() {
+  return request<FeedbackSummary>("/api/v1/feedback/summary");
 }
 
 export function getGraphSchema() {

@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   ArrowUp,
   Check,
+  CheckCircle2,
   Clipboard,
   Clock3,
   Code2,
@@ -14,7 +15,9 @@ import {
   Network,
   RotateCcw,
   ShieldCheck,
+  Siren,
   Table2,
+  UserCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -28,9 +31,13 @@ import {
 
 import { EvidenceGraph } from "@/components/evidence-graph";
 import { ResultTable } from "@/components/result-table";
-import { queryFactoryGraph } from "@/lib/api";
+import {
+  queryFactoryGraph,
+  submitExpertFeedback,
+} from "@/lib/api";
 import { readHistory, saveConversation } from "@/lib/history";
 import type {
+  FeedbackDecision,
   QueryResponse,
   StoredConversation,
 } from "@/lib/types";
@@ -89,6 +96,12 @@ export function QueryWorkspace() {
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<EvidenceTab>("table");
   const [copied, setCopied] = useState(false);
+  const [reviewer, setReviewer] = useState("domain-expert");
+  const [reviewNote, setReviewNote] = useState("");
+  const [reviewDecision, setReviewDecision] =
+    useState<FeedbackDecision | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -101,6 +114,9 @@ export function QueryWorkspace() {
         setQuestion(selected.question);
         setSubmittedQuestion(selected.question);
         setResponse(selected.response);
+        setReviewDecision(null);
+        setReviewNote("");
+        setReviewError("");
       }
     }, 0);
     return () => window.clearTimeout(timer);
@@ -135,6 +151,9 @@ export function QueryWorkspace() {
     setProgressIndex(0);
     setError("");
     setResponse(null);
+    setReviewDecision(null);
+    setReviewNote("");
+    setReviewError("");
     setSubmittedQuestion(normalized);
     try {
       const result = await queryFactoryGraph(normalized);
@@ -174,6 +193,31 @@ export function QueryWorkspace() {
     await navigator.clipboard.writeText(response.cypher);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1200);
+  };
+
+  const submitReview = async (decision: FeedbackDecision) => {
+    if (!response || reviewLoading) return;
+    setReviewLoading(true);
+    setReviewError("");
+    try {
+      await submitExpertFeedback({
+        question: response.question,
+        cypher: response.cypher,
+        query_status: response.status,
+        provider: response.provider,
+        row_count: response.row_count,
+        decision,
+        reviewer: reviewer.trim() || "domain-expert",
+        note: reviewNote.trim(),
+      });
+      setReviewDecision(decision);
+    } catch (reason) {
+      setReviewError(
+        reason instanceof Error ? reason.message : "검증 기록 저장 실패",
+      );
+    } finally {
+      setReviewLoading(false);
+    }
   };
 
   return (
@@ -223,6 +267,9 @@ export function QueryWorkspace() {
                 setQuestion(item.question);
                 setSubmittedQuestion(item.question);
                 setResponse(item.response);
+                setReviewDecision(null);
+                setReviewNote("");
+                setReviewError("");
               }}
             >
               <Clock3 size={13} />
@@ -343,6 +390,74 @@ export function QueryWorkspace() {
                   <ShieldCheck size={13} />{" "}
                   {response.validation.attempts} validation
                 </span>
+              </div>
+              <div className="expert-review">
+                <div className="expert-review-heading">
+                  <UserCheck size={17} />
+                  <div>
+                    <strong>도메인 전문가 검증</strong>
+                    <span>
+                      판정은 답변을 바꾸지 않고 별도 감사기록으로 남습니다.
+                    </span>
+                  </div>
+                </div>
+                {reviewDecision ? (
+                  <div className="review-saved">
+                    <CheckCircle2 size={16} />
+                    {reviewDecision === "verified"
+                      ? "검증 완료"
+                      : reviewDecision === "disputed"
+                        ? "이견 있음"
+                        : "추가 확인 필요"}{" "}
+                    판정을 기록했습니다.
+                  </div>
+                ) : (
+                  <>
+                    <div className="review-fields">
+                      <input
+                        value={reviewer}
+                        onChange={(event) => setReviewer(event.target.value)}
+                        placeholder="검토자 표시"
+                        maxLength={120}
+                        aria-label="검토자 표시"
+                      />
+                      <textarea
+                        value={reviewNote}
+                        onChange={(event) => setReviewNote(event.target.value)}
+                        placeholder="판정 근거 또는 추가 확인 사항"
+                        maxLength={2000}
+                        rows={2}
+                        aria-label="전문가 검토 의견"
+                      />
+                    </div>
+                    <div className="review-actions">
+                      <button
+                        type="button"
+                        disabled={reviewLoading}
+                        onClick={() => void submitReview("verified")}
+                      >
+                        <CheckCircle2 size={14} /> 검증 완료
+                      </button>
+                      <button
+                        type="button"
+                        disabled={reviewLoading}
+                        onClick={() => void submitReview("needs_followup")}
+                      >
+                        <Siren size={14} /> 추가 확인
+                      </button>
+                      <button
+                        type="button"
+                        disabled={reviewLoading}
+                        onClick={() => void submitReview("disputed")}
+                      >
+                        <AlertTriangle size={14} /> 이견 있음
+                      </button>
+                    </div>
+                  </>
+                )}
+                {reviewError && (
+                  <div className="review-error">{reviewError}</div>
+                )}
               </div>
             </article>
           )}

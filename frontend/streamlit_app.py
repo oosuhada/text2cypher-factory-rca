@@ -7,6 +7,7 @@ from pathlib import Path
 import sys
 from typing import Any
 from copy import deepcopy
+from hashlib import sha256
 from uuid import uuid4
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -175,6 +176,7 @@ def initialize_session() -> None:
     )
     st.session_state.setdefault("explorer_result", None)
     st.session_state.setdefault("explorer_search_result", None)
+    st.session_state.setdefault("expert_reviews", {})
     st.session_state.setdefault("intake_record", None)
     st.session_state.setdefault("intake_approval_token", None)
 
@@ -364,7 +366,89 @@ def render_inline_evidence(
                 st.caption("별도의 교정 없이 검증을 통과했습니다.")
 
 
-def render_chat_history() -> None:
+def render_expert_review(
+    response: dict[str, Any],
+    services: ServiceBundle,
+    key_prefix: str,
+) -> None:
+    if services.feedback is None or response.get("status") == "failed":
+        return
+    fingerprint = sha256(
+        (
+            f"{response.get('question', '')}\n"
+            f"{response.get('cypher', '')}"
+        ).encode("utf-8")
+    ).hexdigest()
+    existing = st.session_state["expert_reviews"].get(fingerprint)
+    st.markdown("##### 도메인 전문가 검증")
+    st.caption(
+        "판정은 원래 답변을 덮어쓰지 않고 append-only 감사기록으로 남습니다."
+    )
+    if existing:
+        decision_labels = {
+            "verified": "검증 완료",
+            "needs_followup": "추가 확인 필요",
+            "disputed": "이견 있음",
+        }
+        st.success(
+            f"{decision_labels.get(existing['decision'], existing['decision'])} "
+            f"· 검토자 {existing['reviewer']} · "
+            f"기록 ID {existing['review_id'][:8]}"
+        )
+        return
+    st.session_state.setdefault(f"{key_prefix}-reviewer", "domain-expert")
+    st.session_state.setdefault(f"{key_prefix}-decision", "verified")
+    st.session_state.setdefault(f"{key_prefix}-note", "")
+    with st.form(f"{key_prefix}-expert-review"):
+        reviewer_column, decision_column = st.columns([1, 2])
+        with reviewer_column:
+            reviewer = st.text_input(
+                "검토자 표시",
+                max_chars=120,
+                key=f"{key_prefix}-reviewer",
+            )
+        with decision_column:
+            decision = st.radio(
+                "판정",
+                options=("verified", "needs_followup", "disputed"),
+                format_func=lambda value: {
+                    "verified": "검증 완료",
+                    "needs_followup": "추가 확인 필요",
+                    "disputed": "이견 있음",
+                }[value],
+                horizontal=True,
+                key=f"{key_prefix}-decision",
+            )
+        note = st.text_area(
+            "판정 근거 또는 추가 확인 사항",
+            max_chars=2000,
+            placeholder="예: MES 원장과 결과 건수 대조 완료",
+            key=f"{key_prefix}-note",
+        )
+        submitted = st.form_submit_button(
+            "전문가 판정 기록",
+            type="primary",
+            key=f"{key_prefix}-submit-review",
+        )
+    if submitted:
+        try:
+            record = services.feedback.record_review(
+                question=response.get("question", ""),
+                cypher=response.get("cypher", ""),
+                query_status=response.get("status", "unknown"),
+                provider=response.get("provider", "unknown"),
+                row_count=int(response.get("row_count", 0)),
+                decision=decision,
+                reviewer=reviewer,
+                note=note,
+            )
+            st.session_state["expert_reviews"][fingerprint] = record
+            st.rerun()
+        except Exception as error:
+            st.error(f"전문가 검증 기록에 실패했습니다: {error}")
+
+
+def render_chat_history(services: ServiceBundle) -> None:
     messages = st.session_state["messages"]
     for index, message in enumerate(messages):
         with st.chat_message(message["role"]):
@@ -376,6 +460,11 @@ def render_chat_history() -> None:
                     message["content"],
                     key_prefix=f"chat-{index}",
                     expanded=index == len(messages) - 1,
+                )
+                render_expert_review(
+                    message["content"],
+                    services,
+                    key_prefix=f"chat-{index}",
                 )
 
 
@@ -423,7 +512,7 @@ def render_chat_tab(services: ServiceBundle) -> None:
             selected_question = question
 
     st.divider()
-    render_chat_history()
+    render_chat_history(services)
     last_result = st.session_state.get("last_result")
     if last_result and last_result.get("status") == "failed":
         if st.button(
@@ -1364,6 +1453,42 @@ def render_dashboard_tab(
             )
         else:
             st.info("Query Studio에서 질문을 실행하면 이력이 기록됩니다.")
+
+    st.markdown("#### 도메인 전문가 검증")
+    if services.feedback is None:
+        st.info("전문가 검증 기록 서비스가 구성되지 않았습니다.")
+    else:
+        feedback = services.feedback.summary()
+        feedback_columns = st.columns(5)
+        feedback_columns[0].metric(
+            "전체 판정", feedback["total_reviews"]
+        )
+        feedback_columns[1].metric(
+            "검토한 질의", feedback["unique_queries_reviewed"]
+        )
+        feedback_columns[2].metric(
+            "검증 완료", feedback["decision_counts"]["verified"]
+        )
+        feedback_columns[3].metric(
+            "추가 확인",
+            feedback["decision_counts"]["needs_followup"],
+        )
+        feedback_columns[4].metric(
+            "이견 있음", feedback["decision_counts"]["disputed"]
+        )
+        if feedback["recent"]:
+            st.dataframe(
+                pd.DataFrame(feedback["recent"]),
+                width="stretch",
+                hide_index=True,
+                column_config={
+                    "question": st.column_config.TextColumn(width="large"),
+                    "cypher": st.column_config.TextColumn(width="large"),
+                    "note": st.column_config.TextColumn(width="large"),
+                },
+            )
+        else:
+            st.info("아직 기록된 전문가 판정이 없습니다.")
 
     with st.expander("평가 지표 해석"):
         st.markdown(
