@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import json
 from pathlib import Path
 import sys
 from typing import Any
@@ -20,6 +21,10 @@ import streamlit as st
 from backend.app.services.diagnostics import collect_demo_diagnostics
 from backend.app.services.data_intake_service import DataIntakeService
 from backend.app.services.graph_service import NODE_IDENTITIES
+from backend.app.ingestion import DatasetWorkspace
+from backend.app.mapping import MappingWorkspace
+from backend.app.projects import ProjectRegistry
+from backend.app.schema_registry import SchemaRegistry
 from frontend.app_services import (
     ServiceBundle,
     build_streamlit_service_bundle,
@@ -43,6 +48,7 @@ NAVIGATION_PAGES = (
     "Evidence Lab",
     "Graph Explorer",
     "Operations",
+    "Schema Studio",
     "Data & Health",
 )
 EXAMPLE_QUESTIONS = [
@@ -2030,11 +2036,112 @@ def render_sidebar() -> tuple[str, str, str]:
     return page, provider, model_name
 
 
+def render_schema_studio() -> None:
+    st.markdown("## Schema Studio")
+    st.caption("업로드한 컬럼을 그래프 노드·관계로 매핑하고 승인합니다.")
+    projects = ProjectRegistry(
+        PROJECT_ROOT / "data" / "processed" / "projects.sqlite3"
+    )
+    project_rows = projects.list()
+    project_ids = [row["project_id"] for row in project_rows]
+    project_id = st.selectbox(
+        "프로젝트", project_ids, index=max(0, project_ids.index(
+            projects.active_project_id()
+        )) if projects.active_project_id() in project_ids else 0
+    )
+    datasets = DatasetWorkspace(
+        PROJECT_ROOT / "data" / "processed" / "project_uploads"
+    )
+    uploads = datasets.list(project_id)
+    if not uploads:
+        st.info("먼저 Data & Health에서 데이터셋을 업로드해 프로파일링하세요.")
+        return
+    upload = uploads[0]
+    upload_id = st.selectbox(
+        "프로파일", [row["upload_id"] for row in uploads]
+    )
+    upload = next(row for row in uploads if row["upload_id"] == upload_id)
+    st.dataframe(
+        pd.DataFrame(
+            [
+                {
+                    "file": file["filename"],
+                    "rows": file["row_count"],
+                    "columns": file["column_count"],
+                }
+                for file in upload["files"]
+            ]
+        ),
+        width="stretch",
+        hide_index=True,
+    )
+    source = upload["files"][0]
+    identity = next(
+        (
+            column["name"]
+            for column in source["columns"]
+            if column["identity_candidate"]
+        ),
+        source["columns"][0]["name"],
+    )
+    template = {
+        "title": f"{project_id} graph",
+        "nodes": [
+            {
+                "label": "Record",
+                "source_file": source["filename"],
+                "identity": identity,
+                "properties": {
+                    column["name"]: column["name"]
+                    for column in source["columns"]
+                },
+            }
+        ],
+        "relationships": [],
+    }
+    mapping_text = st.text_area(
+        "Graph mapping (JSON)",
+        value=json.dumps(template, ensure_ascii=False, indent=2),
+        height=360,
+    )
+    schemas = SchemaRegistry(PROJECT_ROOT / "schemas")
+    mappings = MappingWorkspace(
+        PROJECT_ROOT / "data" / "processed" / "project_mappings",
+        datasets,
+        schemas,
+    )
+    left, right = st.columns(2)
+    try:
+        mapping = json.loads(mapping_text)
+        if left.button("매핑 미리보기", width="stretch"):
+            st.session_state["mapping_preview"] = mappings.preview(
+                project_id, upload_id, mapping
+            )
+        if right.button("검토 후 승인", type="primary", width="stretch"):
+            st.session_state["mapping_preview"] = mappings.approve(
+                project_id, upload_id, mapping
+            )
+            projects.update(project_id, schema_version="1.0", status="ready")
+            st.success("매핑과 schema manifest를 승인·저장했습니다.")
+    except (ValueError, KeyError, json.JSONDecodeError) as error:
+        st.error(f"매핑을 검증할 수 없습니다: {error}")
+    if st.session_state.get("mapping_preview"):
+        preview = st.session_state["mapping_preview"]
+        st.json(preview["manifest"])
+        st.caption(
+            f"예상 노드 입력: {preview['estimated_node_rows']} · "
+            f"예상 관계 입력: {preview['estimated_relationship_rows']}"
+        )
+
+
 def main() -> None:
     initialize_session()
     page, provider, model_name = render_sidebar()
     if page == "Home":
         render_streamlit_landing()
+        return
+    if page == "Schema Studio":
+        render_schema_studio()
         return
     st.markdown(
         """
