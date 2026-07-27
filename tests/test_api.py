@@ -1,6 +1,7 @@
 import unittest
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -95,6 +96,20 @@ class FakeFeedback:
         }
 
 
+class FakeProjectGraphLoader:
+    def load(self, project_id, upload_id):
+        return {
+            "project_id": project_id,
+            "upload_id": upload_id,
+            "status": "loaded",
+            "integrity": {
+                "scoped_node_count": 3,
+                "scoped_relationship_count": 2,
+                "project_scope_applied": True,
+            },
+        }
+
+
 class FakeBundle:
     provider = "gold"
     model_name = "gold-lookup"
@@ -145,6 +160,7 @@ class ApiContractTest(unittest.TestCase):
             create_app(
                 bundle_factory=lambda: self.bundle,
                 project_registry=self.projects,
+                project_graph_loader=FakeProjectGraphLoader(),
             )
         )
         self.client = self.client_context.__enter__()
@@ -191,6 +207,7 @@ class ApiContractTest(unittest.TestCase):
                 "name": "Equipment History",
                 "domain_type": "maintenance",
                 "dataset_name": "Synthetic Maintenance",
+                "status": "ready",
             },
         )
         self.assertEqual(created.status_code, 201)
@@ -256,6 +273,35 @@ class ApiContractTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 403)
         self.assertIn("비활성화", response.json()["detail"])
+
+    def test_successful_graph_load_promotes_project_to_ready(self):
+        self.client.post(
+            "/api/v1/projects",
+            json={
+                "project_id": "load-project",
+                "name": "Load project",
+                "domain_type": "maintenance",
+                "dataset_name": "Load data",
+            },
+        )
+        self.projects.update(
+            "load-project", status="mapping_ready"
+        )
+        with patch.dict(
+            "os.environ",
+            {"P3_ENABLE_UI_LOAD": "1"},
+        ):
+            response = self.client.post(
+                "/api/v1/projects/load-project/graph/load",
+                json={
+                    "upload_id": "0" * 36,
+                    "confirm_project_id": "load-project",
+                },
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            self.projects.require("load-project")["status"], "ready"
+        )
 
     def test_query_contract_exposes_cypher_rows_and_evidence(self):
         response = self.client.post(

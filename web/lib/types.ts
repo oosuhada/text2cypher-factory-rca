@@ -66,7 +66,13 @@ export type Project = {
   domain_type: string;
   dataset_name: string;
   schema_version: string | null;
-  status: "draft" | "mapping_ready" | "ready" | "archived";
+  status:
+    | "draft"
+    | "mapping_ready"
+    | "loading"
+    | "load_failed"
+    | "ready"
+    | "archived";
   created_at: string;
   updated_at: string;
   is_active: boolean;

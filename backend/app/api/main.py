@@ -22,6 +22,9 @@ from backend.app.services.diagnostics import (
     collect_demo_diagnostics,
     diagnostics_pass,
 )
+from backend.app.services.project_load_service import (
+    ProjectGraphLoadService,
+)
 
 from .schemas import (
     FeedbackRecord,
@@ -103,6 +106,7 @@ def create_app(
     project_registry: ProjectRegistry | None = None,
     schema_registry: SchemaRegistry | None = None,
     dataset_workspace: DatasetWorkspace | None = None,
+    project_graph_loader: ProjectGraphLoadService | None = None,
 ) -> FastAPI:
     projects = project_registry or ProjectRegistry(
         Path(
@@ -140,6 +144,13 @@ def create_app(
         datasets,
         mappings,
         database=os.getenv("NEO4J_DATABASE", "neo4j"),
+    )
+    graph_loader = (
+        project_graph_loader
+        or ProjectGraphLoadService(
+            PROJECT_ROOT,
+            generic_loader,
+        )
     )
 
     @asynccontextmanager
@@ -276,7 +287,10 @@ def create_app(
                 schema_available = True
             except KeyError:
                 schema_available = False
-            can_query = counts["nodes"] > 0
+            can_query = (
+                project["status"] == "ready"
+                and counts["nodes"] > 0
+            )
             can_load = (
                 mapping_approved
                 and os.getenv("P3_ENABLE_UI_LOAD", "0") == "1"
@@ -437,17 +451,18 @@ def create_app(
             )
         try:
             projects.require(project_id)
-            bundle = registry.get(project_id)
-            result = generic_loader.load(
-                bundle.driver, project_id, payload.upload_id
-            )
+            projects.update(project_id, status="loading")
+            registry.close()
+            result = graph_loader.load(project_id, payload.upload_id)
             projects.update(project_id, status="ready")
             return result
         except KeyError as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         except ValueError as error:
+            projects.update(project_id, status="load_failed")
             raise HTTPException(status_code=422, detail=str(error)) from error
         except Exception as error:
+            projects.update(project_id, status="load_failed")
             raise HTTPException(
                 status_code=502, detail=f"프로젝트 그래프 적재 실패: {error}"
             ) from error
@@ -460,15 +475,18 @@ def create_app(
             or "cip-dmd"
         )
         try:
-            projects.require(requested_project_id)
+            project = projects.require(requested_project_id)
             bundle = registry.get(requested_project_id)
             if (
                 requested_project_id != "cip-dmd"
-                and bundle.graph is not None
-                and bundle.graph.graph_counts(requested_project_id)[
-                    "nodes"
-                ]
-                == 0
+                and (
+                    project["status"] != "ready"
+                    or bundle.graph is None
+                    or bundle.graph.graph_counts(requested_project_id)[
+                        "nodes"
+                    ]
+                    == 0
+                )
             ):
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
