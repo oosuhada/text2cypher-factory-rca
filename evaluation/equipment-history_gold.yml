@@ -1,0 +1,50 @@
+version: "1.0"
+dataset: Equipment Maintenance History example
+questions:
+  - id: EH1
+    category: equipment_history
+    question: "EQ-PRESS-01의 정비 이력을 보여줘."
+    gold_cypher: |
+      MATCH (e:Equipment {project_id: 'equipment-history', equipment_id: 'EQ-PRESS-01'})
+            -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})
+      RETURN m.event_id AS event_id, m.event_date AS event_date,
+             m.event_type AS event_type, m.component AS component,
+             m.downtime_hours AS downtime_hours
+      ORDER BY event_date
+  - id: EH2
+    category: downtime_ranking
+    question: "누적 중단 시간이 가장 긴 장비를 보여줘."
+    gold_cypher: |
+      MATCH (e:Equipment {project_id: 'equipment-history'})
+            -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})
+      RETURN e.equipment_id AS equipment_id,
+             sum(m.downtime_hours) AS total_downtime_hours
+      ORDER BY total_downtime_hours DESC
+  - id: EH3
+    category: unresolved
+    question: "아직 해결되지 않은 정비 이벤트를 보여줘."
+    gold_cypher: |
+      MATCH (e:Equipment {project_id: 'equipment-history'})
+            -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})
+      WHERE m.resolved = false
+      RETURN e.equipment_id AS equipment_id, m.event_id AS event_id,
+             m.component AS component, m.cost_usd AS cost_usd
+  - id: EH4
+    category: technician_workload
+    question: "기술자별 정비 작업 수를 보여줘."
+    gold_cypher: |
+      MATCH (t:Technician {project_id: 'equipment-history'})
+            -[:PERFORMED]->(m:MaintenanceEvent {project_id: 'equipment-history'})
+      RETURN t.technician_id AS technician_id, t.name AS technician_name,
+             count(m) AS event_count
+      ORDER BY event_count DESC
+  - id: EH5
+    category: replacement_cost
+    question: "부품 교체 비용이 발생한 장비와 이벤트를 보여줘."
+    gold_cypher: |
+      MATCH (e:Equipment {project_id: 'equipment-history'})
+            -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})
+      WHERE m.event_type = 'replacement'
+      RETURN e.equipment_id AS equipment_id, m.event_id AS event_id,
+             m.component AS component, m.cost_usd AS cost_usd
+      ORDER BY cost_usd DESC

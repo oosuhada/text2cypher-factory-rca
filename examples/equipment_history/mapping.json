@@ -1,0 +1,60 @@
+{
+  "title": "Equipment Maintenance History",
+  "nodes": [
+    {
+      "label": "Equipment",
+      "source_file": "events.csv",
+      "identity": "equipment_id",
+      "properties": {
+        "equipment_id": "equipment_id",
+        "name": "equipment_name",
+        "equipment_type": "equipment_type"
+      }
+    },
+    {
+      "label": "MaintenanceEvent",
+      "source_file": "events.csv",
+      "identity": "event_id",
+      "properties": {
+        "event_id": "event_id",
+        "event_date": "event_date",
+        "event_type": "event_type",
+        "component": "component",
+        "downtime_hours": "downtime_hours",
+        "cost_usd": "cost_usd",
+        "resolved": "resolved"
+      }
+    },
+    {
+      "label": "Technician",
+      "source_file": "events.csv",
+      "identity": "technician_id",
+      "properties": {
+        "technician_id": "technician_id",
+        "name": "technician_name"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "type": "HAS_MAINTENANCE",
+      "source": "Equipment",
+      "target": "MaintenanceEvent",
+      "source_file": "events.csv",
+      "source_key": "equipment_id",
+      "target_key": "event_id"
+    },
+    {
+      "type": "PERFORMED",
+      "source": "Technician",
+      "target": "MaintenanceEvent",
+      "source_file": "events.csv",
+      "source_key": "technician_id",
+      "target_key": "event_id"
+    }
+  ],
+  "output_rules": [
+    "Return maintenance evidence only from project equipment-history.",
+    "Do not claim causality from maintenance co-occurrence."
+  ]
+}
