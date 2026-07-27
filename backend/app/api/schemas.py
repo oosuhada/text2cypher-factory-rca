@@ -102,6 +102,15 @@ class ProjectResponse(BaseModel):
     is_active: bool = False
 
 
+class UploadFilePayload(BaseModel):
+    filename: str = Field(min_length=1, max_length=160)
+    content_base64: str = Field(min_length=1)
+
+
+class DatasetUploadRequest(BaseModel):
+    files: list[UploadFilePayload] = Field(min_length=1, max_length=10)
+
+
 class NodeIdentity(BaseModel):
     label: str
     identity_property: str
