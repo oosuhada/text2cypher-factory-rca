@@ -83,6 +83,18 @@ def check_api(api_url: str) -> None:
     ]:
         raise RuntimeError("그래프 스키마 계약이 불완전합니다.")
 
+    readiness, _ = expect_json(
+        f"{api_url}/api/v1/projects/cip-dmd/readiness"
+    )
+    if (
+        not readiness["can_query"]
+        or readiness["node_count"] < 1
+        or readiness["next_action"] != "query"
+    ):
+        raise RuntimeError(
+            f"기본 프로젝트 준비 상태가 올바르지 않습니다: {readiness}"
+        )
+
     query_string = urlencode(
         {"label": "Cylinder", "q": "3000", "limit": 5}
     )
@@ -163,4 +175,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

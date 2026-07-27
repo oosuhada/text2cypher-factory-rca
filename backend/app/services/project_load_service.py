@@ -59,6 +59,11 @@ class ProjectGraphLoadService:
 
     def _neo4j_settings(self) -> tuple[str, str, str, str]:
         uri = os.getenv("NEO4J_URI", "neo4j://localhost:7687")
+        if self.mode_control == "homebrew" and uri.startswith("neo4j://"):
+            # Homebrew runs one local server. During a restart the routing
+            # table can lag behind Bolt readiness, so the controlled loader
+            # must use a direct connection rather than cluster discovery.
+            uri = f"bolt://{uri.removeprefix('neo4j://')}"
         database = os.getenv("NEO4J_DATABASE", "neo4j")
         username = os.getenv("NEO4J_USERNAME", "neo4j")
         password = (
@@ -72,7 +77,11 @@ class ProjectGraphLoadService:
     def _wait_for_driver(self):
         uri, _database, username, password = self._neo4j_settings()
         last_error: Exception | None = None
-        for _ in range(40):
+        timeout_seconds = float(
+            os.getenv("P3_NEO4J_RESTART_TIMEOUT_SECONDS", "90")
+        )
+        deadline = time.monotonic() + timeout_seconds
+        while time.monotonic() < deadline:
             driver = GraphDatabase.driver(
                 uri,
                 auth=(username, password),
@@ -85,7 +94,8 @@ class ProjectGraphLoadService:
                 driver.close()
                 time.sleep(0.5)
         raise RuntimeError(
-            f"Neo4j 모드 전환 후 연결하지 못했습니다: {last_error}"
+            "Neo4j 모드 전환 후 "
+            f"{timeout_seconds:.0f}초 안에 연결하지 못했습니다: {last_error}"
         )
 
     def _switch_homebrew_mode(self, mode: str) -> None:

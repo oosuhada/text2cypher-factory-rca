@@ -38,6 +38,29 @@ class _Loader:
 
 
 class ProjectGraphLoadServiceTest(unittest.TestCase):
+    def test_homebrew_mode_uses_direct_bolt_connection(self):
+        with tempfile.TemporaryDirectory() as temp:
+            service = ProjectGraphLoadService(
+                Path(temp),
+                _Loader(),
+                mode_control="homebrew",
+            )
+            with patch.dict(
+                "os.environ",
+                {
+                    "NEO4J_URI": "neo4j://localhost:7687",
+                    "NEO4J_PASSWORD": "test-secret",
+                },
+                clear=False,
+            ):
+                uri, database, username, password = (
+                    service._neo4j_settings()
+                )
+        self.assertEqual(uri, "bolt://localhost:7687")
+        self.assertEqual(database, "neo4j")
+        self.assertEqual(username, "neo4j")
+        self.assertEqual(password, "test-secret")
+
     def test_homebrew_mode_is_restored_after_success(self):
         with tempfile.TemporaryDirectory() as temp:
             modes = []

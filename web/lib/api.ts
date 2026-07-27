@@ -128,6 +128,16 @@ export function approveGraphMapping(
   );
 }
 
+export function getApprovedGraphMapping(projectId: string) {
+  return request<{
+    project_id: string;
+    upload_id: string;
+    status: string;
+    mapping: Record<string, unknown>;
+    manifest: Record<string, unknown>;
+  }>(`/api/v1/projects/${projectId}/mappings/approved`);
+}
+
 export function loadProjectGraph(projectId: string, uploadId: string) {
   return request<Record<string, unknown>>(
     `/api/v1/projects/${projectId}/graph/load`,

@@ -54,7 +54,11 @@ def main() -> None:
     result = mappings.approve(
         "equipment-history", upload["upload_id"], mapping
     )
-    projects.update("equipment-history", schema_version="1.0", status="ready")
+    projects.update(
+        "equipment-history",
+        schema_version="1.0",
+        status="mapping_ready",
+    )
     print(
         json.dumps(
             {
