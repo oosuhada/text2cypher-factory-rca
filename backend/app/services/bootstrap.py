@@ -17,6 +17,8 @@ from backend.app.agent.model import (
     has_vertex_credentials,
 )
 from backend.app.agent.workflow import TextToCypherAgent
+from backend.app.agent.schema import SCHEMA_CONTEXT
+from backend.app.agent.semantic_validation import validate_domain_semantics
 from backend.app.etl.cli import password_from_keychain
 from backend.app.services.dashboard_service import DashboardService
 from backend.app.services.feedback_service import FeedbackService
@@ -59,6 +61,8 @@ def build_service_bundle(
     project_root: Path,
     provider: str = "auto",
     model_name: str | None = None,
+    project_id: str = "cip-dmd",
+    schema_context: str | None = None,
 ) -> ServiceBundle:
     username = os.getenv("NEO4J_USERNAME", "neo4j")
     password = os.getenv("NEO4J_PASSWORD") or password_from_keychain(username)
@@ -89,7 +93,14 @@ def build_service_bundle(
         auth=(username, password),
     )
     driver.verify_connectivity()
-    examples_path = project_root / "evaluation" / "gold_questions.yml"
+    project_examples = (
+        project_root / "evaluation" / f"{project_id}_gold.yml"
+    )
+    examples_path = (
+        project_examples
+        if project_examples.exists()
+        else project_root / "evaluation" / "gold_questions.yml"
+    )
     examples = GoldExampleStore(examples_path)
     try:
         if resolved_provider == "openai":
@@ -124,6 +135,23 @@ def build_service_bundle(
         model=model,
         graph=primary_graph,
         examples_path=examples_path,
+        schema_context=(
+            schema_context or SCHEMA_CONTEXT
+        )
+        + (
+            ""
+            if project_id == "cip-dmd"
+            else (
+                "\n\nProject isolation:\n"
+                f"- Every MATCH must restrict project_id to '{project_id}'."
+            )
+        ),
+        semantic_validator=(
+            validate_domain_semantics
+            if project_id == "cip-dmd"
+            else (lambda _question, _statement: [])
+        ),
+        project_id=project_id,
     )
     audit_log_path = (
         project_root / "data" / "processed" / "query_audit.jsonl"
@@ -135,8 +163,17 @@ def build_service_bundle(
                 model=GoldCypherModel(examples),
                 graph=Neo4jReadGraph(driver, database=database),
                 examples_path=examples_path,
+                schema_context=(
+                    schema_context or SCHEMA_CONTEXT
+                ),
+                semantic_validator=(
+                    validate_domain_semantics
+                    if project_id == "cip-dmd"
+                    else (lambda _question, _statement: [])
+                ),
+                project_id=project_id,
             ),
-            audit_log_path=audit_log_path,
+        audit_log_path=audit_log_path,
             provider="gold-fallback",
         )
     return ServiceBundle(

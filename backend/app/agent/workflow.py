@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from time import perf_counter
-from typing import Any, Literal
+from typing import Any, Callable, Literal
 
 from langgraph.graph import END, START, StateGraph
 
@@ -31,6 +31,9 @@ def create_text2cypher_agent(
     graph: ReadGraph,
     examples: GoldExampleStore,
     max_attempts: int = 3,
+    schema_context: str = SCHEMA_CONTEXT,
+    semantic_validator: Callable[[str, str], list[str]] = validate_domain_semantics,
+    project_id: str = "cip-dmd",
 ):
     if max_attempts < 1:
         raise ValueError("max_attempts must be positive")
@@ -39,7 +42,7 @@ def create_text2cypher_agent(
         question = state["question"]
         few_shot = examples.format_for_prompt(question)
         statement = normalize_model_cypher(
-            model.generate(question, SCHEMA_CONTEXT, few_shot)
+            model.generate(question, schema_context, few_shot)
         )
         return {
             "statement": statement,
@@ -57,7 +60,19 @@ def create_text2cypher_agent(
         )
         if not errors:
             errors.extend(
-                validate_domain_semantics(state["question"], statement)
+                semantic_validator(state["question"], statement)
+            )
+        if (
+            not errors
+            and project_id != "cip-dmd"
+            and (
+                "project_id" not in statement
+                or project_id not in statement
+            )
+        ):
+            errors.append(
+                "PROJECT_SCOPE: Query must restrict graph access to "
+                f"project_id {project_id!r}."
             )
         if not errors:
             errors.extend(graph.explain(statement))
@@ -91,7 +106,7 @@ def create_text2cypher_agent(
         statement = normalize_model_cypher(
             model.correct(
                 state["question"],
-                SCHEMA_CONTEXT,
+                schema_context,
                 state.get("statement", ""),
                 state.get("errors", []),
             )
@@ -144,6 +159,9 @@ class TextToCypherAgent:
         graph: ReadGraph,
         examples_path: Path,
         max_attempts: int = 3,
+        schema_context: str = SCHEMA_CONTEXT,
+        semantic_validator: Callable[[str, str], list[str]] = validate_domain_semantics,
+        project_id: str = "cip-dmd",
     ):
         self.max_attempts = max_attempts
         self.model = model
@@ -152,6 +170,9 @@ class TextToCypherAgent:
             graph=graph,
             examples=GoldExampleStore(examples_path),
             max_attempts=max_attempts,
+            schema_context=schema_context,
+            semantic_validator=semantic_validator,
+            project_id=project_id,
         )
 
     def invoke(self, question: str) -> CypherState:
