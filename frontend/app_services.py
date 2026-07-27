@@ -18,6 +18,8 @@ def build_streamlit_service_bundle(
     model_name: str | None = None,
     *,
     transport: str | None = None,
+    project_id: str = "cip-dmd",
+    schema_context: str | None = None,
 ) -> ServiceBundle | ApiServiceBundle:
     """Prefer FastAPI while preserving an explicit local-service fallback."""
 
@@ -32,7 +34,7 @@ def build_streamlit_service_bundle(
         api = FactoryGraphApiClient()
         if api.live():
             try:
-                return ApiServiceBundle(api)
+                return ApiServiceBundle(api, project_id=project_id)
             except ApiRequestError:
                 api.close()
                 if resolved_transport == "api":
@@ -48,6 +50,8 @@ def build_streamlit_service_bundle(
         project_root=project_root,
         provider=provider,
         model_name=model_name,
+        project_id=project_id,
+        schema_context=schema_context,
     )
     setattr(bundle, "transport", "direct")
     return bundle

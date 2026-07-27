@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import json
+import base64
 from pathlib import Path
 import sys
 from typing import Any
@@ -29,6 +30,7 @@ from frontend.app_services import (
     ServiceBundle,
     build_streamlit_service_bundle,
 )
+from frontend.api_client import FactoryGraphApiClient
 from frontend.conversation_history import upsert_conversation
 from frontend.data_preflight import inspect_uploaded_source
 from frontend.presentation import (
@@ -289,12 +291,16 @@ def get_services(
     provider: str,
     model_name: str,
     bundle_version: str,
+    project_id: str,
 ) -> Any:
     del bundle_version
+    schemas = SchemaRegistry(PROJECT_ROOT / "schemas")
     return build_streamlit_service_bundle(
         project_root=PROJECT_ROOT,
         provider=provider,
         model_name=model_name,
+        project_id=project_id,
+        schema_context=schemas.context(project_id),
     )
 
 
@@ -321,6 +327,8 @@ def initialize_session() -> None:
     st.session_state.setdefault("expert_reviews", {})
     st.session_state.setdefault("intake_record", None)
     st.session_state.setdefault("intake_approval_token", None)
+    st.session_state.setdefault("active_project_id", "cip-dmd")
+    st.session_state.setdefault("project_conversations", {})
 
 
 def navigate_to_page(page: str) -> None:
@@ -1306,13 +1314,14 @@ def render_data_intake_workflow() -> None:
 
 
 def render_data_health_tab(
-    services: ServiceBundle, snapshot: dict[str, Any] | None
+    services: ServiceBundle | None, snapshot: dict[str, Any] | None
 ) -> None:
     st.subheader("데이터 적재와 실행 진단")
     st.caption(
         "운영 그래프는 읽기 전용으로 유지합니다. 전체 번들은 staging과 "
         "dry-run을 통과하고 명시적으로 승인된 경우에만 잠시 loader로 "
-        f"전환됩니다. 현재 질의 provider: {services.provider}"
+        "전환됩니다. 현재 질의 provider: "
+        f"{services.provider if services is not None else '연결 전'}"
     )
     checks = collect_demo_diagnostics(PROJECT_ROOT)
     check_columns = st.columns(len(checks))
@@ -1346,7 +1355,72 @@ def render_data_health_tab(
         st.warning("성공한 ETL load 기록을 찾지 못했습니다.")
 
     st.divider()
+    render_generic_dataset_upload()
+    st.divider()
     render_data_intake_workflow()
+
+
+def render_generic_dataset_upload() -> None:
+    project_id = st.session_state.get("active_project_id", "cip-dmd")
+    st.markdown("#### 프로젝트 데이터 온보딩")
+    st.caption(
+        f"`{project_id}` 워크스페이스에 CSV/JSON을 올려 구조를 확인합니다. "
+        "업로드만으로 Neo4j가 변경되지는 않습니다."
+    )
+    files = st.file_uploader(
+        "CSV 또는 JSON (파일당 10MB, 최대 10개)",
+        type=("csv", "json"),
+        accept_multiple_files=True,
+        key=f"project-upload-{project_id}",
+    )
+    if st.button(
+        "업로드 및 컬럼 프로파일링",
+        disabled=not files,
+        width="stretch",
+        key=f"profile-upload-{project_id}",
+    ):
+        try:
+            datasets = DatasetWorkspace(
+                PROJECT_ROOT / "data" / "processed" / "project_uploads"
+            )
+            result = datasets.profile_upload(
+                project_id,
+                [
+                    {
+                        "filename": file.name,
+                        "content_base64": base64.b64encode(
+                            file.getvalue()
+                        ).decode(),
+                    }
+                    for file in files
+                ],
+            )
+            st.session_state["latest_project_upload"] = result
+            st.success(
+                f"{len(result['files'])}개 파일 프로파일 완료 · "
+                f"upload {result['upload_id'][:8]}"
+            )
+        except Exception as error:
+            st.error(f"프로파일링 실패: {error}")
+    latest = st.session_state.get("latest_project_upload")
+    if latest and latest.get("project_id") == project_id:
+        for file in latest["files"]:
+            with st.expander(
+                f"{file['filename']} · {file['row_count']}행 "
+                f"× {file['column_count']}열"
+            ):
+                st.dataframe(
+                    pd.DataFrame(file["columns"]),
+                    width="stretch",
+                    hide_index=True,
+                )
+        if st.button(
+            "Schema Studio에서 매핑 검토 →",
+            type="primary",
+            key=f"goto-schema-{project_id}",
+        ):
+            navigate_to_page("Schema Studio")
+            st.rerun()
 
 
 def render_evidence_tab() -> None:
@@ -1919,7 +1993,36 @@ def render_dashboard_tab(
         )
 
 
-def render_sidebar() -> tuple[str, str, str]:
+def _switch_project(project_id: str) -> None:
+    previous = st.session_state.get("active_project_id", "cip-dmd")
+    if previous == project_id:
+        return
+    sync_active_conversation()
+    st.session_state["project_conversations"][previous] = {
+        "conversations": deepcopy(st.session_state["conversations"]),
+        "messages": deepcopy(st.session_state["messages"]),
+        "last_result": deepcopy(st.session_state.get("last_result")),
+        "active_conversation_id": st.session_state[
+            "active_conversation_id"
+        ],
+    }
+    restored = st.session_state["project_conversations"].get(project_id, {})
+    st.session_state["conversations"] = deepcopy(
+        restored.get("conversations", [])
+    )
+    st.session_state["messages"] = deepcopy(restored.get("messages", []))
+    st.session_state["last_result"] = deepcopy(restored.get("last_result"))
+    st.session_state["active_conversation_id"] = restored.get(
+        "active_conversation_id", str(uuid4())
+    )
+    st.session_state["active_project_id"] = project_id
+    ProjectRegistry(
+        PROJECT_ROOT / "data" / "processed" / "projects.sqlite3"
+    ).activate(project_id)
+    get_services.clear()
+
+
+def render_sidebar() -> tuple[str, str, str, str]:
     st.sidebar.markdown("### Navigation")
     page = st.sidebar.radio(
         "Navigation",
@@ -1938,8 +2041,50 @@ def render_sidebar() -> tuple[str, str, str]:
             page,
             "auto",
             os.getenv("GOOGLE_VERTEX_MODEL", "gemini-2.5-flash"),
+            st.session_state.get("active_project_id", "cip-dmd"),
         )
 
+    registry = ProjectRegistry(
+        PROJECT_ROOT / "data" / "processed" / "projects.sqlite3"
+    )
+    registry.ensure_default()
+    project_rows = registry.list()
+    project_ids = [row["project_id"] for row in project_rows]
+    active_project_id = st.session_state.get(
+        "active_project_id", registry.active_project_id() or "cip-dmd"
+    )
+    if active_project_id not in project_ids:
+        active_project_id = project_ids[0]
+    st.sidebar.markdown("### 프로젝트")
+    selected_project_id = st.sidebar.selectbox(
+        "활성 워크스페이스",
+        project_ids,
+        index=project_ids.index(active_project_id),
+        format_func=lambda value: next(
+            row["name"] for row in project_rows if row["project_id"] == value
+        ),
+    )
+    _switch_project(selected_project_id)
+    with st.sidebar.expander("새 프로젝트 만들기"):
+        with st.form("create-project-form"):
+            new_id = st.text_input("프로젝트 ID", placeholder="factory-demo")
+            new_name = st.text_input("이름", placeholder="Factory Demo")
+            new_domain = st.text_input("도메인", placeholder="manufacturing")
+            new_dataset = st.text_input("데이터셋", placeholder="CSV upload")
+            submitted = st.form_submit_button("프로젝트 생성")
+        if submitted:
+            try:
+                registry.create(
+                    project_id=new_id,
+                    name=new_name,
+                    domain_type=new_domain,
+                    dataset_name=new_dataset,
+                )
+                st.success("프로젝트를 생성했습니다.")
+                st.rerun()
+            except ValueError as error:
+                st.error(str(error))
+    st.sidebar.divider()
     st.sidebar.markdown("### 대화")
     if st.sidebar.button(
         "＋ 새 대화",
@@ -2033,7 +2178,7 @@ def render_sidebar() -> tuple[str, str, str]:
     st.sidebar.caption(
         "쓰기 의도 차단 · Cypher 검사 · EXPLAIN · DB read-only"
     )
-    return page, provider, model_name
+    return page, provider, model_name, selected_project_id
 
 
 def render_schema_studio() -> None:
@@ -2044,10 +2189,13 @@ def render_schema_studio() -> None:
     )
     project_rows = projects.list()
     project_ids = [row["project_id"] for row in project_rows]
+    active_project = st.session_state.get("active_project_id", "cip-dmd")
     project_id = st.selectbox(
-        "프로젝트", project_ids, index=max(0, project_ids.index(
-            projects.active_project_id()
-        )) if projects.active_project_id() in project_ids else 0
+        "프로젝트",
+        project_ids,
+        index=project_ids.index(active_project)
+        if active_project in project_ids
+        else 0,
     )
     datasets = DatasetWorkspace(
         PROJECT_ROOT / "data" / "processed" / "project_uploads"
@@ -2132,11 +2280,43 @@ def render_schema_studio() -> None:
             f"예상 노드 입력: {preview['estimated_node_rows']} · "
             f"예상 관계 입력: {preview['estimated_relationship_rows']}"
         )
+        if preview.get("status") == "approved":
+            st.markdown("### Neo4j 적재 승인")
+            st.warning(
+                "승인된 매핑을 현재 프로젝트 범위로 실제 적재합니다. "
+                "다른 프로젝트의 노드·관계는 변경하지 않습니다."
+            )
+            confirmation = st.text_input(
+                f"확인을 위해 `{project_id}` 입력",
+                key=f"mapping-load-confirm-{project_id}",
+            )
+            load_enabled = os.getenv("P3_ENABLE_UI_LOAD") == "1"
+            if not load_enabled:
+                st.info("관리자가 P3_ENABLE_UI_LOAD=1로 실행해야 활성화됩니다.")
+            if st.button(
+                "승인된 그래프 적재",
+                type="primary",
+                disabled=(
+                    not load_enabled or confirmation != project_id
+                ),
+                key=f"mapping-load-{project_id}",
+            ):
+                api = FactoryGraphApiClient()
+                try:
+                    result = api.load_project_graph(project_id, upload_id)
+                    st.session_state["project_load_result"] = result
+                    st.success("프로젝트 격리 적재와 무결성 확인을 완료했습니다.")
+                except Exception as error:
+                    st.error(f"그래프 적재 실패: {error}")
+                finally:
+                    api.close()
+    if st.session_state.get("project_load_result"):
+        st.json(st.session_state["project_load_result"])
 
 
 def main() -> None:
     initialize_session()
-    page, provider, model_name = render_sidebar()
+    page, provider, model_name, project_id = render_sidebar()
     if page == "Home":
         render_streamlit_landing()
         return
@@ -2159,8 +2339,13 @@ def main() -> None:
             provider,
             model_name,
             SERVICE_BUNDLE_VERSION,
+            project_id,
         )
     except Exception as error:
+        if page == "Data & Health":
+            st.warning(f"질의 서비스 연결 전 데이터 온보딩 모드입니다: {error}")
+            render_data_health_tab(None, None)
+            return
         render_startup_failure(error)
         return
     st.sidebar.caption(

@@ -83,11 +83,35 @@ class FactoryGraphApiClient:
     def runtime(self) -> dict[str, Any]:
         return self._request("GET", "/api/v1/runtime")
 
-    def query(self, question: str) -> dict[str, Any]:
+    def query(
+        self, question: str, project_id: str | None = None
+    ) -> dict[str, Any]:
         return self._request(
             "POST",
             "/api/v1/query",
-            json={"question": question},
+            json={"question": question, "project_id": project_id},
+        )
+
+    def projects(self) -> list[dict[str, Any]]:
+        response = self.client.get("/api/v1/projects")
+        response.raise_for_status()
+        return response.json()
+
+    def activate_project(self, project_id: str) -> dict[str, Any]:
+        return self._request(
+            "POST", f"/api/v1/projects/{project_id}/activate"
+        )
+
+    def load_project_graph(
+        self, project_id: str, upload_id: str
+    ) -> dict[str, Any]:
+        return self._request(
+            "POST",
+            f"/api/v1/projects/{project_id}/graph/load",
+            json={
+                "upload_id": upload_id,
+                "confirm_project_id": project_id,
+            },
         )
 
     def metrics(self) -> dict[str, Any]:
@@ -172,8 +196,12 @@ class _ApiFeedback:
 class ApiServiceBundle:
     """ServiceBundle-compatible facade backed by FastAPI."""
 
-    def __init__(self, api: FactoryGraphApiClient):
+    def __init__(
+        self, api: FactoryGraphApiClient, project_id: str | None = None
+    ):
         self.api = api
+        if project_id:
+            api.activate_project(project_id)
         runtime = api.runtime()
         self.provider = str(runtime.get("provider", "api"))
         self.model_name = str(runtime.get("model_name", "server-managed"))
@@ -181,10 +209,12 @@ class ApiServiceBundle:
         self.dashboard = _ApiDashboard(api)
         self.graph = _ApiGraph(api)
         self.feedback = _ApiFeedback(api)
+        self.project_id = str(
+            runtime.get("active_project_id", project_id or "cip-dmd")
+        )
 
     def query_with_fallback(self, question: str) -> dict[str, Any]:
-        return self.api.query(question)
+        return self.api.query(question, self.project_id)
 
     def close(self) -> None:
         self.api.close()
-
