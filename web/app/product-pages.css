@@ -3,14 +3,40 @@
 }
 
 .project-switcher {
-  max-width: 180px;
+  max-width: 230px;
   min-height: 34px;
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  padding: 0 9px;
+  border: 0;
+  padding: 0;
   color: var(--text);
+  background: transparent;
+  font-size: .7rem;
+  font-weight: 680;
+}
+
+.project-control {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 250px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  padding: 5px 10px;
   background: var(--surface);
-  font-size: .68rem;
+}
+
+.project-control > svg {
+  color: var(--brand);
+}
+
+.project-control label {
+  display: grid;
+}
+
+.project-control label > span {
+  color: var(--text-soft);
+  font-size: .52rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
 }
 
 .onboarding-grid,
@@ -19,6 +45,74 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
   padding-bottom: 80px;
+}
+
+.pipeline-progress {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(4, 1fr);
+  padding: 18px;
+}
+
+.pipeline-progress-step {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--text-soft);
+  font-size: .68rem;
+}
+
+.pipeline-progress-step > span {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  font-size: .58rem;
+}
+
+.pipeline-progress-step.done,
+.pipeline-progress-step.active {
+  color: var(--text);
+}
+
+.pipeline-progress-step.done > span {
+  color: #06251c;
+  border-color: var(--brand);
+  background: var(--brand);
+}
+
+.pipeline-progress-step.active > span {
+  color: var(--brand);
+  border-color: var(--brand);
+}
+
+.selected-files {
+  word-break: break-all;
+}
+
+.load-readiness {
+  display: grid;
+  gap: 4px;
+  margin: 15px 0;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  padding: 13px;
+}
+
+.load-readiness strong {
+  font-size: .72rem;
+}
+
+.load-readiness span {
+  color: var(--text-soft);
+  font-size: .64rem;
+}
+
+.load-readiness.ready {
+  border-color: color-mix(in srgb, var(--brand) 38%, var(--line));
+  background: color-mix(in srgb, var(--brand) 6%, transparent);
 }
 
 .onboarding-panel,
@@ -83,6 +177,9 @@
   .onboarding-grid, .schema-studio-grid { grid-template-columns: 1fr; }
   .profile-panel { grid-column: auto; }
   .project-switcher { max-width: 130px; }
+  .project-control { min-width: auto; }
+  .project-control label > span { display: none; }
+  .pipeline-progress { grid-template-columns: repeat(2, 1fr); gap: 12px; }
 }
 
 .product-page-heading {

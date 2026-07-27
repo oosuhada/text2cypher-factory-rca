@@ -33,7 +33,12 @@ function defaultMapping(profile: DatasetProfile) {
 }
 
 export function SchemaStudio() {
-  const { activeProject, refresh } = useProject();
+  const {
+    activeProject,
+    readiness,
+    refresh,
+    refreshReadiness,
+  } = useProject();
   const projectId = activeProject?.project_id ?? "";
   const [uploads, setUploads] = useState<DatasetProfile[]>([]);
   const [uploadId, setUploadId] = useState("");
@@ -73,7 +78,10 @@ export function SchemaStudio() {
         ? await approveGraphMapping(projectId, uploadId, mapping)
         : await previewGraphMapping(projectId, uploadId, mapping);
       setResult(response);
-      if (approve) await refresh();
+      if (approve) {
+        await refresh();
+        await refreshReadiness();
+      }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "매핑 검증 실패");
     } finally {
@@ -86,6 +94,8 @@ export function SchemaStudio() {
     setError("");
     try {
       setResult(await loadProjectGraph(projectId, uploadId));
+      await refresh();
+      await refreshReadiness();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "그래프 적재 실패");
     } finally {
@@ -141,6 +151,26 @@ export function SchemaStudio() {
       </section>
       <section className="card onboarding-panel">
         <h2>Schema contract / load evidence</h2>
+        <div
+          className={`load-readiness ${
+            readiness?.can_load ? "ready" : "blocked"
+          }`}
+        >
+          <strong>
+            {readiness?.can_query
+              ? "그래프 적재 완료"
+              : readiness?.can_load
+                ? "안전 적재 가능"
+                : "적재 기능 비활성"}
+          </strong>
+          <span>
+            {readiness?.can_load
+              ? "loader 전환 후 적재하고 reader 모드로 자동 복귀합니다."
+              : readiness?.mapping_approved
+                ? "서버를 P3_ENABLE_UI_LOAD=1로 실행해야 합니다."
+                : "먼저 매핑을 검토하고 승인하세요."}
+          </span>
+        </div>
         {result ? <pre className="json-preview">{JSON.stringify(result, null, 2)}</pre> : (
           <p>미리보기를 실행하면 생성될 노드·관계와 예상 행 수가 표시됩니다.</p>
         )}
@@ -154,7 +184,11 @@ export function SchemaStudio() {
         </label>
         <button
           className="primary-button"
-          disabled={busy || confirmation !== projectId}
+          disabled={
+            busy ||
+            !readiness?.can_load ||
+            confirmation !== projectId
+          }
           onClick={() => void load()}
         >
           <CheckCircle2 size={15} /> 승인된 그래프 적재

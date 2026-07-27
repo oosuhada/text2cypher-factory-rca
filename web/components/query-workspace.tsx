@@ -66,6 +66,21 @@ const EXAMPLES = [
   },
 ];
 
+const EQUIPMENT_EXAMPLES = [
+  {
+    label: "장비 정비 이력",
+    question: "EQ-PRESS-01 장비의 유지보수 이력을 보여줘.",
+  },
+  {
+    label: "고비용 정비",
+    question: "비용이 1000달러 이상인 유지보수 이력을 보여줘.",
+  },
+  {
+    label: "부품 교체",
+    question: "replacement 유형의 정비 이력과 담당 기술자를 보여줘.",
+  },
+];
+
 const PROGRESS = [
   "질문 의도 분류",
   "그래프 스키마 주입",
@@ -87,8 +102,20 @@ const STATUS_LABEL: Record<QueryResponse["status"], string> = {
 type EvidenceTab = "table" | "graph" | "cypher" | "trace";
 
 export function QueryWorkspace() {
-  const { activeProject } = useProject();
+  const {
+    activeProject,
+    readiness,
+    loading: projectLoading,
+    error: projectError,
+  } = useProject();
   const projectId = activeProject?.project_id ?? "cip-dmd";
+  const examples =
+    projectId === "cip-dmd"
+      ? EXAMPLES
+      : projectId === "equipment-history"
+        ? EQUIPMENT_EXAMPLES
+        : [];
+  const queryEnabled = Boolean(readiness?.can_query);
   const searchParams = useSearchParams();
   const [question, setQuestion] = useState("");
   const [submittedQuestion, setSubmittedQuestion] = useState("");
@@ -111,6 +138,13 @@ export function QueryWorkspace() {
     const timer = window.setTimeout(() => {
       const stored = readHistory(projectId);
       setHistory(stored);
+      setQuestion("");
+      setSubmittedQuestion("");
+      setResponse(null);
+      setError("");
+      setReviewDecision(null);
+      setReviewNote("");
+      setReviewError("");
       const conversationId = searchParams.get("conversation");
       const selected = stored.find((item) => item.id === conversationId);
       if (selected) {
@@ -239,10 +273,11 @@ export function QueryWorkspace() {
         <section>
           <p className="workspace-label">Demo questions</p>
           <div className="example-list">
-            {EXAMPLES.map((example) => (
+            {examples.map((example) => (
               <button
                 type="button"
                 key={example.label}
+                disabled={!queryEnabled}
                 onClick={() => {
                   setQuestion(example.question);
                   void runQuestion(example.question);
@@ -255,6 +290,11 @@ export function QueryWorkspace() {
                 </span>
               </button>
             ))}
+            {!examples.length && (
+              <p className="workspace-hint">
+                이 프로젝트의 검증 질문은 데이터 적재 후 등록할 수 있습니다.
+              </p>
+            )}
           </div>
         </section>
 
@@ -299,7 +339,7 @@ export function QueryWorkspace() {
         <div className="workspace-heading">
           <div>
             <span className="eyebrow">Query workspace</span>
-            <h1>제조 관계를 질문하세요.</h1>
+            <h1>{activeProject?.name ?? "그래프"}에 질문하세요.</h1>
           </div>
           {response && (
             <span className={`result-status status-${response.status}`}>
@@ -310,7 +350,56 @@ export function QueryWorkspace() {
         </div>
 
         <div className="conversation-body">
-          {!submittedQuestion && !loading && (
+          {(projectLoading || (!readiness && !projectError)) && (
+            <div className="conversation-empty">
+              <LoaderCircle className="spin" size={28} />
+              <h2>프로젝트 상태를 확인하고 있습니다.</h2>
+            </div>
+          )}
+
+          {projectError && (
+            <div className="query-error">
+              <AlertTriangle size={19} />
+              <div>
+                <strong>프로젝트 상태 확인 실패</strong>
+                <p>{projectError}</p>
+              </div>
+            </div>
+          )}
+
+          {readiness && !readiness.can_query && (
+            <div className="project-not-ready card">
+              <Database size={28} />
+              <span className="eyebrow">
+                {readiness.lifecycle_status.replaceAll("_", " ")}
+              </span>
+              <h2>아직 질의할 그래프가 없습니다.</h2>
+              <p>
+                업로드 {readiness.upload_count}건 · 노드{" "}
+                {readiness.node_count}개 · 관계{" "}
+                {readiness.relationship_count}개
+              </p>
+              <p>
+                {readiness.next_action === "upload"
+                  ? "CSV/JSON 파일을 업로드하고 프로파일링하세요."
+                  : readiness.next_action === "map"
+                    ? "업로드한 컬럼을 노드와 관계에 매핑하세요."
+                    : "승인된 스키마를 Neo4j에 적재해야 합니다."}
+              </p>
+              <Link
+                className="primary-button"
+                href={
+                  readiness.next_action === "upload" ? "/data" : "/schema"
+                }
+              >
+                {readiness.next_action === "upload"
+                  ? "Data Pipeline 열기"
+                  : "Schema Studio 열기"}
+              </Link>
+            </div>
+          )}
+
+          {queryEnabled && !submittedQuestion && !loading && (
             <div className="conversation-empty">
               <span>
                 <Network size={30} />
@@ -483,13 +572,16 @@ export function QueryWorkspace() {
             rows={2}
             maxLength={2000}
             aria-label="제조 관계 질문"
+            disabled={!queryEnabled}
           />
           <div>
             <span>Enter 전송 · Shift + Enter 줄바꿈</span>
             <button
               type="submit"
               aria-label="질문 전송"
-              disabled={loading || !question.trim()}
+              disabled={
+                !queryEnabled || loading || !question.trim()
+              }
             >
               {loading ? (
                 <LoaderCircle className="spin" size={18} />

@@ -7,6 +7,7 @@ import {
   Menu,
   MessageSquareText,
   Network,
+  DatabaseZap,
   Workflow,
   X,
 } from "lucide-react";
@@ -30,7 +31,20 @@ const NAVIGATION = [
 export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const { projects, activeProject, switchProject } = useProject();
+  const {
+    projects,
+    activeProject,
+    readiness,
+    switching,
+    switchProject,
+  } = useProject();
+  const statusLabel = readiness?.can_query
+    ? `${readiness.node_count.toLocaleString()} nodes`
+    : readiness?.next_action === "load"
+      ? "Load required"
+      : readiness?.next_action === "map"
+        ? "Mapping required"
+        : "Upload required";
 
   return (
     <header className="site-header">
@@ -63,19 +77,27 @@ export function SiteHeader() {
         </nav>
 
         <div className="header-actions">
-          <select
-            className="project-switcher"
-            aria-label="활성 프로젝트"
-            value={activeProject?.project_id ?? ""}
-            disabled={!activeProject}
-            onChange={(event) => void switchProject(event.target.value)}
-          >
-            {projects.map((project) => (
-              <option key={project.project_id} value={project.project_id}>
-                {project.name}
-              </option>
-            ))}
-          </select>
+          <div className="project-control">
+            <DatabaseZap size={15} />
+            <label>
+              <span>Project · {statusLabel}</span>
+              <select
+                className="project-switcher"
+                aria-label="활성 프로젝트"
+                value={activeProject?.project_id ?? ""}
+                disabled={!activeProject || switching}
+                onChange={(event) =>
+                  void switchProject(event.target.value)
+                }
+              >
+                {projects.map((project) => (
+                  <option key={project.project_id} value={project.project_id}>
+                    {project.name} · {project.status}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
           <ApiStatus />
           <ThemeToggle />
           <button
