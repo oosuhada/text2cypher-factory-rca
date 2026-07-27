@@ -30,6 +30,7 @@ export type Evidence = {
 };
 
 export type QueryResponse = {
+  project_id?: string;
   question: string;
   answer: string;
   status: QueryStatus;
@@ -56,6 +57,41 @@ export type StoredConversation = {
   updatedAt: string;
   question: string;
   response: QueryResponse;
+  projectId: string;
+};
+
+export type Project = {
+  project_id: string;
+  name: string;
+  domain_type: string;
+  dataset_name: string;
+  schema_version: string | null;
+  status: "draft" | "ready" | "archived";
+  created_at: string;
+  updated_at: string;
+  is_active: boolean;
+};
+
+export type DatasetProfile = {
+  upload_id: string;
+  project_id: string;
+  created_at: string;
+  status: string;
+  total_bytes: number;
+  files: {
+    filename: string;
+    row_count: number;
+    column_count: number;
+    columns: {
+      name: string;
+      inferred_type: string;
+      missing_count: number;
+      missing_rate: number;
+      unique_count: number;
+      identity_candidate: boolean;
+      samples: unknown[];
+    }[];
+  }[];
 };
 
 export type HealthResponse = {
@@ -69,12 +105,17 @@ export type HealthResponse = {
 };
 
 export type GraphSchema = {
+  project_id: string;
+  schema_version: string;
+  title: string;
   schema_context: string;
   node_identities: {
     label: string;
     identity_property: string;
   }[];
   relationship_types: string[];
+  nodes: Record<string, unknown>[];
+  relationships: Record<string, unknown>[];
 };
 
 export type NodeSearchResponse = {

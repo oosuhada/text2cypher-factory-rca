@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { ProjectProvider } from "@/components/project-context";
 
 import "./globals.css";
 
@@ -56,9 +57,11 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <body className={`${geist.variable} ${geistMono.variable}`}>
-        <SiteHeader />
-        <main>{children}</main>
-        <SiteFooter />
+        <ProjectProvider>
+          <SiteHeader />
+          <main>{children}</main>
+          <SiteFooter />
+        </ProjectProvider>
       </body>
     </html>
   );

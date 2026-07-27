@@ -6,6 +6,8 @@ import type {
   HealthResponse,
   NodeSearchResponse,
   QueryResponse,
+  Project,
+  DatasetProfile,
   SubgraphResponse,
 } from "@/lib/types";
 
@@ -33,11 +35,103 @@ async function request<T>(
   return response.json() as Promise<T>;
 }
 
-export function queryFactoryGraph(question: string) {
+export function queryFactoryGraph(question: string, projectId: string) {
   return request<QueryResponse>("/api/v1/query", {
     method: "POST",
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ question, project_id: projectId }),
   });
+}
+
+export function getProjects() {
+  return request<Project[]>("/api/v1/projects");
+}
+
+export function createProject(payload: {
+  project_id: string;
+  name: string;
+  domain_type: string;
+  dataset_name: string;
+}) {
+  return request<Project>("/api/v1/projects", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function activateProject(projectId: string) {
+  return request<Project>(`/api/v1/projects/${projectId}/activate`, {
+    method: "POST",
+  });
+}
+
+export function profileDataset(
+  projectId: string,
+  files: { filename: string; content_base64: string }[],
+) {
+  return request<DatasetProfile>(
+    `/api/v1/projects/${projectId}/uploads/profile`,
+    {
+      method: "POST",
+      body: JSON.stringify({ files }),
+    },
+  );
+}
+
+export function getDatasetUploads(projectId: string) {
+  return request<{
+    project_id: string;
+    uploads: DatasetProfile[];
+    count: number;
+  }>(`/api/v1/projects/${projectId}/uploads`);
+}
+
+export function previewGraphMapping(
+  projectId: string,
+  uploadId: string,
+  mapping: Record<string, unknown>,
+) {
+  return request<Record<string, unknown>>(
+    `/api/v1/projects/${projectId}/mappings/preview`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        upload_id: uploadId,
+        schema_version: "1.0",
+        mapping,
+      }),
+    },
+  );
+}
+
+export function approveGraphMapping(
+  projectId: string,
+  uploadId: string,
+  mapping: Record<string, unknown>,
+) {
+  return request<Record<string, unknown>>(
+    `/api/v1/projects/${projectId}/mappings/approve`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        upload_id: uploadId,
+        schema_version: "1.0",
+        mapping,
+      }),
+    },
+  );
+}
+
+export function loadProjectGraph(projectId: string, uploadId: string) {
+  return request<Record<string, unknown>>(
+    `/api/v1/projects/${projectId}/graph/load`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        upload_id: uploadId,
+        confirm_project_id: projectId,
+      }),
+    },
+  );
 }
 
 export function getHealth() {
@@ -68,20 +162,25 @@ export function getFeedbackSummary() {
   return request<FeedbackSummary>("/api/v1/feedback/summary");
 }
 
-export function getGraphSchema() {
-  return request<GraphSchema>("/api/v1/graph/schema");
+export function getGraphSchema(projectId?: string) {
+  const suffix = projectId
+    ? `?project_id=${encodeURIComponent(projectId)}`
+    : "";
+  return request<GraphSchema>(`/api/v1/graph/schema${suffix}`);
 }
 
 export function searchGraphNodes(
   label: string,
   searchTerm: string,
   limit = 12,
+  projectId?: string,
 ) {
   const query = new URLSearchParams({
     label,
     q: searchTerm,
     limit: String(limit),
   });
+  if (projectId) query.set("project_id", projectId);
   return request<NodeSearchResponse>(
     `/api/v1/graph/search?${query.toString()}`,
   );
@@ -91,12 +190,14 @@ export function getSubgraph(
   label: string,
   identity: string,
   depth = 2,
+  projectId?: string,
 ) {
   const query = new URLSearchParams({
     label,
     identity,
     depth: String(depth),
   });
+  if (projectId) query.set("project_id", projectId);
   return request<SubgraphResponse>(
     `/api/v1/graph/subgraph?${query.toString()}`,
   );

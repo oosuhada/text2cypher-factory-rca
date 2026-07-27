@@ -6,14 +6,20 @@ import { useEffect, useState } from "react";
 
 import { clearHistory, readHistory, removeConversation } from "@/lib/history";
 import type { StoredConversation } from "@/lib/types";
+import { useProject } from "@/components/project-context";
 
 export function HistoryList() {
+  const { activeProject } = useProject();
+  const projectId = activeProject?.project_id ?? "cip-dmd";
   const [items, setItems] = useState<StoredConversation[]>([]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setItems(readHistory()), 0);
+    const timer = window.setTimeout(
+      () => setItems(readHistory(projectId)),
+      0,
+    );
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [projectId]);
 
   if (items.length === 0) {
     return (
@@ -38,7 +44,7 @@ export function HistoryList() {
           type="button"
           className="ghost-button"
           onClick={() => {
-            clearHistory();
+            clearHistory(projectId);
             setItems([]);
           }}
         >
@@ -75,7 +81,7 @@ export function HistoryList() {
               type="button"
               className="ghost-button"
               aria-label={`${item.title} 삭제`}
-              onClick={() => setItems(removeConversation(item.id))}
+              onClick={() => setItems(removeConversation(item.id, projectId))}
             >
               <Trash2 size={14} />
             </button>
