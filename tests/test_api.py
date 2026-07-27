@@ -141,6 +141,11 @@ class ApiContractTest(unittest.TestCase):
         live = self.client.get("/api/v1/health/live")
         self.assertEqual(live.status_code, 200)
         self.assertEqual(live.json(), {"status": "alive"})
+        self.assertEqual(
+            live.headers["x-content-type-options"], "nosniff"
+        )
+        self.assertEqual(live.headers["x-frame-options"], "DENY")
+        self.assertEqual(live.headers["cache-control"], "no-store")
 
         schema = self.client.get("/api/v1/graph/schema")
         self.assertEqual(schema.status_code, 200)

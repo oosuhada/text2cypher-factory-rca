@@ -41,3 +41,43 @@ jobs:
         run: pnpm lint
       - name: Build web application
         run: pnpm build
+
+  packaged-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Create CI runtime environment
+        run: |
+          printf '%s\n' \
+            'NEO4J_PASSWORD=ci-factorygraph-password' \
+            'P3_API_PROVIDER=gold' \
+            > .env.ci
+      - name: Validate Compose contract
+        run: >-
+          docker compose
+          --env-file .env.ci
+          -f infra/docker-compose.product.yml
+          config --quiet
+      - name: Build and start packaged stack
+        run: >-
+          docker compose
+          --env-file .env.ci
+          -f infra/docker-compose.product.yml
+          up --build --wait
+        timeout-minutes: 15
+      - name: Run black-box E2E smoke
+        run: python3 scripts/e2e_smoke.py --timeout 120
+      - name: Print packaged service logs on failure
+        if: failure()
+        run: >-
+          docker compose
+          --env-file .env.ci
+          -f infra/docker-compose.product.yml
+          logs --no-color --tail 200
+      - name: Stop packaged stack
+        if: always()
+        run: >-
+          docker compose
+          --env-file .env.ci
+          -f infra/docker-compose.product.yml
+          down --volumes --remove-orphans

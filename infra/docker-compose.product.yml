@@ -1,0 +1,147 @@
+name: factorygraph-rca
+
+x-python-service: &python-service
+  image: factorygraph-rca-python:local
+  build:
+    context: ..
+    dockerfile: backend/Dockerfile
+  environment: &python-environment
+    NEO4J_URI: neo4j://neo4j:7687
+    NEO4J_DATABASE: neo4j
+    NEO4J_USERNAME: ${NEO4J_USERNAME:-neo4j}
+    NEO4J_PASSWORD: ${NEO4J_PASSWORD:?Set NEO4J_PASSWORD in .env}
+    P3_API_PROVIDER: ${P3_API_PROVIDER:-gold}
+    P3_API_MODEL: ${P3_API_MODEL:-}
+    P3_CORS_ORIGINS: ${P3_CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
+    P3_ENABLE_UI_LOAD: ${P3_ENABLE_UI_LOAD:-0}
+    OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4.1-mini}
+    GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-}
+    GOOGLE_VERTEX_PROJECT: ${GOOGLE_VERTEX_PROJECT:-}
+    GOOGLE_VERTEX_LOCATION: ${GOOGLE_VERTEX_LOCATION:-us-central1}
+    GOOGLE_VERTEX_MODEL: ${GOOGLE_VERTEX_MODEL:-gemini-2.5-flash}
+  volumes:
+    - p3_processed:/app/data/processed
+  restart: unless-stopped
+
+services:
+  neo4j:
+    image: ${NEO4J_IMAGE:-neo4j:2026.06.0-community}
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: ${NEO4J_USERNAME:-neo4j}/${NEO4J_PASSWORD:?Set NEO4J_PASSWORD in .env}
+      NEO4J_server_memory_heap_initial__size: 512m
+      NEO4J_server_memory_heap_max__size: 1g
+      NEO4J_server_memory_pagecache_size: 512m
+    ports:
+      - "127.0.0.1:7474:7474"
+      - "127.0.0.1:7687:7687"
+    volumes:
+      - p3_neo4j_data:/data
+      - p3_neo4j_logs:/logs
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "cypher-shell -a neo4j://localhost:7687 -u \"$${NEO4J_AUTH%%/*}\" -p \"$${NEO4J_AUTH#*/}\" 'RETURN 1' >/dev/null 2>&1",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  initialize:
+    <<: *python-service
+    restart: "no"
+    command:
+      [
+        "python",
+        "-m",
+        "backend.app.etl.cli",
+        "--verify-idempotency",
+      ]
+    depends_on:
+      neo4j:
+        condition: service_healthy
+
+  api:
+    <<: *python-service
+    command:
+      [
+        "uvicorn",
+        "backend.app.api.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--proxy-headers",
+      ]
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      initialize:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/live', timeout=2)",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
+
+  streamlit:
+    <<: *python-service
+    command:
+      [
+        "streamlit",
+        "run",
+        "frontend/streamlit_app.py",
+        "--server.address=0.0.0.0",
+        "--server.port=8501",
+        "--server.headless=true",
+      ]
+    ports:
+      - "127.0.0.1:8501:8501"
+    depends_on:
+      initialize:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=2)",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+
+  web:
+    image: factorygraph-rca-web:local
+    build:
+      context: ../web
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://127.0.0.1:8000}
+    environment:
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  p3_neo4j_data:
+  p3_neo4j_logs:
+  p3_processed:
+
