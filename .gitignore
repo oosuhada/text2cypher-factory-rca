@@ -11,6 +11,9 @@ data/processed/etl_runs/
 data/processed/quarantine/
 data/processed/cip_dmd_etl_summary.json
 data/processed/demo_smoke_latest.json
+data/processed/intake_audit.jsonl
+data/processed/intake_load.lock
+data/processed/intake_runs/
 web/.env.local
 web/.next/
 web/node_modules/

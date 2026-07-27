@@ -17,6 +17,7 @@ import pandas as pd
 import streamlit as st
 
 from backend.app.services.diagnostics import collect_demo_diagnostics
+from backend.app.services.data_intake_service import DataIntakeService
 from backend.app.services.graph_service import NODE_IDENTITIES
 from frontend.app_services import ServiceBundle, build_service_bundle
 from frontend.conversation_history import upsert_conversation
@@ -155,6 +156,16 @@ def get_services(provider: str, model_name: str) -> ServiceBundle:
     )
 
 
+@st.cache_resource(show_spinner=False)
+def get_data_intake_service() -> DataIntakeService:
+    return DataIntakeService(PROJECT_ROOT)
+
+
+@st.cache_data(show_spinner=False)
+def get_reference_intake_archive() -> bytes:
+    return DataIntakeService(PROJECT_ROOT).build_reference_archive()
+
+
 def initialize_session() -> None:
     st.session_state.setdefault("messages", [])
     st.session_state.setdefault("last_result", None)
@@ -163,6 +174,8 @@ def initialize_session() -> None:
         "active_conversation_id", str(uuid4())
     )
     st.session_state.setdefault("explorer_result", None)
+    st.session_state.setdefault("intake_record", None)
+    st.session_state.setdefault("intake_approval_token", None)
 
 
 def sync_active_conversation() -> None:
@@ -600,13 +613,265 @@ def render_startup_failure(error: Exception) -> None:
         st.rerun()
 
 
+def render_data_intake_workflow() -> None:
+    intake = get_data_intake_service()
+    st.markdown("#### CiP-DMD Data Intake")
+    st.caption(
+        "검증 기준과 동일한 CiP-DMD ZIP 번들만 staging할 수 있습니다. "
+        "일부 파일이나 변경된 데이터는 실제 그래프에 적재되지 않습니다."
+    )
+    stage_column, policy_column = st.columns([1.45, 1])
+    with stage_column:
+        uploaded_bundle = st.file_uploader(
+            "CiP-DMD 전체 폴더 구조가 포함된 ZIP (25MB 이하)",
+            type=("zip",),
+            accept_multiple_files=False,
+            key="cip-dmd-intake-zip",
+            help=(
+                "cylinder, cylinder_bottom, piston_rod 하위의 메타데이터와 "
+                "품질 CSV 8개를 원래 상대경로로 포함해야 합니다."
+            ),
+        )
+        st.download_button(
+            "검증용 CiP-DMD 번들 다운로드",
+            data=get_reference_intake_archive(),
+            file_name="cip_dmd_reference_bundle.zip",
+            mime="application/zip",
+            width="stretch",
+            help="현재 프로젝트에 포함된 공개 데이터로 만든 데모 번들입니다.",
+        )
+        if st.button(
+            "1 · 번들 staging",
+            type="secondary",
+            width="stretch",
+            disabled=uploaded_bundle is None,
+            key="stage-intake-bundle",
+        ):
+            try:
+                with st.spinner("ZIP 경로·크기·필수 파일·해시를 검사합니다."):
+                    record = intake.stage_archive(
+                        uploaded_bundle.name,
+                        uploaded_bundle.getvalue(),
+                    )
+                st.session_state["intake_record"] = record
+                st.session_state["intake_approval_token"] = None
+            except Exception as error:
+                st.error(f"번들 staging 실패: {error}")
+    with policy_column:
+        st.markdown(
+            """
+            <div class="p3-section-note">
+              <b>안전 정책</b><br>
+              ZIP 경로 탈출 차단 · 압축 해제 크기 제한 · 필수 파일 8개
+              고정 매핑 · 기준 원본 SHA-256 일치 · dry-run PASS ·
+              30분 승인 토큰 · 단일 적재 잠금 · reader 모드 자동 복귀
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    record = st.session_state.get("intake_record")
+    if record:
+        status_columns = st.columns(4)
+        status_columns[0].metric("Run 상태", record["status"])
+        status_columns[1].metric(
+            "필수 파일", len(record.get("source_files", []))
+        )
+        status_columns[2].metric(
+            "원본 일치",
+            "PASS" if record.get("canonical_bundle_match") else "REVIEW",
+        )
+        status_columns[3].metric(
+            "Run ID", record["run_id"].split("-")[0]
+        )
+        with st.expander("파일 매핑·해시 상세"):
+            st.dataframe(
+                pd.DataFrame(record.get("source_files", [])),
+                width="stretch",
+                hide_index=True,
+                column_config={
+                    "sha256": st.column_config.TextColumn(width="medium"),
+                    "canonical_sha256": st.column_config.TextColumn(
+                        width="medium"
+                    ),
+                },
+            )
+
+        if record["status"] == "staged":
+            if not record.get("canonical_bundle_match"):
+                st.warning(
+                    "필수 구조는 확인했지만 검증 기준 원본과 다른 파일이 "
+                    "있어 자동 적재를 중단했습니다."
+                )
+            if st.button(
+                "2 · ETL dry-run",
+                type="primary",
+                width="stretch",
+                disabled=not record.get("canonical_bundle_match"),
+                key=f"dry-run-{record['run_id']}",
+            ):
+                try:
+                    with st.spinner(
+                        "Extract → Transform → Validate를 실행합니다."
+                    ):
+                        dry_run = intake.dry_run(record["run_id"])
+                    st.session_state["intake_record"] = {
+                        key: value
+                        for key, value in dry_run.items()
+                        if key != "approval_token"
+                    }
+                    st.session_state["intake_approval_token"] = dry_run[
+                        "approval_token"
+                    ]
+                    st.rerun()
+                except Exception as error:
+                    st.error(f"ETL dry-run 실패: {error}")
+
+        if record["status"] == "dry_run_pass":
+            validation = record["validation"]
+            st.success(
+                "ETL dry-run PASS · 실제 Neo4j에는 아직 아무것도 "
+                "기록하지 않았습니다."
+            )
+            count_rows = [
+                {"entity_or_relation": name, "projected_count": count}
+                for name, count in validation["counts"].items()
+            ]
+            st.dataframe(
+                pd.DataFrame(count_rows),
+                width="stretch",
+                hide_index=True,
+            )
+            st.caption(
+                f"격리 예정 레코드 "
+                f"{validation['quarantined_count']}건 · "
+                f"승인 만료 {record['approval_expires_at']}"
+            )
+
+            confirmation_text = f"LOAD {record['run_id']}"
+            st.markdown("##### 실제 적재 승인")
+            st.code(confirmation_text)
+            acknowledged = st.checkbox(
+                "현재 그래프가 일시적으로 재시작되며, 적재 후 reader "
+                "모드로 복귀하는 것에 동의합니다.",
+                key=f"approve-intake-{record['run_id']}",
+            )
+            confirmation = st.text_input(
+                "위 확인 문구를 정확히 입력",
+                key=f"confirm-intake-{record['run_id']}",
+            )
+            ui_load_enabled = os.getenv("P3_ENABLE_UI_LOAD") == "1"
+            approval_token = st.session_state.get(
+                "intake_approval_token"
+            )
+            if not ui_load_enabled:
+                st.info(
+                    "실제 적재는 기본 비활성화 상태입니다. 관리자가 "
+                    "`P3_ENABLE_UI_LOAD=1`로 앱을 시작한 경우에만 "
+                    "승인 버튼이 활성화됩니다."
+                )
+            if approval_token is None:
+                st.warning(
+                    "승인 토큰이 현재 세션에 없습니다. dry-run을 다시 "
+                    "실행해 새 토큰을 발급하세요."
+                )
+            can_load = (
+                ui_load_enabled
+                and approval_token is not None
+                and acknowledged
+                and confirmation == confirmation_text
+            )
+            if st.button(
+                "3 · 승인 후 Neo4j 적재",
+                type="primary",
+                width="stretch",
+                disabled=not can_load,
+                key=f"load-intake-{record['run_id']}",
+            ):
+                try:
+                    with st.spinner(
+                        "loader 전환 → 적재 → 건수 검증 → reader 복귀"
+                    ):
+                        loaded = intake.load(
+                            record["run_id"],
+                            approval_token=approval_token,
+                            confirmation=confirmation,
+                        )
+                    st.session_state["intake_record"] = loaded
+                    st.session_state["intake_approval_token"] = None
+                    get_services.clear()
+                    st.success(
+                        "적재와 reader 모드 복귀를 완료했습니다. 다음 "
+                        "화면 갱신부터 새 연결을 사용합니다."
+                    )
+                except Exception as error:
+                    st.error(f"승인 적재 실패: {error}")
+
+        if record["status"] == "load_pass":
+            st.success("적재 완료 · Neo4j reader 모드 복귀 확인")
+        elif record["status"] in {"dry_run_failed", "load_failed"}:
+            st.error(record.get("error", "Data Intake 작업이 실패했습니다."))
+
+    with st.expander("최근 Data Intake 실행·감사로그"):
+        recent_runs = intake.list_runs(limit=10)
+        if recent_runs:
+            st.dataframe(
+                pd.DataFrame(
+                    [
+                        {
+                            "run_id": item["run_id"],
+                            "status": item["status"],
+                            "filename": item.get("original_filename"),
+                            "created_at": item.get("created_at"),
+                            "updated_at": item.get("updated_at"),
+                        }
+                        for item in recent_runs
+                    ]
+                ),
+                width="stretch",
+                hide_index=True,
+            )
+        events = intake.recent_audit_events(limit=20)
+        if events:
+            st.dataframe(
+                pd.DataFrame(events),
+                width="stretch",
+                hide_index=True,
+            )
+        if not recent_runs and not events:
+            st.info("아직 Data Intake 실행 기록이 없습니다.")
+
+    with st.expander("개별 파일 빠른 사전검증"):
+        uploaded_files = st.file_uploader(
+            "메타데이터 JSON 또는 품질 CSV (10MB 이하)",
+            type=("json", "csv"),
+            accept_multiple_files=True,
+            key="candidate-source-files",
+            help=(
+                "이 검사는 파일 구조와 공통 ID 후보만 확인하며 실제 "
+                "적재 승인으로 사용되지 않습니다."
+            ),
+        )
+        if uploaded_files:
+            inspections = [
+                inspect_uploaded_source(file.name, file.getvalue())
+                for file in uploaded_files
+            ]
+            st.dataframe(
+                pd.DataFrame(inspections),
+                width="stretch",
+                hide_index=True,
+            )
+
+
 def render_data_health_tab(
     services: ServiceBundle, snapshot: dict[str, Any] | None
 ) -> None:
     st.subheader("데이터 적재와 실행 진단")
     st.caption(
-        "운영 그래프는 읽기 전용으로 유지하고, 업로드 파일은 메모리에서 "
-        f"스키마만 사전검증합니다. 현재 질의 provider: {services.provider}"
+        "운영 그래프는 읽기 전용으로 유지합니다. 전체 번들은 staging과 "
+        "dry-run을 통과하고 명시적으로 승인된 경우에만 잠시 loader로 "
+        f"전환됩니다. 현재 질의 provider: {services.provider}"
     )
     checks = collect_demo_diagnostics(PROJECT_ROOT)
     check_columns = st.columns(len(checks))
@@ -639,38 +904,8 @@ def render_data_health_tab(
     else:
         st.warning("성공한 ETL load 기록을 찾지 못했습니다.")
 
-    st.markdown("#### 업로드 파일 사전검증")
-    uploaded_files = st.file_uploader(
-        "CiP-DMD 메타데이터 JSON 또는 품질 CSV (10MB 이하)",
-        type=("json", "csv"),
-        accept_multiple_files=True,
-        help=(
-            "여기서는 구조와 공통 ID만 확인합니다. 검증되지 않은 파일을 "
-            "Neo4j에 자동 적재하지 않습니다."
-        ),
-    )
-    if uploaded_files:
-        inspections = [
-            inspect_uploaded_source(file.name, file.getvalue())
-            for file in uploaded_files
-        ]
-        st.dataframe(
-            pd.DataFrame(inspections),
-            width="stretch",
-            hide_index=True,
-        )
-        if all(item["status"] == "PASS" for item in inspections):
-            st.success(
-                "모든 파일에서 CiP-DMD 공통 ID 후보를 확인했습니다. "
-                "운영 적재 전 ETL dry-run을 수행하세요."
-            )
-        else:
-            st.warning("일부 파일은 매핑 검토 또는 형식 수정이 필요합니다.")
-    st.code(
-        ".venv/bin/python -m backend.app.etl.cli --dry-run\n"
-        "# PASS 후에만 loader 모드에서 적재하고 즉시 reader로 복귀",
-        language="bash",
-    )
+    st.divider()
+    render_data_intake_workflow()
 
 
 def render_evidence_tab() -> None:

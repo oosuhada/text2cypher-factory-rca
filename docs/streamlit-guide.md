@@ -64,10 +64,23 @@ Neo4j가 reader 모드로 실행 중인지 확인한다.
 
 - CiP-DMD·Neo4j·LLM·평가 결과 실행 진단
 - 최근 ETL 시간·상태·멱등성·격리 레코드
-- JSON/CSV 업로드 구조와 `part_id` 계열 공통 키 사전검증
+- 검증용 CiP-DMD ZIP 다운로드
+- ZIP 경로·크기·필수 파일 8개·SHA-256 기준 원본 일치 검사
+- Extract → Transform → Validate dry-run과 projection 건수 미리보기
+- 30분 승인 토큰·전체 Run ID 확인 후 Neo4j 적재
+- loader 단일 잠금·적재 결과 검증·reader 모드 자동 복귀
+- 최근 Data Intake 실행과 JSONL 감사로그
+- 개별 JSON/CSV의 `part_id` 계열 공통 키 빠른 사전검증
 
-업로드 파일은 메모리에서만 검사한다. 운영 Neo4j는 reader 모드이므로
-검증되지 않은 파일을 화면에서 즉시 적재하지 않는다.
+실제 적재 버튼은 기본 비활성화한다. 관리자가 로컬 환경에서 아래처럼
+명시적으로 허용한 경우에만 활성화된다.
+
+```bash
+P3_ENABLE_UI_LOAD=1 ./scripts/run_demo.sh
+```
+
+승인 적재는 검증 기준과 SHA-256이 동일한 CiP-DMD 번들만 지원한다.
+변경된 데이터나 다른 제조 데이터셋은 자동 적재하지 않는다.
 
 UI 질의 이력은 `data/processed/query_audit.jsonl`에 로컬 JSONL로 저장한다.
 대시보드는 최근 1,000건을 읽고 최근 20건을 표로 보여준다. 질문 원문이
@@ -81,7 +94,7 @@ UI 질의 이력은 `data/processed/query_audit.jsonl`에 로컬 JSONL로 저장
 3. Evidence Lab에서 필터와 검증 이력 확인
 4. `없는 엔티티 검증`으로 빈 결과와 비환각 동작 시연
 5. Operations에서 데이터 규모·정확도·혼동행렬 확인
-6. Data & Health에서 최근 ETL과 프리플라이트 PASS 확인
+6. Data & Health에서 ZIP staging → dry-run PASS와 감사로그 확인
 
 ## 문제 해결
 
