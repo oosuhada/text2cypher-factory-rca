@@ -14,6 +14,8 @@ x-python-service: &python-service
     P3_API_MODEL: ${P3_API_MODEL:-}
     P3_CORS_ORIGINS: ${P3_CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
     P3_ENABLE_UI_LOAD: ${P3_ENABLE_UI_LOAD:-0}
+    P3_API_BASE_URL: ${P3_API_BASE_URL:-http://api:8000}
+    P3_STREAMLIT_TRANSPORT: ${P3_STREAMLIT_TRANSPORT:-api}
     OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4.1-mini}
     GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-}
@@ -108,8 +110,8 @@ services:
     ports:
       - "127.0.0.1:8501:8501"
     depends_on:
-      initialize:
-        condition: service_completed_successfully
+      api:
+        condition: service_healthy
     healthcheck:
       test:
         [
@@ -144,4 +146,3 @@ volumes:
   p3_neo4j_data:
   p3_neo4j_logs:
   p3_processed:
-

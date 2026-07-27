@@ -155,6 +155,10 @@ class ApiContractTest(unittest.TestCase):
         self.assertIn(
             "ASSEMBLED_FROM", schema.json()["relationship_types"]
         )
+        runtime = self.client.get("/api/v1/runtime")
+        self.assertEqual(runtime.status_code, 200)
+        self.assertEqual(runtime.json()["provider"], "gold")
+        self.assertEqual(runtime.json()["transport"], "service")
 
     def test_query_contract_exposes_cypher_rows_and_evidence(self):
         response = self.client.post(

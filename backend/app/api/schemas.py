@@ -58,6 +58,12 @@ class HealthResponse(BaseModel):
     checks: list[HealthCheck]
 
 
+class RuntimeResponse(BaseModel):
+    provider: str
+    model_name: str
+    transport: Literal["service"]
+
+
 class NodeIdentity(BaseModel):
     label: str
     identity_property: str
