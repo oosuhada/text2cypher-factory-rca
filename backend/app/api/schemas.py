@@ -64,9 +64,10 @@ class RuntimeResponse(BaseModel):
     model_name: str
     transport: Literal["service"]
     active_project_id: str
+    ui_load_enabled: bool
 
 
-ProjectStatus = Literal["draft", "ready", "archived"]
+ProjectStatus = Literal["draft", "mapping_ready", "ready", "archived"]
 
 
 class ProjectCreate(BaseModel):
@@ -100,6 +101,19 @@ class ProjectResponse(BaseModel):
     created_at: str
     updated_at: str
     is_active: bool = False
+
+
+class ProjectReadinessResponse(BaseModel):
+    project_id: str
+    lifecycle_status: ProjectStatus
+    upload_count: int
+    mapping_approved: bool
+    schema_available: bool
+    node_count: int
+    relationship_count: int
+    can_query: bool
+    can_load: bool
+    next_action: Literal["upload", "map", "load", "query"]
 
 
 class UploadFilePayload(BaseModel):

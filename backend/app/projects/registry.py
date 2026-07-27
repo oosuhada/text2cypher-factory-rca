@@ -12,7 +12,7 @@ from typing import Any, Iterator
 
 
 PROJECT_ID_PATTERN = re.compile(r"^[a-z][a-z0-9-]{2,62}$")
-PROJECT_STATUSES = {"draft", "ready", "archived"}
+PROJECT_STATUSES = {"draft", "mapping_ready", "ready", "archived"}
 
 
 def _now() -> str:

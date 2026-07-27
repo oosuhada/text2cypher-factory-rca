@@ -18,6 +18,7 @@ data/processed/intake_runs/
 data/processed/projects.sqlite3
 data/processed/project_uploads/
 data/processed/project_mappings/
+data/processed/projects/
 web/.env.local
 web/next-env.d.ts
 web/.next/

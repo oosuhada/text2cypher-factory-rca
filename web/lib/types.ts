@@ -66,10 +66,23 @@ export type Project = {
   domain_type: string;
   dataset_name: string;
   schema_version: string | null;
-  status: "draft" | "ready" | "archived";
+  status: "draft" | "mapping_ready" | "ready" | "archived";
   created_at: string;
   updated_at: string;
   is_active: boolean;
+};
+
+export type ProjectReadiness = {
+  project_id: string;
+  lifecycle_status: Project["status"];
+  upload_count: number;
+  mapping_approved: boolean;
+  schema_available: boolean;
+  node_count: number;
+  relationship_count: number;
+  can_query: boolean;
+  can_load: boolean;
+  next_action: "upload" | "map" | "load" | "query";
 };
 
 export type DatasetProfile = {
