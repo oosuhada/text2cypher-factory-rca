@@ -1,0 +1,96 @@
+project_id: cip-dmd
+version: "1.1"
+title: CiP-DMD Manufacturing Genealogy
+nodes:
+  - label: Part
+    identity: part_id
+    properties:
+      part_id: STRING
+      part_type: STRING
+      reworked: BOOLEAN
+      source_file: STRING
+  - label: Cylinder
+    extends: Part
+    identity: part_id
+    properties: {}
+  - label: CylinderBottom
+    extends: Part
+    identity: part_id
+    properties: {}
+  - label: PistonRod
+    extends: Part
+    identity: part_id
+    properties: {}
+  - label: Process
+    identity: name
+    properties:
+      name: STRING
+      display_name: STRING
+  - label: Equipment
+    identity: equipment_id
+    properties:
+      equipment_id: STRING
+      name: STRING
+      equipment_type: STRING
+  - label: AnomalyClass
+    identity: code
+    properties:
+      code: STRING
+      name: STRING
+      description: STRING
+      is_normal: BOOLEAN
+  - label: ProcessRun
+    identity: run_id
+    properties:
+      run_id: STRING
+      sequence: INTEGER
+      anomaly: STRING
+      start_time: FLOAT
+      end_time: FLOAT
+      sensor_file_count: INTEGER
+  - label: QualityMeasurement
+    identity: measurement_id
+    properties:
+      measurement_id: STRING
+      feature: STRING
+      value_text: STRING
+      value_numeric: FLOAT
+      qc_pass: BOOLEAN
+  - label: QualityFailure
+    extends: QualityMeasurement
+    identity: measurement_id
+    properties: {}
+relationships:
+  - type: ASSEMBLED_FROM
+    source: Cylinder
+    targets: [CylinderBottom, PistonRod]
+    properties:
+      component_role: STRING
+  - type: UNDERWENT
+    source: Part
+    targets: [ProcessRun]
+  - type: INSTANCE_OF
+    source: ProcessRun
+    targets: [Process]
+  - type: RUN_ON
+    source: ProcessRun
+    targets: [Equipment]
+  - type: CLASSIFIED_AS
+    source: ProcessRun
+    targets: [AnomalyClass]
+  - type: HAS_MEASUREMENT
+    source: Part
+    targets: [QualityMeasurement]
+  - type: FOR_PROCESS
+    source: QualityMeasurement
+    targets: [Process]
+domain_values:
+  Process.name: [saw, cnc_milling_machine, cnc_lathe, assembly]
+  AnomalyClass.code: ["0", "1", "2", "3"]
+  Equipment.equipment_id: [kasto-sba-2, dmc-50h, index-c65]
+  Equipment.name: [Kasto SBA 2, DMC 50H, Index C65]
+output_rules:
+  - Return every field explicitly requested by the user.
+  - If the question asks for a component role, return ASSEMBLED_FROM.component_role.
+  - If the question asks for pass/fail, return QualityMeasurement.qc_pass.
+  - Keep result aliases concise and based on the requested business term.

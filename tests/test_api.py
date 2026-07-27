@@ -166,6 +166,8 @@ class ApiContractTest(unittest.TestCase):
         self.assertIn(
             "ASSEMBLED_FROM", schema.json()["relationship_types"]
         )
+        self.assertEqual(schema.json()["project_id"], "cip-dmd")
+        self.assertEqual(schema.json()["schema_version"], "1.1")
         runtime = self.client.get("/api/v1/runtime")
         self.assertEqual(runtime.status_code, 200)
         self.assertEqual(runtime.json()["provider"], "gold")

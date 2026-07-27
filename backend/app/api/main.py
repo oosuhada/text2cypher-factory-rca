@@ -14,14 +14,12 @@ from fastapi.middleware.gzip import GZipMiddleware
 
 from backend.app.services.bootstrap import ServiceBundle, build_service_bundle
 from backend.app.projects import ProjectRegistry
+from backend.app.schema_registry import SchemaRegistry
 from backend.app.services.diagnostics import (
     collect_demo_diagnostics,
     diagnostics_pass,
 )
-from backend.app.services.graph_service import (
-    NODE_IDENTITIES,
-    schema_contract,
-)
+from backend.app.services.graph_service import NODE_IDENTITIES
 
 from .schemas import (
     FeedbackRecord,
@@ -95,6 +93,7 @@ def get_bundle(request: Request) -> ServiceBundle:
 def create_app(
     bundle_factory: BundleFactory | None = None,
     project_registry: ProjectRegistry | None = None,
+    schema_registry: SchemaRegistry | None = None,
 ) -> FastAPI:
     registry = ServiceRegistry(bundle_factory or _default_bundle_factory)
     projects = project_registry or ProjectRegistry(
@@ -106,11 +105,13 @@ def create_app(
         )
     )
     projects.ensure_default()
+    schemas = schema_registry or SchemaRegistry(PROJECT_ROOT / "schemas")
 
     @asynccontextmanager
     async def lifespan(application: FastAPI):
         application.state.registry = registry
         application.state.projects = projects
+        application.state.schemas = schemas
         yield
         registry.close()
 
@@ -317,8 +318,28 @@ def create_app(
         "/api/v1/graph/schema",
         response_model=GraphSchemaResponse,
     )
-    def graph_schema() -> dict:
-        return schema_contract()
+    def graph_schema(project_id: str | None = None) -> dict:
+        resolved_project_id = (
+            project_id or projects.active_project_id() or "cip-dmd"
+        )
+        try:
+            projects.require(resolved_project_id)
+            return schemas.contract(resolved_project_id)
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+
+    @application.get(
+        "/api/v1/projects/{project_id}/schema",
+        response_model=GraphSchemaResponse,
+    )
+    def project_schema(project_id: str) -> dict:
+        try:
+            projects.require(project_id)
+            return schemas.contract(project_id)
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
 
     @application.get(
         "/api/v1/graph/search",
