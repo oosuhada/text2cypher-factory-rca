@@ -151,31 +151,21 @@ class StreamlitIntegrationTest(unittest.TestCase):
         )
         app = AppTest.from_file(str(app_path)).run(timeout=30)
         self.assertEqual(len(app.exception), 0)
-        self.assertEqual(
-            [tab.label for tab in app.tabs[:3]],
-            ["Query Studio", "Evidence Lab", "Graph Explorer"],
+        navigation = next(
+            radio for radio in app.radio if radio.label == "Navigation"
         )
-        self.assertIn("Operations", [tab.label for tab in app.tabs])
-        self.assertIn("Data & Health", [tab.label for tab in app.tabs])
+        self.assertEqual(navigation.value, "Home")
+        self.assertTrue(
+            any(button.label == "RCA 질문 시작 →" for button in app.button)
+        )
+        self.assertEqual(len(app.chat_input), 0)
+
+        navigation.set_value("Query Studio").run(timeout=30)
+        self.assertEqual(len(app.exception), 0)
         self.assertTrue(
             any(box.label == "생성 모드" for box in app.selectbox)
         )
-        self.assertTrue(
-            any(box.label == "노드 유형" for box in app.selectbox)
-        )
         self.assertEqual(len(app.chat_input), 1)
-        self.assertTrue(
-            any(
-                uploader.label.startswith("CiP-DMD 전체 폴더")
-                for uploader in app.file_uploader
-            )
-        )
-        self.assertTrue(
-            any(
-                button.label == "1 · 번들 staging" and button.disabled
-                for button in app.button
-            )
-        )
         provider_select = next(
             box for box in app.selectbox if box.label == "생성 모드"
         )
@@ -194,8 +184,7 @@ class StreamlitIntegrationTest(unittest.TestCase):
         self.assertGreater(result["evidence"]["node_count"], 0)
         self.assertGreater(result["evidence"]["relationship_count"], 0)
         self.assertGreaterEqual(len(app.chat_message), 2)
-        self.assertGreaterEqual(len(app.dataframe), 3)
-        self.assertGreaterEqual(len(app.metric), 9)
+        self.assertGreaterEqual(len(app.dataframe), 2)
         self.assertGreaterEqual(len(app.expander), 1)
         self.assertGreaterEqual(len(app.code), 1)
         self.assertEqual(len(app.session_state["conversations"]), 1)
@@ -226,6 +215,50 @@ class StreamlitIntegrationTest(unittest.TestCase):
             app.session_state["last_result"]["status"], "unsupported"
         )
 
+    def test_navigation_exposes_graph_and_data_workspaces(self):
+        from streamlit.testing.v1 import AppTest
+
+        app_path = (
+            Path(__file__).resolve().parents[1]
+            / "frontend"
+            / "streamlit_app.py"
+        )
+        graph_app = AppTest.from_file(str(app_path)).run(timeout=30)
+        graph_navigation = next(
+            radio
+            for radio in graph_app.radio
+            if radio.label == "Navigation"
+        )
+        graph_navigation.set_value("Graph Explorer").run(timeout=30)
+        self.assertEqual(len(graph_app.exception), 0)
+        self.assertTrue(
+            any(
+                box.label == "노드 유형"
+                for box in graph_app.selectbox
+            )
+        )
+
+        data_app = AppTest.from_file(str(app_path)).run(timeout=30)
+        data_navigation = next(
+            radio
+            for radio in data_app.radio
+            if radio.label == "Navigation"
+        )
+        data_navigation.set_value("Data & Health").run(timeout=30)
+        self.assertEqual(len(data_app.exception), 0)
+        self.assertTrue(
+            any(
+                uploader.label.startswith("CiP-DMD 전체 폴더")
+                for uploader in data_app.file_uploader
+            )
+        )
+        self.assertTrue(
+            any(
+                button.label == "1 · 번들 staging" and button.disabled
+                for button in data_app.button
+            )
+        )
+
     def test_openai_mode_without_key_has_actionable_reconnect_state(self):
         from streamlit.testing.v1 import AppTest
 
@@ -237,6 +270,12 @@ class StreamlitIntegrationTest(unittest.TestCase):
         original_key = os.environ.pop("OPENAI_API_KEY", None)
         try:
             app = AppTest.from_file(str(app_path)).run(timeout=30)
+            navigation = next(
+                radio
+                for radio in app.radio
+                if radio.label == "Navigation"
+            )
+            navigation.set_value("Query Studio").run(timeout=30)
             provider_select = next(
                 box for box in app.selectbox if box.label == "생성 모드"
             )

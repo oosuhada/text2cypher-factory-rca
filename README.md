@@ -134,6 +134,8 @@ ETL을 안내·진단하는 범위이며, 임의 파일 업로드와 비동기 �
 
 Streamlit 안에서 다음 사용자 흐름을 완결한다.
 
+- 제품 가치·RCA 예시·검증 지표를 보여주는 Home 랜딩
+- Home → Query·Graph·Operations·Data로 이어지는 sidebar navigation
 - 자연어 질문과 세션 내 최근 대화 다시 열기
 - 답변 직하에서 결과표·관계 경로·Cypher·검증 이력 확인
 - 답변에 대한 도메인 전문가 판정과 의견 기록
@@ -144,6 +146,9 @@ Streamlit 안에서 다음 사용자 흐름을 완결한다.
 
 구현 경계와 검증 결과는
 [Streamlit 제품형 UX 이전](./docs/streamlit-product-ux-migration.md)에
+정리했다.
+랜딩 분리와 구버전 서비스 캐시 오류의 원인·수정은
+[Streamlit 랜딩·캐시 수정](./docs/streamlit-landing-and-cache-fix-2026-07-28.md)에
 정리했다.
 
 제품 리팩터링 5단계 Data Intake의 안전 경계는
