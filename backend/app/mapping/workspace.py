@@ -73,10 +73,13 @@ class MappingWorkspace:
                 raise ValueError(f"유효하지 않거나 중복된 노드 라벨입니다: {label}")
             if source_file not in columns:
                 raise ValueError(f"{label} source_file을 찾을 수 없습니다: {source_file}")
-            if identity not in columns[source_file]:
-                raise ValueError(f"{label} identity 컬럼이 없습니다: {identity}")
             if not isinstance(properties, dict) or not properties:
                 raise ValueError(f"{label}.properties가 필요합니다.")
+            if identity not in properties:
+                raise ValueError(
+                    f"{label} identity 속성이 properties에 없습니다: "
+                    f"{identity}"
+                )
             property_types = {}
             for graph_property, source_column in properties.items():
                 if not NAME.fullmatch(str(graph_property)):
@@ -88,12 +91,6 @@ class MappingWorkspace:
                 property_types[graph_property] = TYPE_MAP[
                     columns[source_file][source_column]["inferred_type"]
                 ]
-            if identity not in properties:
-                properties = {identity: identity, **properties}
-                property_types = {
-                    identity: TYPE_MAP[columns[source_file][identity]["inferred_type"]],
-                    **property_types,
-                }
             labels.add(label)
             node_sources[label] = source_file
             manifest_nodes.append(
@@ -110,13 +107,23 @@ class MappingWorkspace:
             target = str(relationship.get("target", ""))
             source_key = str(relationship.get("source_key", ""))
             target_key = str(relationship.get("target_key", ""))
+            relationship_file = str(
+                relationship.get(
+                    "source_file", node_sources.get(source, "")
+                )
+            )
             if not NAME.fullmatch(rel_type):
                 raise ValueError(f"유효하지 않은 관계 타입입니다: {rel_type}")
             if source not in labels or target not in labels:
                 raise ValueError(f"{rel_type}의 source/target 노드가 없습니다.")
-            if source_key not in columns[node_sources[source]]:
+            if relationship_file not in columns:
+                raise ValueError(
+                    f"{rel_type} source_file을 찾을 수 없습니다: "
+                    f"{relationship_file}"
+                )
+            if source_key not in columns[relationship_file]:
                 raise ValueError(f"{rel_type} source_key 컬럼이 없습니다.")
-            if target_key not in columns[node_sources[target]]:
+            if target_key not in columns[relationship_file]:
                 raise ValueError(f"{rel_type} target_key 컬럼이 없습니다.")
             manifest_relationships.append(
                 {"type": rel_type, "source": source, "targets": [target]}
@@ -143,10 +150,11 @@ class MappingWorkspace:
                 label: file_rows[source] for label, source in node_sources.items()
             },
             "estimated_relationship_rows": {
-                row["type"]: min(
-                    file_rows[node_sources[row["source"]]],
-                    file_rows[node_sources[row["target"]]],
-                )
+                row["type"]: file_rows[
+                    row.get(
+                        "source_file", node_sources[row["source"]]
+                    )
+                ]
                 for row in relationships
             },
         }

@@ -16,6 +16,7 @@ RUN groupadd --gid 10001 factorygraph \
 COPY --chown=factorygraph:factorygraph backend /app/backend
 COPY --chown=factorygraph:factorygraph frontend /app/frontend
 COPY --chown=factorygraph:factorygraph evaluation /app/evaluation
+COPY --chown=factorygraph:factorygraph schemas /app/schemas
 COPY --chown=factorygraph:factorygraph data /app/data
 COPY --chown=factorygraph:factorygraph infra/schema.cypher /app/infra/schema.cypher
 
@@ -27,4 +28,3 @@ HEALTHCHECK --interval=15s --timeout=3s --start-period=20s --retries=5 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/live', timeout=2)"
 
 CMD ["uvicorn", "backend.app.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
-

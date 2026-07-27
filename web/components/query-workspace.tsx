@@ -205,6 +205,7 @@ export function QueryWorkspace() {
     setReviewError("");
     try {
       await submitExpertFeedback({
+        project_id: projectId,
         question: response.question,
         cypher: response.cypher,
         query_status: response.status,

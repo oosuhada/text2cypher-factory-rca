@@ -72,8 +72,27 @@ class MappingWorkspaceTest(unittest.TestCase):
         )
 
     def test_missing_source_column_is_rejected(self):
-        self.mapping["nodes"][0]["identity"] = "missing"
-        with self.assertRaisesRegex(ValueError, "identity 컬럼"):
+        self.mapping["nodes"][0]["properties"][
+            "equipment_id"
+        ] = "missing"
+        with self.assertRaisesRegex(ValueError, "원본 컬럼"):
             self.mappings.preview(
                 "factory-demo", self.upload["upload_id"], self.mapping
             )
+
+    def test_identity_is_graph_property_and_may_map_source_alias(self):
+        self.mapping["nodes"][0]["identity"] = "id"
+        self.mapping["nodes"][0]["properties"] = {
+            "id": "equipment_id",
+            "name": "name",
+        }
+        preview = self.mappings.preview(
+            "factory-demo", self.upload["upload_id"], self.mapping
+        )
+        equipment = next(
+            node
+            for node in preview["manifest"]["nodes"]
+            if node["label"] == "Equipment"
+        )
+        self.assertEqual(equipment["identity"], "id")
+        self.assertEqual(equipment["properties"]["id"], "STRING")

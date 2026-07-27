@@ -150,6 +150,7 @@ FeedbackDecision = Literal["verified", "disputed", "needs_followup"]
 
 
 class FeedbackRequest(BaseModel):
+    project_id: str | None = Field(default=None, min_length=3, max_length=63)
     question: str = Field(min_length=1, max_length=2000)
     cypher: str = Field(default="", max_length=20_000)
     query_status: str = Field(default="unknown", max_length=80)

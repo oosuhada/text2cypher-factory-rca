@@ -69,3 +69,47 @@ class ProjectSchemaAgentTest(unittest.TestCase):
             result = agent.invoke("장비를 보여줘")
             self.assertEqual(result["status"], "failed")
             self.assertTrue(result["errors"][0].startswith("PROJECT_SCOPE"))
+
+    def test_project_scope_cannot_be_spoofed_in_comment(self):
+        with tempfile.TemporaryDirectory() as temp:
+            examples = Path(temp) / "examples.yml"
+            examples.write_text("questions: []\n", encoding="utf-8")
+            model = RecordingModel()
+            model.generate = lambda *_args: (
+                "MATCH (e:Equipment) RETURN e "
+                "// project_id: 'equipment-history'"
+            )
+            agent = TextToCypherAgent(
+                model,
+                PassingGraph(),
+                examples,
+                schema_context="Equipment {equipment_id: STRING}",
+                semantic_validator=lambda _question, _statement: [],
+                project_id="equipment-history",
+                max_attempts=1,
+            )
+            result = agent.invoke("장비를 보여줘")
+            self.assertEqual(result["status"], "failed")
+            self.assertTrue(result["errors"][0].startswith("PROJECT_SCOPE"))
+
+    def test_wrong_project_scope_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            examples = Path(temp) / "examples.yml"
+            examples.write_text("questions: []\n", encoding="utf-8")
+            model = RecordingModel()
+            model.generate = lambda *_args: (
+                "MATCH (e:Equipment {project_id: 'other-project'}) "
+                "RETURN e"
+            )
+            agent = TextToCypherAgent(
+                model,
+                PassingGraph(),
+                examples,
+                schema_context="Equipment {equipment_id: STRING}",
+                semantic_validator=lambda _question, _statement: [],
+                project_id="equipment-history",
+                max_attempts=1,
+            )
+            result = agent.invoke("장비를 보여줘")
+            self.assertEqual(result["status"], "failed")
+            self.assertTrue(result["errors"][0].startswith("PROJECT_SCOPE"))

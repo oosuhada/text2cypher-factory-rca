@@ -4,7 +4,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from backend.app.api.main import create_app
+from backend.app.api.main import ServiceRegistry, create_app
 from backend.app.projects import ProjectRegistry
 
 
@@ -188,14 +188,17 @@ class ApiContractTest(unittest.TestCase):
             },
         )
         self.assertEqual(created.status_code, 201)
-        blocked_query = self.client.post(
+        project_query = self.client.post(
             "/api/v1/query",
             json={
                 "project_id": "equipment-history",
                 "question": "장비를 보여줘.",
             },
         )
-        self.assertEqual(blocked_query.status_code, 409)
+        self.assertEqual(project_query.status_code, 200)
+        self.assertEqual(
+            project_query.json()["project_id"], "equipment-history"
+        )
         activated = self.client.post(
             "/api/v1/projects/equipment-history/activate"
         )
@@ -209,6 +212,17 @@ class ApiContractTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["project_id"], "equipment-history")
+
+    def test_graph_load_is_disabled_without_explicit_server_opt_in(self):
+        response = self.client.post(
+            "/api/v1/projects/cip-dmd/graph/load",
+            json={
+                "upload_id": "0" * 36,
+                "confirm_project_id": "cip-dmd",
+            },
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertIn("비활성화", response.json()["detail"])
 
     def test_query_contract_exposes_cypher_rows_and_evidence(self):
         response = self.client.post(
@@ -253,6 +267,11 @@ class ApiContractTest(unittest.TestCase):
             params={"label": "Anything", "identity": "x"},
         )
         self.assertEqual(invalid.status_code, 422)
+        missing_project = self.client.get(
+            "/api/v1/metrics",
+            params={"project_id": "missing-project"},
+        )
+        self.assertEqual(missing_project.status_code, 404)
 
     def test_search_nodes_by_partial_value(self):
         response = self.client.get(
@@ -323,6 +342,26 @@ class ApiContractTest(unittest.TestCase):
             )
             self.assertFalse(separate_bundle.closed)
         self.assertTrue(separate_bundle.closed)
+
+    def test_project_aware_registry_isolates_and_closes_bundles(self):
+        created = {}
+
+        def factory(project_id):
+            bundle = FakeBundle()
+            created[project_id] = bundle
+            return bundle
+
+        registry = ServiceRegistry(factory, project_aware=True)
+        first = registry.get("first-project")
+        second = registry.get("second-project")
+        self.assertIsNot(first, second)
+        self.assertIs(first, registry.get("first-project"))
+
+        registry.close("first-project")
+        self.assertTrue(first.closed)
+        self.assertFalse(second.closed)
+        registry.close()
+        self.assertTrue(second.closed)
 
 
 if __name__ == "__main__":
