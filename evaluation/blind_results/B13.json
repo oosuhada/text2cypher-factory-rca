@@ -1,0 +1,22 @@
+{
+  "question_id": "B13",
+  "category": "process_equipment_path",
+  "question": "부품 103504가 거친 공정, 장비, anomaly를 순서대로 보여줘.",
+  "expected_status": "success",
+  "row_count": 2,
+  "rows_sha256": "5d683df1da52787a8565238eed7a99ee1cf55a083f7bc3f68e33d415a19c758d",
+  "normalized_rows": [
+    {
+      "anomaly_code": "0",
+      "equipment": "DMC 50H",
+      "process_name": "cnc_milling_machine",
+      "sequence": 2
+    },
+    {
+      "anomaly_code": "0",
+      "equipment": "Kasto SBA 2",
+      "process_name": "saw",
+      "sequence": 1
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "question_id": "B06",
+  "category": "equipment_filter",
+  "question": "Kasto SBA 2에서 비정상으로 분류된 공정 실행은 몇 건이야?",
+  "expected_status": "success",
+  "row_count": 1,
+  "rows_sha256": "8c69729eddf222eceaadfc1efa628b470da8a35208e6e40b5a3771061dde6189",
+  "normalized_rows": [
+    {
+      "abnormal_run_count": 81
+    }
+  ]
+}

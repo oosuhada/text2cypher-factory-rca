@@ -1,0 +1,22 @@
+{
+  "question_id": "B04",
+  "category": "aggregate",
+  "question": "부품 유형별 등록 수량을 보여줘.",
+  "expected_status": "success",
+  "row_count": 3,
+  "rows_sha256": "0c48ad0643a0842e3413e2b0bc1ab1a53234c0a30c60d8b44c16ab4c8520b242",
+  "normalized_rows": [
+    {
+      "part_count": 802,
+      "part_type": "cylinder"
+    },
+    {
+      "part_count": 950,
+      "part_type": "piston_rod"
+    },
+    {
+      "part_count": 984,
+      "part_type": "cylinder_bottom"
+    }
+  ]
+}

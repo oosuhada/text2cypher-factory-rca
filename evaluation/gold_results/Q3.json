@@ -1,0 +1,103 @@
+{
+  "question_id": "Q3",
+  "category": "product_genealogy",
+  "question": "완제품 300002의 구성품, 각 구성품의 공정과 품질검사 결과를 보여줘.",
+  "expected_status": "success",
+  "row_count": 2,
+  "rows_sha256": "1f28aff6fcdfb2b14904cad443ea5b782e242c30b83dfcf28f403f0467aacf11",
+  "normalized_rows": [
+    {
+      "component_id": "103504",
+      "component_type": "cylinder_bottom",
+      "cylinder_id": "300002",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1661154548.503,
+          "equipment": "Kasto SBA 2",
+          "process_name": "saw",
+          "run_id": "103504:saw:0",
+          "sequence": 1,
+          "start_time": 1661154477.003
+        },
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1670513426.572621,
+          "equipment": "DMC 50H",
+          "process_name": "cnc_milling_machine",
+          "run_id": "103504:cnc_milling_machine:0",
+          "sequence": 2,
+          "start_time": 1670512550.187925
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "groove_depth",
+          "measurement_id": "103504:cnc_milling_machine:groove_depth:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.804"
+        },
+        {
+          "feature": "groove_diameter",
+          "measurement_id": "103504:cnc_milling_machine:groove_diameter:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "-0.036"
+        },
+        {
+          "feature": "parallelism",
+          "measurement_id": "103504:cnc_milling_machine:parallelism:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.0335"
+        },
+        {
+          "feature": "surface_roughness",
+          "measurement_id": "103504:cnc_milling_machine:surface_roughness:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "2.364"
+        },
+        {
+          "feature": "weight",
+          "measurement_id": "103504:saw:weight:0",
+          "process_name": "saw",
+          "qc_pass": true,
+          "value": "0.530674095"
+        }
+      ]
+    },
+    {
+      "component_id": "200102",
+      "component_type": "piston_rod",
+      "cylinder_id": "300002",
+      "process_runs": [],
+      "quality_measurements": [
+        {
+          "feature": "coaxiality",
+          "measurement_id": "200102:cnc_lathe:coaxiality:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "29.2"
+        },
+        {
+          "feature": "diameter",
+          "measurement_id": "200102:cnc_lathe:diameter:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "0.0055"
+        },
+        {
+          "feature": "length",
+          "measurement_id": "200102:cnc_lathe:length:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "163.656"
+        }
+      ]
+    }
+  ]
+}

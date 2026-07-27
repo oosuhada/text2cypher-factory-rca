@@ -1,0 +1,126 @@
+{
+  "dataset": "CiP-DMD",
+  "schema_version": "stage-3-v1.1",
+  "status": "PASS",
+  "source_stats": {
+    "cylinder/meta_data.json": {
+      "raw_records": 803,
+      "placeholder_records": 1,
+      "exact_duplicate_records": 0,
+      "projected_parts": 802
+    },
+    "cylinder_bottom/meta_data.json": {
+      "raw_records": 985,
+      "placeholder_records": 0,
+      "exact_duplicate_records": 1,
+      "projected_parts": 984
+    },
+    "piston_rod/meta_data.json": {
+      "raw_records": 898,
+      "placeholder_records": 0,
+      "exact_duplicate_records": 0,
+      "projected_parts": 898
+    },
+    "piston_rod/reworked_piston_rods_meta_data.json": {
+      "raw_records": 52,
+      "placeholder_records": 0,
+      "exact_duplicate_records": 0,
+      "projected_parts": 52
+    }
+  },
+  "process_names": [
+    "assembly",
+    "cnc_lathe",
+    "cnc_milling_machine",
+    "saw"
+  ],
+  "equipment_ids": [
+    "dmc-50h",
+    "index-c65",
+    "kasto-sba-2"
+  ],
+  "anomaly_codes": [
+    "0",
+    "1",
+    "2",
+    "3"
+  ],
+  "counts": {
+    "Part": 2736,
+    "Process": 4,
+    "Equipment": 3,
+    "AnomalyClass": 4,
+    "ProcessRun": 2758,
+    "QualityMeasurement": 7570,
+    "QualityFailure": 443,
+    "ASSEMBLED_FROM": 1569,
+    "UNDERWENT": 2758,
+    "INSTANCE_OF": 2758,
+    "RUN_ON": 2758,
+    "CLASSIFIED_AS": 2758,
+    "HAS_MEASUREMENT": 7570,
+    "FOR_PROCESS": 7570
+  },
+  "totals": {
+    "nodes": 13075,
+    "relationships": 27741
+  },
+  "integrity": {
+    "unique_part_ids": true,
+    "unique_run_ids": true,
+    "unique_measurement_ids": true,
+    "missing_component_reference_count": 35,
+    "missing_component_reference_samples": [
+      {
+        "cylinder_id": "300137",
+        "component_id": "109304",
+        "role": "bottom"
+      },
+      {
+        "cylinder_id": "300709",
+        "component_id": "222302",
+        "role": "rod"
+      },
+      {
+        "cylinder_id": "300771",
+        "component_id": "223901",
+        "role": "rod"
+      },
+      {
+        "cylinder_id": "300772",
+        "component_id": "223902",
+        "role": "rod"
+      },
+      {
+        "cylinder_id": "300773",
+        "component_id": "223903",
+        "role": "rod"
+      },
+      {
+        "cylinder_id": "300774",
+        "component_id": "223904",
+        "role": "rod"
+      },
+      {
+        "cylinder_id": "300775",
+        "component_id": "224001",
+        "role": "rod"
+      },
+      {
+        "cylinder_id": "300776",
+        "component_id": "224002",
+        "role": "rod"
+      },
+      {
+        "cylinder_id": "300777",
+        "component_id": "224003",
+        "role": "rod"
+      },
+      {
+        "cylinder_id": "300778",
+        "component_id": "224004",
+        "role": "rod"
+      }
+    ]
+  }
+}

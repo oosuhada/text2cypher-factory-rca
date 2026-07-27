@@ -1,0 +1,22 @@
+{
+  "question_id": "B09",
+  "category": "process_statistics",
+  "question": "공정별 평균 센서 파일 수를 계산해줘.",
+  "expected_status": "success",
+  "row_count": 3,
+  "rows_sha256": "c56756b095ee53dcb47701891a2772ed282235c3f6250a328aaf69625b624f67",
+  "normalized_rows": [
+    {
+      "average_sensor_files": 0.0,
+      "process_name": "cnc_lathe"
+    },
+    {
+      "average_sensor_files": 1.0,
+      "process_name": "saw"
+    },
+    {
+      "average_sensor_files": 6.83,
+      "process_name": "cnc_milling_machine"
+    }
+  ]
+}

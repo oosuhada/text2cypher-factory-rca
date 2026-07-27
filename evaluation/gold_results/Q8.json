@@ -1,0 +1,46 @@
+{
+  "question_id": "Q8",
+  "category": "quality_failure_ranking",
+  "question": "품질검사 항목별 불합격 건수를 많은 순서대로 보여줘.",
+  "expected_status": "success",
+  "row_count": 9,
+  "rows_sha256": "755c0dc414b8de062afacbe548fc91fbe7d8914102a356e8b3510784eb423a0c",
+  "normalized_rows": [
+    {
+      "failure_count": 1,
+      "feature": "length"
+    },
+    {
+      "failure_count": 15,
+      "feature": "groove_depth"
+    },
+    {
+      "failure_count": 19,
+      "feature": "pressure"
+    },
+    {
+      "failure_count": 190,
+      "feature": "surface_roughness"
+    },
+    {
+      "failure_count": 22,
+      "feature": "groove_diameter"
+    },
+    {
+      "failure_count": 52,
+      "feature": "rework"
+    },
+    {
+      "failure_count": 65,
+      "feature": "coaxiality"
+    },
+    {
+      "failure_count": 70,
+      "feature": "parallelism"
+    },
+    {
+      "failure_count": 9,
+      "feature": "diameter"
+    }
+  ]
+}

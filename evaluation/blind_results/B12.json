@@ -1,0 +1,14 @@
+{
+  "question_id": "B12",
+  "category": "equipment_quality_summary",
+  "question": "Index C65를 거친 부품 수와 그 부품들의 품질 불합격 수를 알려줘.",
+  "expected_status": "success",
+  "row_count": 1,
+  "rows_sha256": "9c1c4906c6eb03e542a7dca7a5f443f236041667c83b0e9e214c224db8891db9",
+  "normalized_rows": [
+    {
+      "failure_count": 75,
+      "part_count": 928
+    }
+  ]
+}

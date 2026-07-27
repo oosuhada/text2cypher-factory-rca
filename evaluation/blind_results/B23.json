@@ -1,0 +1,40 @@
+{
+  "question_id": "B23",
+  "category": "top_n_duration",
+  "question": "시간 기록이 있는 공정 중 소요시간이 긴 상위 5개 실행을 보여줘.",
+  "expected_status": "success",
+  "row_count": 5,
+  "rows_sha256": "e5b909e5b84db7de4b526688203f10794fe353357086c2390a57a3929d969dfd",
+  "normalized_rows": [
+    {
+      "duration_seconds": 1020327.74,
+      "equipment": "DMC 50H",
+      "process_name": "cnc_milling_machine",
+      "run_id": "112501:cnc_milling_machine:0"
+    },
+    {
+      "duration_seconds": 415770.54,
+      "equipment": "DMC 50H",
+      "process_name": "cnc_milling_machine",
+      "run_id": "104503:cnc_milling_machine:0"
+    },
+    {
+      "duration_seconds": 4741619.09,
+      "equipment": "DMC 50H",
+      "process_name": "cnc_milling_machine",
+      "run_id": "110902:cnc_milling_machine:0"
+    },
+    {
+      "duration_seconds": 919113.58,
+      "equipment": "DMC 50H",
+      "process_name": "cnc_milling_machine",
+      "run_id": "119103:cnc_milling_machine:0"
+    },
+    {
+      "duration_seconds": 930217.03,
+      "equipment": "DMC 50H",
+      "process_name": "cnc_milling_machine",
+      "run_id": "123701:cnc_milling_machine:0"
+    }
+  ]
+}

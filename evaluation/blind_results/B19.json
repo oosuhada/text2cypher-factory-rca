@@ -1,0 +1,9 @@
+{
+  "question_id": "B19",
+  "category": "nonexistent_property_value",
+  "question": "검사항목 imaginary_feature의 측정 결과를 찾아줘.",
+  "expected_status": "empty",
+  "row_count": 0,
+  "rows_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "normalized_rows": []
+}

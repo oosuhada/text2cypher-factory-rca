@@ -1,0 +1,23 @@
+flowchart LR
+    C["Part:Cylinder<br/>완제품"]
+    B["Part:CylinderBottom<br/>구성품"]
+    R["Part:PistonRod<br/>구성품"]
+    PR["ProcessRun<br/>부품별 공정 실행"]
+    P["Process<br/>공정 종류"]
+    E["Equipment<br/>실제 장비"]
+    A["AnomalyClass<br/>이상 유형"]
+    Q["QualityMeasurement<br/>품질 측정"]
+    F["QualityFailure<br/>불합격 측정 보조 라벨"]
+
+    C -->|"ASSEMBLED_FROM<br/>role=bottom"| B
+    C -->|"ASSEMBLED_FROM<br/>role=rod"| R
+    B -->|"UNDERWENT"| PR
+    R -->|"UNDERWENT"| PR
+    PR -->|"INSTANCE_OF"| P
+    PR -->|"RUN_ON"| E
+    PR -->|"CLASSIFIED_AS"| A
+    C -->|"HAS_MEASUREMENT"| Q
+    B -->|"HAS_MEASUREMENT"| Q
+    R -->|"HAS_MEASUREMENT"| Q
+    Q -->|"FOR_PROCESS"| P
+    Q -.->|"qc_pass=false"| F

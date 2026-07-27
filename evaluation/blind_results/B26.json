@@ -1,0 +1,60 @@
+{
+  "question_id": "B26",
+  "category": "repeated_quality_failure",
+  "question": "품질 불합격이 두 건 이상인 부품을 불합격 수가 많은 순서로 10개 보여줘.",
+  "expected_status": "success",
+  "row_count": 10,
+  "rows_sha256": "f69c46124e785a51075bc5723bc6931ef86bb3d3847e6b3217dea4fdf9532eaf",
+  "normalized_rows": [
+    {
+      "failure_count": 2,
+      "part_id": "101101",
+      "part_type": "cylinder_bottom"
+    },
+    {
+      "failure_count": 2,
+      "part_id": "101103",
+      "part_type": "cylinder_bottom"
+    },
+    {
+      "failure_count": 2,
+      "part_id": "106603",
+      "part_type": "cylinder_bottom"
+    },
+    {
+      "failure_count": 3,
+      "part_id": "101104",
+      "part_type": "cylinder_bottom"
+    },
+    {
+      "failure_count": 3,
+      "part_id": "111303",
+      "part_type": "cylinder_bottom"
+    },
+    {
+      "failure_count": 3,
+      "part_id": "111802",
+      "part_type": "cylinder_bottom"
+    },
+    {
+      "failure_count": 3,
+      "part_id": "122903",
+      "part_type": "cylinder_bottom"
+    },
+    {
+      "failure_count": 3,
+      "part_id": "123002",
+      "part_type": "cylinder_bottom"
+    },
+    {
+      "failure_count": 3,
+      "part_id": "123302",
+      "part_type": "cylinder_bottom"
+    },
+    {
+      "failure_count": 3,
+      "part_id": "123601",
+      "part_type": "cylinder_bottom"
+    }
+  ]
+}

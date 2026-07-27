@@ -1,0 +1,34 @@
+{
+  "question_id": "Q14",
+  "category": "failed_product_equipment_genealogy",
+  "question": "압력검사에 실패한 완제품 300048의 구성품별 장비와 이상 유형을 보여줘.",
+  "expected_status": "success",
+  "row_count": 3,
+  "rows_sha256": "94326b26ea10d3744dea40efbd924b87b51cbf473dbe02a6ba565ccfc1d8a9ef",
+  "normalized_rows": [
+    {
+      "anomaly_code": "0",
+      "anomaly_name": "Normal process",
+      "component_id": "111203",
+      "component_type": "cylinder_bottom",
+      "equipment": "Kasto SBA 2",
+      "run_id": "111203:saw:0"
+    },
+    {
+      "anomaly_code": "0",
+      "anomaly_name": "Normal process",
+      "component_id": "201302",
+      "component_type": "piston_rod",
+      "equipment": "Index C65",
+      "run_id": "201302:cnc_lathe:0"
+    },
+    {
+      "anomaly_code": "2",
+      "anomaly_name": "Uneven milling-jig clamping",
+      "component_id": "111203",
+      "component_type": "cylinder_bottom",
+      "equipment": "DMC 50H",
+      "run_id": "111203:cnc_milling_machine:0"
+    }
+  ]
+}

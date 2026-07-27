@@ -1,0 +1,19 @@
+{
+  "question_id": "B16",
+  "category": "reverse_impact",
+  "question": "밀링 anomaly 3이 발생한 부품이 연결된 완제품 수와 ID를 보여줘.",
+  "expected_status": "success",
+  "row_count": 1,
+  "rows_sha256": "2c43ac402e4b63b1a55b79b6d5e539edccc757008ae35fb23b2442948fa07724",
+  "normalized_rows": [
+    {
+      "cylinder_count": 4,
+      "cylinder_ids": [
+        "300670",
+        "300684",
+        "300708",
+        "300720"
+      ]
+    }
+  ]
+}

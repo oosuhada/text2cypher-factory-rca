@@ -1,0 +1,1943 @@
+{
+  "question_id": "Q1",
+  "category": "upstream_trace_from_final_qc_failure",
+  "question": "압력검사에 실패한 완제품과 그 구성품, 구성품별 공정 이상 및 품질검사 결과를 보여줘.",
+  "expected_status": "success",
+  "row_count": 38,
+  "rows_sha256": "8f744f5d6a0e88beb0e04c7709928500010ce69ce080fe6b2b8228126a990093",
+  "normalized_rows": [
+    {
+      "component_id": "100204",
+      "component_type": "cylinder_bottom",
+      "cylinder_id": "300401",
+      "final_pressure_measurement_id": "300401:assembly:pressure:0",
+      "final_pressure_value": "5455.667",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1660634009.505,
+          "equipment": "Kasto SBA 2",
+          "process_name": "saw",
+          "run_id": "100204:saw:0",
+          "start_time": 1660633914.003
+        },
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1669717702.309214,
+          "equipment": "DMC 50H",
+          "process_name": "cnc_milling_machine",
+          "run_id": "100204:cnc_milling_machine:0",
+          "start_time": 1669716719.135007
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "groove_depth",
+          "measurement_id": "100204:cnc_milling_machine:groove_depth:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.792"
+        },
+        {
+          "feature": "groove_diameter",
+          "measurement_id": "100204:cnc_milling_machine:groove_diameter:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "-0.027"
+        },
+        {
+          "feature": "parallelism",
+          "measurement_id": "100204:cnc_milling_machine:parallelism:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.0335"
+        },
+        {
+          "feature": "surface_roughness",
+          "measurement_id": "100204:cnc_milling_machine:surface_roughness:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "1.468"
+        },
+        {
+          "feature": "weight",
+          "measurement_id": "100204:saw:weight:0",
+          "process_name": "saw",
+          "qc_pass": true,
+          "value": "0.531794579"
+        }
+      ]
+    },
+    {
+      "component_id": "101504",
+      "component_type": "cylinder_bottom",
+      "cylinder_id": "300414",
+      "final_pressure_measurement_id": "300414:assembly:pressure:0",
+      "final_pressure_value": "72.333",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1660889097.504,
+          "equipment": "Kasto SBA 2",
+          "process_name": "saw",
+          "run_id": "101504:saw:0",
+          "start_time": 1660889032.003
+        },
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1671119393.175939,
+          "equipment": "DMC 50H",
+          "process_name": "cnc_milling_machine",
+          "run_id": "101504:cnc_milling_machine:0",
+          "start_time": 1671118500.671248
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "groove_depth",
+          "measurement_id": "101504:cnc_milling_machine:groove_depth:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.801"
+        },
+        {
+          "feature": "groove_diameter",
+          "measurement_id": "101504:cnc_milling_machine:groove_diameter:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "-0.032"
+        },
+        {
+          "feature": "parallelism",
+          "measurement_id": "101504:cnc_milling_machine:parallelism:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.0295"
+        },
+        {
+          "feature": "surface_roughness",
+          "measurement_id": "101504:cnc_milling_machine:surface_roughness:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "2.262"
+        },
+        {
+          "feature": "weight",
+          "measurement_id": "101504:saw:weight:0",
+          "process_name": "saw",
+          "qc_pass": true,
+          "value": "0.537711487"
+        }
+      ]
+    },
+    {
+      "component_id": "102303",
+      "component_type": "cylinder_bottom",
+      "cylinder_id": "300352",
+      "final_pressure_measurement_id": "300352:assembly:pressure:0",
+      "final_pressure_value": "7205.333",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1660891575.504,
+          "equipment": "Kasto SBA 2",
+          "process_name": "saw",
+          "run_id": "102303:saw:0",
+          "start_time": 1660891506.003
+        },
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1671804925.530162,
+          "equipment": "DMC 50H",
+          "process_name": "cnc_milling_machine",
+          "run_id": "102303:cnc_milling_machine:0",
+          "start_time": 1671804083.166998
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "groove_depth",
+          "measurement_id": "102303:cnc_milling_machine:groove_depth:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.782"
+        },
+        {
+          "feature": "groove_diameter",
+          "measurement_id": "102303:cnc_milling_machine:groove_diameter:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "-0.0275"
+        },
+        {
+          "feature": "parallelism",
+          "measurement_id": "102303:cnc_milling_machine:parallelism:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.0295"
+        },
+        {
+          "feature": "surface_roughness",
+          "measurement_id": "102303:cnc_milling_machine:surface_roughness:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "2.118"
+        },
+        {
+          "feature": "weight",
+          "measurement_id": "102303:saw:weight:0",
+          "process_name": "saw",
+          "qc_pass": true,
+          "value": "0.526384352"
+        }
+      ]
+    },
+    {
+      "component_id": "102703",
+      "component_type": "cylinder_bottom",
+      "cylinder_id": "300353",
+      "final_pressure_measurement_id": "300353:assembly:pressure:0",
+      "final_pressure_value": "6273.833",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1660896361.503,
+          "equipment": "Kasto SBA 2",
+          "process_name": "saw",
+          "run_id": "102703:saw:0",
+          "start_time": 1660896295.004
+        },
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1671793871.366427,
+          "equipment": "DMC 50H",
+          "process_name": "cnc_milling_machine",
+          "run_id": "102703:cnc_milling_machine:0",
+          "start_time": 1671792984.747259
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "groove_depth",
+          "measurement_id": "102703:cnc_milling_machine:groove_depth:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.792"
+        },
+        {
+          "feature": "groove_diameter",
+          "measurement_id": "102703:cnc_milling_machine:groove_diameter:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "-0.0355"
+        },
+        {
+          "feature": "parallelism",
+          "measurement_id": "102703:cnc_milling_machine:parallelism:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.0255"
+        },
+        {
+          "feature": "surface_roughness",
+          "measurement_id": "102703:cnc_milling_machine:surface_roughness:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "2.321"
+        },
+        {
+          "feature": "weight",
+          "measurement_id": "102703:saw:weight:0",
+          "process_name": "saw",
+          "qc_pass": true,
+          "value": "0.525492918"
+        }
+      ]
+    },
+    {
+      "component_id": "103502",
+      "component_type": "cylinder_bottom",
+      "cylinder_id": "300413",
+      "final_pressure_measurement_id": "300413:assembly:pressure:0",
+      "final_pressure_value": "90.333",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1661154401.503,
+          "equipment": "Kasto SBA 2",
+          "process_name": "saw",
+          "run_id": "103502:saw:0",
+          "start_time": 1661154329.004
+        },
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1670581830.955108,
+          "equipment": "DMC 50H",
+          "process_name": "cnc_milling_machine",
+          "run_id": "103502:cnc_milling_machine:0",
+          "start_time": 1670580868.237672
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "groove_depth",
+          "measurement_id": "103502:cnc_milling_machine:groove_depth:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.794"
+        },
+        {
+          "feature": "groove_diameter",
+          "measurement_id": "103502:cnc_milling_machine:groove_diameter:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "-0.0335"
+        },
+        {
+          "feature": "parallelism",
+          "measurement_id": "103502:cnc_milling_machine:parallelism:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.023"
+        },
+        {
+          "feature": "surface_roughness",
+          "measurement_id": "103502:cnc_milling_machine:surface_roughness:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "2.248"
+        },
+        {
+          "feature": "weight",
+          "measurement_id": "103502:saw:weight:0",
+          "process_name": "saw",
+          "qc_pass": true,
+          "value": "0.528823687"
+        }
+      ]
+    },
+    {
+      "component_id": "103904",
+      "component_type": "cylinder_bottom",
+      "cylinder_id": "300415",
+      "final_pressure_measurement_id": "300415:assembly:pressure:0",
+      "final_pressure_value": "86.333",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1662714890.503,
+          "equipment": "Kasto SBA 2",
+          "process_name": "saw",
+          "run_id": "103904:saw:0",
+          "start_time": 1662714785.003
+        },
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1670428475.826639,
+          "equipment": "DMC 50H",
+          "process_name": "cnc_milling_machine",
+          "run_id": "103904:cnc_milling_machine:0",
+          "start_time": 1670427528.645442
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "groove_depth",
+          "measurement_id": "103904:cnc_milling_machine:groove_depth:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.798"
+        },
+        {
+          "feature": "groove_diameter",
+          "measurement_id": "103904:cnc_milling_machine:groove_diameter:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "-0.0345"
+        },
+        {
+          "feature": "parallelism",
+          "measurement_id": "103904:cnc_milling_machine:parallelism:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.0195"
+        },
+        {
+          "feature": "surface_roughness",
+          "measurement_id": "103904:cnc_milling_machine:surface_roughness:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "1.922"
+        },
+        {
+          "feature": "weight",
+          "measurement_id": "103904:saw:weight:0",
+          "process_name": "saw",
+          "qc_pass": true,
+          "value": "0.559215882"
+        }
+      ]
+    },
+    {
+      "component_id": "104404",
+      "component_type": "cylinder_bottom",
+      "cylinder_id": "300725",
+      "final_pressure_measurement_id": "300725:assembly:pressure:0",
+      "final_pressure_value": "7103",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1662720021.503,
+          "equipment": "Kasto SBA 2",
+          "process_name": "saw",
+          "run_id": "104404:saw:0",
+          "start_time": 1662719913.003
+        },
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1669998267.398181,
+          "equipment": "DMC 50H",
+          "process_name": "cnc_milling_machine",
+          "run_id": "104404:cnc_milling_machine:0",
+          "start_time": 1669997343.726816
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "groove_depth",
+          "measurement_id": "104404:cnc_milling_machine:groove_depth:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.804"
+        },
+        {
+          "feature": "groove_diameter",
+          "measurement_id": "104404:cnc_milling_machine:groove_diameter:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "-0.028"
+        },
+        {
+          "feature": "parallelism",
+          "measurement_id": "104404:cnc_milling_machine:parallelism:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.015"
+        },
+        {
+          "feature": "surface_roughness",
+          "measurement_id": "104404:cnc_milling_machine:surface_roughness:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "1.516"
+        },
+        {
+          "feature": "weight",
+          "measurement_id": "104404:saw:weight:0",
+          "process_name": "saw",
+          "qc_pass": true,
+          "value": "0.553583271"
+        }
+      ]
+    },
+    {
+      "component_id": "106604",
+      "component_type": "cylinder_bottom",
+      "cylinder_id": "300683",
+      "final_pressure_measurement_id": "300683:assembly:pressure:0",
+      "final_pressure_value": "78.333",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1662731714.503,
+          "equipment": "Kasto SBA 2",
+          "process_name": "saw",
+          "run_id": "106604:saw:0",
+          "start_time": 1662731612.003
+        },
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1669976565.621775,
+          "equipment": "DMC 50H",
+          "process_name": "cnc_milling_machine",
+          "run_id": "106604:cnc_milling_machine:0",
+          "start_time": 1669975367.111798
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "groove_depth",
+          "measurement_id": "106604:cnc_milling_machine:groove_depth:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.8"
+        },
+        {
+          "feature": "groove_diameter",
+          "measurement_id": "106604:cnc_milling_machine:groove_diameter:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "-0.0355"
+        },
+        {
+          "feature": "parallelism",
+          "measurement_id": "106604:cnc_milling_machine:parallelism:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.0345"
+        },
+        {
+          "feature": "surface_roughness",
+          "measurement_id": "106604:cnc_milling_machine:surface_roughness:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "1.922"
+        },
+        {
+          "feature": "weight",
+          "measurement_id": "106604:saw:weight:0",
+          "process_name": "saw",
+          "qc_pass": true,
+          "value": "0.551765686"
+        }
+      ]
+    },
+    {
+      "component_id": "106901",
+      "component_type": "cylinder_bottom",
+      "cylinder_id": "300412",
+      "final_pressure_measurement_id": "300412:assembly:pressure:0",
+      "final_pressure_value": "87.667",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1662732644.503,
+          "equipment": "Kasto SBA 2",
+          "process_name": "saw",
+          "run_id": "106901:saw:0",
+          "start_time": 1662732545.002
+        },
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1669739987.474786,
+          "equipment": "DMC 50H",
+          "process_name": "cnc_milling_machine",
+          "run_id": "106901:cnc_milling_machine:0",
+          "start_time": 1669739092.355539
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "groove_depth",
+          "measurement_id": "106901:cnc_milling_machine:groove_depth:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.794"
+        },
+        {
+          "feature": "groove_diameter",
+          "measurement_id": "106901:cnc_milling_machine:groove_diameter:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "-0.0315"
+        },
+        {
+          "feature": "parallelism",
+          "measurement_id": "106901:cnc_milling_machine:parallelism:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.0155"
+        },
+        {
+          "feature": "surface_roughness",
+          "measurement_id": "106901:cnc_milling_machine:surface_roughness:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "1.907"
+        },
+        {
+          "feature": "weight",
+          "measurement_id": "106901:saw:weight:0",
+          "process_name": "saw",
+          "qc_pass": true,
+          "value": "0.549210087"
+        }
+      ]
+    },
+    {
+      "component_id": "106904",
+      "component_type": "cylinder_bottom",
+      "cylinder_id": "300384",
+      "final_pressure_measurement_id": "300384:assembly:pressure:0",
+      "final_pressure_value": "84",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1662729638.503,
+          "equipment": "Kasto SBA 2",
+          "process_name": "saw",
+          "run_id": "106904:saw:0",
+          "start_time": 1662729537.004
+        },
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1669815698.709717,
+          "equipment": "DMC 50H",
+          "process_name": "cnc_milling_machine",
+          "run_id": "106904:cnc_milling_machine:0",
+          "start_time": 1669814746.962884
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "groove_depth",
+          "measurement_id": "106904:cnc_milling_machine:groove_depth:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.808"
+        },
+        {
+          "feature": "groove_diameter",
+          "measurement_id": "106904:cnc_milling_machine:groove_diameter:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "-0.0335"
+        },
+        {
+          "feature": "parallelism",
+          "measurement_id": "106904:cnc_milling_machine:parallelism:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.0635"
+        },
+        {
+          "feature": "surface_roughness",
+          "measurement_id": "106904:cnc_milling_machine:surface_roughness:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "1.714"
+        },
+        {
+          "feature": "weight",
+          "measurement_id": "106904:saw:weight:0",
+          "process_name": "saw",
+          "qc_pass": true,
+          "value": "0.548170552"
+        }
+      ]
+    },
+    {
+      "component_id": "109301",
+      "component_type": "cylinder_bottom",
+      "cylinder_id": "300110",
+      "final_pressure_measurement_id": "300110:assembly:pressure:0",
+      "final_pressure_value": "6727.167",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1664201218.503,
+          "equipment": "Kasto SBA 2",
+          "process_name": "saw",
+          "run_id": "109301:saw:0",
+          "start_time": 1664201144.005
+        },
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1673529946.500467,
+          "equipment": "DMC 50H",
+          "process_name": "cnc_milling_machine",
+          "run_id": "109301:cnc_milling_machine:0",
+          "start_time": 1673529141.565921
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "groove_depth",
+          "measurement_id": "109301:cnc_milling_machine:groove_depth:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.781"
+        },
+        {
+          "feature": "groove_diameter",
+          "measurement_id": "109301:cnc_milling_machine:groove_diameter:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "-0.032"
+        },
+        {
+          "feature": "parallelism",
+          "measurement_id": "109301:cnc_milling_machine:parallelism:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.033"
+        },
+        {
+          "feature": "surface_roughness",
+          "measurement_id": "109301:cnc_milling_machine:surface_roughness:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "1.578"
+        },
+        {
+          "feature": "weight",
+          "measurement_id": "109301:saw:weight:0",
+          "process_name": "saw",
+          "qc_pass": true,
+          "value": "0.585924478"
+        }
+      ]
+    },
+    {
+      "component_id": "109403",
+      "component_type": "cylinder_bottom",
+      "cylinder_id": "300151",
+      "final_pressure_measurement_id": "300151:assembly:pressure:0",
+      "final_pressure_value": "6959",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1664270889.504,
+          "equipment": "Kasto SBA 2",
+          "process_name": "saw",
+          "run_id": "109403:saw:0",
+          "start_time": 1664270803.007
+        },
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1673532111.610563,
+          "equipment": "DMC 50H",
+          "process_name": "cnc_milling_machine",
+          "run_id": "109403:cnc_milling_machine:0",
+          "start_time": 1673531274.860478
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "groove_depth",
+          "measurement_id": "109403:cnc_milling_machine:groove_depth:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.78"
+        },
+        {
+          "feature": "groove_diameter",
+          "measurement_id": "109403:cnc_milling_machine:groove_diameter:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "-0.0355"
+        },
+        {
+          "feature": "parallelism",
+          "measurement_id": "109403:cnc_milling_machine:parallelism:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.0455"
+        },
+        {
+          "feature": "surface_roughness",
+          "measurement_id": "109403:cnc_milling_machine:surface_roughness:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "2.232"
+        },
+        {
+          "feature": "weight",
+          "measurement_id": "109403:saw:weight:0",
+          "process_name": "saw",
+          "qc_pass": true,
+          "value": "0.595481504"
+        }
+      ]
+    },
+    {
+      "component_id": "111203",
+      "component_type": "cylinder_bottom",
+      "cylinder_id": "300048",
+      "final_pressure_measurement_id": "300048:assembly:pressure:0",
+      "final_pressure_value": "7461.167",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1664372786.504,
+          "equipment": "Kasto SBA 2",
+          "process_name": "saw",
+          "run_id": "111203:saw:0",
+          "start_time": 1664372702.004
+        },
+        {
+          "anomaly_code": "2",
+          "anomaly_name": "Uneven milling-jig clamping",
+          "end_time": 1673620131.524742,
+          "equipment": "DMC 50H",
+          "process_name": "cnc_milling_machine",
+          "run_id": "111203:cnc_milling_machine:0",
+          "start_time": 1673619335.79292
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "groove_depth",
+          "measurement_id": "111203:cnc_milling_machine:groove_depth:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.771"
+        },
+        {
+          "feature": "groove_diameter",
+          "measurement_id": "111203:cnc_milling_machine:groove_diameter:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "-0.0385"
+        },
+        {
+          "feature": "parallelism",
+          "measurement_id": "111203:cnc_milling_machine:parallelism:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": false,
+          "value": "0.361"
+        },
+        {
+          "feature": "surface_roughness",
+          "measurement_id": "111203:cnc_milling_machine:surface_roughness:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": false,
+          "value": "2.547"
+        },
+        {
+          "feature": "weight",
+          "measurement_id": "111203:saw:weight:0",
+          "process_name": "saw",
+          "qc_pass": true,
+          "value": "0.577342673"
+        }
+      ]
+    },
+    {
+      "component_id": "112001",
+      "component_type": "cylinder_bottom",
+      "cylinder_id": "300145",
+      "final_pressure_measurement_id": "300145:assembly:pressure:0",
+      "final_pressure_value": "6448.667",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1664378894.504,
+          "equipment": "Kasto SBA 2",
+          "process_name": "saw",
+          "run_id": "112001:saw:0",
+          "start_time": 1664378814.004
+        },
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1673351038.248767,
+          "equipment": "DMC 50H",
+          "process_name": "cnc_milling_machine",
+          "run_id": "112001:cnc_milling_machine:0",
+          "start_time": 1673350104.58089
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "groove_depth",
+          "measurement_id": "112001:cnc_milling_machine:groove_depth:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.803"
+        },
+        {
+          "feature": "groove_diameter",
+          "measurement_id": "112001:cnc_milling_machine:groove_diameter:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "-0.0295"
+        },
+        {
+          "feature": "parallelism",
+          "measurement_id": "112001:cnc_milling_machine:parallelism:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.039"
+        },
+        {
+          "feature": "surface_roughness",
+          "measurement_id": "112001:cnc_milling_machine:surface_roughness:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "2.039"
+        },
+        {
+          "feature": "weight",
+          "measurement_id": "112001:saw:weight:0",
+          "process_name": "saw",
+          "qc_pass": true,
+          "value": "0.580264917"
+        }
+      ]
+    },
+    {
+      "component_id": "112003",
+      "component_type": "cylinder_bottom",
+      "cylinder_id": "300076",
+      "final_pressure_measurement_id": "300076:assembly:pressure:0",
+      "final_pressure_value": "6623.667",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1664375458.504,
+          "equipment": "Kasto SBA 2",
+          "process_name": "saw",
+          "run_id": "112003:saw:0",
+          "start_time": 1664375378.004
+        },
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1673022292.240564,
+          "equipment": "DMC 50H",
+          "process_name": "cnc_milling_machine",
+          "run_id": "112003:cnc_milling_machine:0",
+          "start_time": 1673021401.713768
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "groove_depth",
+          "measurement_id": "112003:cnc_milling_machine:groove_depth:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.787"
+        },
+        {
+          "feature": "groove_diameter",
+          "measurement_id": "112003:cnc_milling_machine:groove_diameter:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "-0.028"
+        },
+        {
+          "feature": "parallelism",
+          "measurement_id": "112003:cnc_milling_machine:parallelism:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.048"
+        },
+        {
+          "feature": "surface_roughness",
+          "measurement_id": "112003:cnc_milling_machine:surface_roughness:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "2.183"
+        },
+        {
+          "feature": "weight",
+          "measurement_id": "112003:saw:weight:0",
+          "process_name": "saw",
+          "qc_pass": true,
+          "value": "0.584217779"
+        }
+      ]
+    },
+    {
+      "component_id": "113001",
+      "component_type": "cylinder_bottom",
+      "cylinder_id": "300146",
+      "final_pressure_measurement_id": "300146:assembly:pressure:0",
+      "final_pressure_value": "6234.5",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1664882061.71,
+          "equipment": "Kasto SBA 2",
+          "process_name": "saw",
+          "run_id": "113001:saw:0",
+          "start_time": 1664881977.003
+        },
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1673356063.355593,
+          "equipment": "DMC 50H",
+          "process_name": "cnc_milling_machine",
+          "run_id": "113001:cnc_milling_machine:0",
+          "start_time": 1673355220.806758
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "groove_depth",
+          "measurement_id": "113001:cnc_milling_machine:groove_depth:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.789"
+        },
+        {
+          "feature": "groove_diameter",
+          "measurement_id": "113001:cnc_milling_machine:groove_diameter:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "-0.03"
+        },
+        {
+          "feature": "parallelism",
+          "measurement_id": "113001:cnc_milling_machine:parallelism:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.036"
+        },
+        {
+          "feature": "surface_roughness",
+          "measurement_id": "113001:cnc_milling_machine:surface_roughness:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "2.019"
+        },
+        {
+          "feature": "weight",
+          "measurement_id": "113001:saw:weight:0",
+          "process_name": "saw",
+          "qc_pass": true,
+          "value": "0.595888272"
+        }
+      ]
+    },
+    {
+      "component_id": "113104",
+      "component_type": "cylinder_bottom",
+      "cylinder_id": "300144",
+      "final_pressure_measurement_id": "300144:assembly:pressure:0",
+      "final_pressure_value": "7072.167",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1664886250.505,
+          "equipment": "Kasto SBA 2",
+          "process_name": "saw",
+          "run_id": "113104:saw:0",
+          "start_time": 1664886168.004
+        },
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1673353037.566191,
+          "equipment": "DMC 50H",
+          "process_name": "cnc_milling_machine",
+          "run_id": "113104:cnc_milling_machine:0",
+          "start_time": 1673352182.756001
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "groove_depth",
+          "measurement_id": "113104:cnc_milling_machine:groove_depth:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.795"
+        },
+        {
+          "feature": "groove_diameter",
+          "measurement_id": "113104:cnc_milling_machine:groove_diameter:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "-0.0275"
+        },
+        {
+          "feature": "parallelism",
+          "measurement_id": "113104:cnc_milling_machine:parallelism:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.0425"
+        },
+        {
+          "feature": "surface_roughness",
+          "measurement_id": "113104:cnc_milling_machine:surface_roughness:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "2.034"
+        },
+        {
+          "feature": "weight",
+          "measurement_id": "113104:saw:weight:0",
+          "process_name": "saw",
+          "qc_pass": true,
+          "value": "0.592519933"
+        }
+      ]
+    },
+    {
+      "component_id": "119603",
+      "component_type": "cylinder_bottom",
+      "cylinder_id": "300364",
+      "final_pressure_measurement_id": "300364:assembly:pressure:0",
+      "final_pressure_value": "7350.833",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1665143265.503,
+          "equipment": "Kasto SBA 2",
+          "process_name": "saw",
+          "run_id": "119603:saw:0",
+          "start_time": 1665143186.003
+        },
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1671618819.679666,
+          "equipment": "DMC 50H",
+          "process_name": "cnc_milling_machine",
+          "run_id": "119603:cnc_milling_machine:0",
+          "start_time": 1671614048.903047
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "groove_depth",
+          "measurement_id": "119603:cnc_milling_machine:groove_depth:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.802"
+        },
+        {
+          "feature": "groove_diameter",
+          "measurement_id": "119603:cnc_milling_machine:groove_diameter:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "-0.0315"
+        },
+        {
+          "feature": "parallelism",
+          "measurement_id": "119603:cnc_milling_machine:parallelism:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.018"
+        },
+        {
+          "feature": "surface_roughness",
+          "measurement_id": "119603:cnc_milling_machine:surface_roughness:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "1.921"
+        },
+        {
+          "feature": "weight",
+          "measurement_id": "119603:saw:weight:0",
+          "process_name": "saw",
+          "qc_pass": true,
+          "value": "0.579023943"
+        }
+      ]
+    },
+    {
+      "component_id": "119804",
+      "component_type": "cylinder_bottom",
+      "cylinder_id": "300302",
+      "final_pressure_measurement_id": "300302:assembly:pressure:0",
+      "final_pressure_value": "7205.5",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1665143992.503,
+          "equipment": "Kasto SBA 2",
+          "process_name": "saw",
+          "run_id": "119804:saw:0",
+          "start_time": 1665143913.003
+        },
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": 1671552905.745245,
+          "equipment": "DMC 50H",
+          "process_name": "cnc_milling_machine",
+          "run_id": "119804:cnc_milling_machine:0",
+          "start_time": 1671552100.874715
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "groove_depth",
+          "measurement_id": "119804:cnc_milling_machine:groove_depth:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.802"
+        },
+        {
+          "feature": "groove_diameter",
+          "measurement_id": "119804:cnc_milling_machine:groove_diameter:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "-0.032"
+        },
+        {
+          "feature": "parallelism",
+          "measurement_id": "119804:cnc_milling_machine:parallelism:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "0.023"
+        },
+        {
+          "feature": "surface_roughness",
+          "measurement_id": "119804:cnc_milling_machine:surface_roughness:0",
+          "process_name": "cnc_milling_machine",
+          "qc_pass": true,
+          "value": "2.317"
+        },
+        {
+          "feature": "weight",
+          "measurement_id": "119804:saw:weight:0",
+          "process_name": "saw",
+          "qc_pass": true,
+          "value": "0.580527943"
+        }
+      ]
+    },
+    {
+      "component_id": "201302",
+      "component_type": "piston_rod",
+      "cylinder_id": "300048",
+      "final_pressure_measurement_id": "300048:assembly:pressure:0",
+      "final_pressure_value": "7461.167",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": null,
+          "equipment": "Index C65",
+          "process_name": "cnc_lathe",
+          "run_id": "201302:cnc_lathe:0",
+          "start_time": null
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "coaxiality",
+          "measurement_id": "201302:cnc_lathe:coaxiality:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "49.4"
+        },
+        {
+          "feature": "diameter",
+          "measurement_id": "201302:cnc_lathe:diameter:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "0.0005"
+        },
+        {
+          "feature": "length",
+          "measurement_id": "201302:cnc_lathe:length:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "163.701"
+        }
+      ]
+    },
+    {
+      "component_id": "202002",
+      "component_type": "piston_rod",
+      "cylinder_id": "300076",
+      "final_pressure_measurement_id": "300076:assembly:pressure:0",
+      "final_pressure_value": "6623.667",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": null,
+          "equipment": "Index C65",
+          "process_name": "cnc_lathe",
+          "run_id": "202002:cnc_lathe:0",
+          "start_time": null
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "coaxiality",
+          "measurement_id": "202002:cnc_lathe:coaxiality:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "25.1"
+        },
+        {
+          "feature": "diameter",
+          "measurement_id": "202002:cnc_lathe:diameter:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "-0.0065"
+        },
+        {
+          "feature": "length",
+          "measurement_id": "202002:cnc_lathe:length:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "163.672"
+        }
+      ]
+    },
+    {
+      "component_id": "202902",
+      "component_type": "piston_rod",
+      "cylinder_id": "300110",
+      "final_pressure_measurement_id": "300110:assembly:pressure:0",
+      "final_pressure_value": "6727.167",
+      "process_runs": [],
+      "quality_measurements": [
+        {
+          "feature": "coaxiality",
+          "measurement_id": "202902:cnc_lathe:coaxiality:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "40.6"
+        },
+        {
+          "feature": "diameter",
+          "measurement_id": "202902:cnc_lathe:diameter:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "-0.007"
+        },
+        {
+          "feature": "length",
+          "measurement_id": "202902:cnc_lathe:length:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "163.699"
+        }
+      ]
+    },
+    {
+      "component_id": "203803",
+      "component_type": "piston_rod",
+      "cylinder_id": "300144",
+      "final_pressure_measurement_id": "300144:assembly:pressure:0",
+      "final_pressure_value": "7072.167",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": null,
+          "equipment": "Index C65",
+          "process_name": "cnc_lathe",
+          "run_id": "203803:cnc_lathe:0",
+          "start_time": null
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "coaxiality",
+          "measurement_id": "203803:cnc_lathe:coaxiality:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "22.2"
+        },
+        {
+          "feature": "diameter",
+          "measurement_id": "203803:cnc_lathe:diameter:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "-0.01"
+        },
+        {
+          "feature": "length",
+          "measurement_id": "203803:cnc_lathe:length:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "163.666"
+        }
+      ]
+    },
+    {
+      "component_id": "203804",
+      "component_type": "piston_rod",
+      "cylinder_id": "300145",
+      "final_pressure_measurement_id": "300145:assembly:pressure:0",
+      "final_pressure_value": "6448.667",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": null,
+          "equipment": "Index C65",
+          "process_name": "cnc_lathe",
+          "run_id": "203804:cnc_lathe:0",
+          "start_time": null
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "coaxiality",
+          "measurement_id": "203804:cnc_lathe:coaxiality:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "27.3"
+        },
+        {
+          "feature": "diameter",
+          "measurement_id": "203804:cnc_lathe:diameter:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "-0.009"
+        },
+        {
+          "feature": "length",
+          "measurement_id": "203804:cnc_lathe:length:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "163.69"
+        }
+      ]
+    },
+    {
+      "component_id": "203901",
+      "component_type": "piston_rod",
+      "cylinder_id": "300146",
+      "final_pressure_measurement_id": "300146:assembly:pressure:0",
+      "final_pressure_value": "6234.5",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": null,
+          "equipment": "Index C65",
+          "process_name": "cnc_lathe",
+          "run_id": "203901:cnc_lathe:0",
+          "start_time": null
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "coaxiality",
+          "measurement_id": "203901:cnc_lathe:coaxiality:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "25.9"
+        },
+        {
+          "feature": "diameter",
+          "measurement_id": "203901:cnc_lathe:diameter:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "-0.003"
+        },
+        {
+          "feature": "length",
+          "measurement_id": "203901:cnc_lathe:length:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "163.681"
+        }
+      ]
+    },
+    {
+      "component_id": "204002",
+      "component_type": "piston_rod",
+      "cylinder_id": "300151",
+      "final_pressure_measurement_id": "300151:assembly:pressure:0",
+      "final_pressure_value": "6959",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": null,
+          "equipment": "Index C65",
+          "process_name": "cnc_lathe",
+          "run_id": "204002:cnc_lathe:0",
+          "start_time": null
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "coaxiality",
+          "measurement_id": "204002:cnc_lathe:coaxiality:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "11.8"
+        },
+        {
+          "feature": "diameter",
+          "measurement_id": "204002:cnc_lathe:diameter:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "-0.002"
+        },
+        {
+          "feature": "length",
+          "measurement_id": "204002:cnc_lathe:length:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "163.678"
+        }
+      ]
+    },
+    {
+      "component_id": "208403",
+      "component_type": "piston_rod",
+      "cylinder_id": "300302",
+      "final_pressure_measurement_id": "300302:assembly:pressure:0",
+      "final_pressure_value": "7205.5",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": null,
+          "equipment": "Index C65",
+          "process_name": "cnc_lathe",
+          "run_id": "208403:cnc_lathe:0",
+          "start_time": null
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "coaxiality",
+          "measurement_id": "208403:cnc_lathe:coaxiality:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "41.8"
+        },
+        {
+          "feature": "diameter",
+          "measurement_id": "208403:cnc_lathe:diameter:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "0.002"
+        },
+        {
+          "feature": "length",
+          "measurement_id": "208403:cnc_lathe:length:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "163.642"
+        }
+      ]
+    },
+    {
+      "component_id": "210103",
+      "component_type": "piston_rod",
+      "cylinder_id": "300352",
+      "final_pressure_measurement_id": "300352:assembly:pressure:0",
+      "final_pressure_value": "7205.333",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": null,
+          "equipment": "Index C65",
+          "process_name": "cnc_lathe",
+          "run_id": "210103:cnc_lathe:0",
+          "start_time": null
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "coaxiality",
+          "measurement_id": "210103:cnc_lathe:coaxiality:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": false,
+          "value": "53.7"
+        },
+        {
+          "feature": "diameter",
+          "measurement_id": "210103:cnc_lathe:diameter:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "0.009"
+        },
+        {
+          "feature": "length",
+          "measurement_id": "210103:cnc_lathe:length:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "163.665"
+        }
+      ]
+    },
+    {
+      "component_id": "210104",
+      "component_type": "piston_rod",
+      "cylinder_id": "300353",
+      "final_pressure_measurement_id": "300353:assembly:pressure:0",
+      "final_pressure_value": "6273.833",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": null,
+          "equipment": "Index C65",
+          "process_name": "cnc_lathe",
+          "run_id": "210104:cnc_lathe:0",
+          "start_time": null
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "coaxiality",
+          "measurement_id": "210104:cnc_lathe:coaxiality:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "21.7"
+        },
+        {
+          "feature": "diameter",
+          "measurement_id": "210104:cnc_lathe:diameter:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "0.006"
+        },
+        {
+          "feature": "length",
+          "measurement_id": "210104:cnc_lathe:length:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "163.691"
+        }
+      ]
+    },
+    {
+      "component_id": "210403",
+      "component_type": "piston_rod",
+      "cylinder_id": "300364",
+      "final_pressure_measurement_id": "300364:assembly:pressure:0",
+      "final_pressure_value": "7350.833",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": null,
+          "equipment": "Index C65",
+          "process_name": "cnc_lathe",
+          "run_id": "210403:cnc_lathe:0",
+          "start_time": null
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "coaxiality",
+          "measurement_id": "210403:cnc_lathe:coaxiality:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "42.4"
+        },
+        {
+          "feature": "diameter",
+          "measurement_id": "210403:cnc_lathe:diameter:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "0"
+        },
+        {
+          "feature": "length",
+          "measurement_id": "210403:cnc_lathe:length:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "163.587"
+        }
+      ]
+    },
+    {
+      "component_id": "210903",
+      "component_type": "piston_rod",
+      "cylinder_id": "300384",
+      "final_pressure_measurement_id": "300384:assembly:pressure:0",
+      "final_pressure_value": "84",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": null,
+          "equipment": "Index C65",
+          "process_name": "cnc_lathe",
+          "run_id": "210903:cnc_lathe:0",
+          "start_time": null
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "coaxiality",
+          "measurement_id": "210903:cnc_lathe:coaxiality:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "21.7"
+        },
+        {
+          "feature": "diameter",
+          "measurement_id": "210903:cnc_lathe:diameter:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "0.006"
+        },
+        {
+          "feature": "length",
+          "measurement_id": "210903:cnc_lathe:length:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "163.645"
+        }
+      ]
+    },
+    {
+      "component_id": "211401",
+      "component_type": "piston_rod",
+      "cylinder_id": "300401",
+      "final_pressure_measurement_id": "300401:assembly:pressure:0",
+      "final_pressure_value": "5455.667",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": null,
+          "equipment": "Index C65",
+          "process_name": "cnc_lathe",
+          "run_id": "211401:cnc_lathe:0",
+          "start_time": null
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "coaxiality",
+          "measurement_id": "211401:cnc_lathe:coaxiality:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "18.5"
+        },
+        {
+          "feature": "diameter",
+          "measurement_id": "211401:cnc_lathe:diameter:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "-0.007"
+        },
+        {
+          "feature": "length",
+          "measurement_id": "211401:cnc_lathe:length:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "163.609"
+        }
+      ]
+    },
+    {
+      "component_id": "211604",
+      "component_type": "piston_rod",
+      "cylinder_id": "300412",
+      "final_pressure_measurement_id": "300412:assembly:pressure:0",
+      "final_pressure_value": "87.667",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": null,
+          "equipment": "Index C65",
+          "process_name": "cnc_lathe",
+          "run_id": "211604:cnc_lathe:0",
+          "start_time": null
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "coaxiality",
+          "measurement_id": "211604:cnc_lathe:coaxiality:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "35"
+        },
+        {
+          "feature": "diameter",
+          "measurement_id": "211604:cnc_lathe:diameter:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "0.01"
+        },
+        {
+          "feature": "length",
+          "measurement_id": "211604:cnc_lathe:length:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "163.606"
+        }
+      ]
+    },
+    {
+      "component_id": "214102",
+      "component_type": "piston_rod",
+      "cylinder_id": "300413",
+      "final_pressure_measurement_id": "300413:assembly:pressure:0",
+      "final_pressure_value": "90.333",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": null,
+          "equipment": "Index C65",
+          "process_name": "cnc_lathe",
+          "run_id": "214102:cnc_lathe:0",
+          "start_time": null
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": null,
+          "measurement_id": null,
+          "process_name": null,
+          "qc_pass": null,
+          "value": null
+        }
+      ]
+    },
+    {
+      "component_id": "214104",
+      "component_type": "piston_rod",
+      "cylinder_id": "300414",
+      "final_pressure_measurement_id": "300414:assembly:pressure:0",
+      "final_pressure_value": "72.333",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": null,
+          "equipment": "Index C65",
+          "process_name": "cnc_lathe",
+          "run_id": "214104:cnc_lathe:0",
+          "start_time": null
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": null,
+          "measurement_id": null,
+          "process_name": null,
+          "qc_pass": null,
+          "value": null
+        }
+      ]
+    },
+    {
+      "component_id": "214702",
+      "component_type": "piston_rod",
+      "cylinder_id": "300415",
+      "final_pressure_measurement_id": "300415:assembly:pressure:0",
+      "final_pressure_value": "86.333",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": null,
+          "equipment": "Index C65",
+          "process_name": "cnc_lathe",
+          "run_id": "214702:cnc_lathe:0",
+          "start_time": null
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": null,
+          "measurement_id": null,
+          "process_name": null,
+          "qc_pass": null,
+          "value": null
+        }
+      ]
+    },
+    {
+      "component_id": "221604",
+      "component_type": "piston_rod",
+      "cylinder_id": "300683",
+      "final_pressure_measurement_id": "300683:assembly:pressure:0",
+      "final_pressure_value": "78.333",
+      "process_runs": [
+        {
+          "anomaly_code": "0",
+          "anomaly_name": "Normal process",
+          "end_time": null,
+          "equipment": "Index C65",
+          "process_name": "cnc_lathe",
+          "run_id": "221604:cnc_lathe:0",
+          "start_time": null
+        }
+      ],
+      "quality_measurements": [
+        {
+          "feature": "coaxiality",
+          "measurement_id": "221604:cnc_lathe:coaxiality:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "49.8"
+        },
+        {
+          "feature": "diameter",
+          "measurement_id": "221604:cnc_lathe:diameter:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "-0.007"
+        },
+        {
+          "feature": "length",
+          "measurement_id": "221604:cnc_lathe:length:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "163.654"
+        }
+      ]
+    },
+    {
+      "component_id": "222703",
+      "component_type": "piston_rod",
+      "cylinder_id": "300725",
+      "final_pressure_measurement_id": "300725:assembly:pressure:0",
+      "final_pressure_value": "7103",
+      "process_runs": [],
+      "quality_measurements": [
+        {
+          "feature": "coaxiality",
+          "measurement_id": "222703:cnc_lathe:coaxiality:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "47.7"
+        },
+        {
+          "feature": "diameter",
+          "measurement_id": "222703:cnc_lathe:diameter:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "0.006"
+        },
+        {
+          "feature": "length",
+          "measurement_id": "222703:cnc_lathe:length:0",
+          "process_name": "cnc_lathe",
+          "qc_pass": true,
+          "value": "163.68"
+        }
+      ]
+    }
+  ]
+}

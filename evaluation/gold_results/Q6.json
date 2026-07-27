@@ -1,0 +1,22 @@
+{
+  "question_id": "Q6",
+  "category": "equipment_workload",
+  "question": "장비별 공정 실행 건수를 보여줘.",
+  "expected_status": "success",
+  "row_count": 3,
+  "rows_sha256": "4206d245b3b956544dd0523dd044ae5088a6139b423763b55df407648aa07579",
+  "normalized_rows": [
+    {
+      "equipment": "DMC 50H",
+      "run_count": 846
+    },
+    {
+      "equipment": "Index C65",
+      "run_count": 928
+    },
+    {
+      "equipment": "Kasto SBA 2",
+      "run_count": 984
+    }
+  ]
+}

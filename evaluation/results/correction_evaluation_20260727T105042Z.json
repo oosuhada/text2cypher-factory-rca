@@ -1,0 +1,155 @@
+{
+  "provider": "gemini",
+  "model": "gemini-2.5-flash",
+  "evaluated_at": "2026-07-27T10:50:42.751121+00:00",
+  "case_count": 8,
+  "validation_success_rate": 1.0,
+  "result_accuracy": 0.375,
+  "strict_result_accuracy": 0.25,
+  "usage": {
+    "call_count": 8,
+    "input_tokens": 5337,
+    "output_tokens": 448,
+    "total_tokens": 5785,
+    "model_elapsed_ms": 8295,
+    "estimated_cost_usd": 0.00106935,
+    "pricing_basis": {
+      "currency": "USD",
+      "input_usd_per_million_tokens": 0.15,
+      "output_usd_per_million_tokens": 0.6,
+      "thinking_budget": 0,
+      "seed": 42,
+      "source": "https://cloud.google.com/vertex-ai/generative-ai/pricing"
+    }
+  },
+  "results": [
+    {
+      "case_id": "C01",
+      "source_question_id": "B03",
+      "error_type": "syntax",
+      "initial_errors": [
+        "EXPLAIN_ERROR: Invalid input 'RETURN': expected a parameter, '&', ')', ':', 'WHERE', '{' or '|' (line 1, column 31 (offset: 30))\n\"EXPLAIN MATCH (run:ProcessRun RETURN count(run)\"\n                               ^"
+      ],
+      "correction_attempts": 1,
+      "corrected_cypher": "MATCH (run:ProcessRun)-[:INSTANCE_OF]->(process:Process) RETURN process.name AS process_type, count(run) AS process_run_count",
+      "remaining_errors": [],
+      "validation_success": true,
+      "result_match": true,
+      "strict_result_match": false,
+      "contract_only_mismatch": true,
+      "actual_status": "success"
+    },
+    {
+      "case_id": "C02",
+      "source_question_id": "B06",
+      "error_type": "schema_topology",
+      "initial_errors": [
+        "SCHEMA_TOPOLOGY: CLASSIFIED_AS must start at ProcessRun, not Equipment. Match (run)-[:CLASSIFIED_AS]->(anomaly) as a separate path."
+      ],
+      "correction_attempts": 1,
+      "corrected_cypher": "MATCH (run:ProcessRun)-[:RUN_ON]->(equipment:Equipment {name: 'Kasto SBA 2'}) MATCH (run)-[:CLASSIFIED_AS]->(anomaly:AnomalyClass {is_normal: false}) RETURN count(run) AS abnormal_run_count",
+      "remaining_errors": [],
+      "validation_success": true,
+      "result_match": true,
+      "strict_result_match": true,
+      "contract_only_mismatch": false,
+      "actual_status": "success"
+    },
+    {
+      "case_id": "C03",
+      "source_question_id": "B02",
+      "error_type": "domain_value",
+      "initial_errors": [
+        "DOMAIN_VALUE: Equipment.equipment_id must use a slug ['dmc-50h', 'index-c65', 'kasto-sba-2']; display value 'DMC 50H' belongs in Equipment.name."
+      ],
+      "correction_attempts": 1,
+      "corrected_cypher": "MATCH (run:ProcessRun)-[:RUN_ON]->(:Equipment {name: 'DMC 50H'})-[:CLASSIFIED_AS]->(anomaly:AnomalyClass) RETURN anomaly.name AS anomaly_class, count(run) AS run_count",
+      "remaining_errors": [],
+      "validation_success": true,
+      "result_match": false,
+      "strict_result_match": false,
+      "contract_only_mismatch": false,
+      "actual_status": "empty"
+    },
+    {
+      "case_id": "C04",
+      "source_question_id": "B17",
+      "error_type": "missing_requested_field",
+      "initial_errors": [
+        "QUESTION_ALIGNMENT: The question asks for the assembly role; return ASSEMBLED_FROM.component_role."
+      ],
+      "correction_attempts": 1,
+      "corrected_cypher": "MATCH (:Cylinder {part_id: '300137'})-[assembly:ASSEMBLED_FROM]->(component:Part) RETURN component.part_id AS component_id, assembly.component_role AS component_role",
+      "remaining_errors": [],
+      "validation_success": true,
+      "result_match": false,
+      "strict_result_match": false,
+      "contract_only_mismatch": false,
+      "actual_status": "success"
+    },
+    {
+      "case_id": "C05",
+      "source_question_id": "B14",
+      "error_type": "missing_requested_field",
+      "initial_errors": [
+        "QUESTION_ALIGNMENT: The question asks for pass/fail; return QualityMeasurement.qc_pass."
+      ],
+      "correction_attempts": 1,
+      "corrected_cypher": "MATCH (p:Cylinder {part_id: '300048'})-[:HAS_MEASUREMENT]->(measurement:QualityMeasurement) WHERE measurement.feature = 'pressure' RETURN p.reworked AS reworked, measurement.value_numeric AS pressure_value, measurement.qc_pass AS qc_pass",
+      "remaining_errors": [],
+      "validation_success": true,
+      "result_match": false,
+      "strict_result_match": false,
+      "contract_only_mismatch": false,
+      "actual_status": "success"
+    },
+    {
+      "case_id": "C06",
+      "source_question_id": "B01",
+      "error_type": "undefined_variable",
+      "initial_errors": [
+        "EXPLAIN_ERROR: Variable `missing_variable` not defined (line 2, column 8 (offset: 53))\n\"RETURN missing_variable\"\n        ^"
+      ],
+      "correction_attempts": 1,
+      "corrected_cypher": "MATCH (part:Part {part_id: '103504'}) RETURN part.part_type, part.reworked",
+      "remaining_errors": [],
+      "validation_success": true,
+      "result_match": false,
+      "strict_result_match": false,
+      "contract_only_mismatch": false,
+      "actual_status": "success"
+    },
+    {
+      "case_id": "C07",
+      "source_question_id": "B18",
+      "error_type": "nonexistent_entity_domain_value",
+      "initial_errors": [
+        "DOMAIN_VALUE: Equipment.equipment_id must use a slug ['dmc-50h', 'index-c65', 'kasto-sba-2']; display value 'ZZZ-999' belongs in Equipment.name."
+      ],
+      "correction_attempts": 1,
+      "corrected_cypher": "MATCH (run:ProcessRun)-[:RUN_ON]->(:Equipment {name: 'ZZZ-999'}) RETURN run.run_id AS run_id",
+      "remaining_errors": [],
+      "validation_success": true,
+      "result_match": true,
+      "strict_result_match": true,
+      "contract_only_mismatch": false,
+      "actual_status": "empty"
+    },
+    {
+      "case_id": "C08",
+      "source_question_id": "B24",
+      "error_type": "syntax",
+      "initial_errors": [
+        "EXPLAIN_ERROR: Invalid input 'RETURN': expected a parameter, '&', ')', ':', 'WHERE', '{' or '|' (line 2, column 1 (offset: 76))\n\"RETURN count(DISTINCT cylinder) AS cylinder_count\"\n ^"
+      ],
+      "correction_attempts": 1,
+      "corrected_cypher": "MATCH (cylinder:Cylinder)-[:HAS_MEASUREMENT]->(qm:QualityMeasurement)-[:FOR_PROCESS]->(p:Process {name: \"pressure_test\"}) WHERE qm.qc_pass = true WITH cylinder MATCH (cylinder)-[:ASSEMBLED_FROM]->(bottom:CylinderBottom)-[:UNDERWENT]->(pr:ProcessRun)-[:INSTANCE_OF]->(p2:Process {name: \"cnc_milling_machine\"}) WHERE pr.anomaly = \"0\" RETURN count(DISTINCT cylinder) AS cylinder_count",
+      "remaining_errors": [],
+      "validation_success": true,
+      "result_match": false,
+      "strict_result_match": false,
+      "contract_only_mismatch": false,
+      "actual_status": "success"
+    }
+  ]
+}

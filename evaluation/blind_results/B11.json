@@ -1,0 +1,13 @@
+{
+  "question_id": "B11",
+  "category": "reverse_genealogy",
+  "question": "piston rod 200102가 조립된 완제품 ID를 찾아줘.",
+  "expected_status": "success",
+  "row_count": 1,
+  "rows_sha256": "b5a24b77c2e4ab26f5a20951d54052cfd2b18ad553ae89ad1b8b682ca199480a",
+  "normalized_rows": [
+    {
+      "cylinder_id": "300002"
+    }
+  ]
+}

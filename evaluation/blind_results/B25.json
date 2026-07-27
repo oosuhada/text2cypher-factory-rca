@@ -1,0 +1,20 @@
+{
+  "question_id": "B25",
+  "category": "quality_equipment_path",
+  "question": "품질 불합격이 발생한 공정과 해당 장비별 불합격 측정 수를 보여줘.",
+  "expected_status": "success",
+  "row_count": 2,
+  "rows_sha256": "014ea8e6175335080b6f2cb3e0aee62e2a938f7346d255e6418c84bfefadeba6",
+  "normalized_rows": [
+    {
+      "equipment": "DMC 50H",
+      "failure_count": 297,
+      "process_name": "cnc_milling_machine"
+    },
+    {
+      "equipment": "Index C65",
+      "failure_count": 75,
+      "process_name": "cnc_lathe"
+    }
+  ]
+}

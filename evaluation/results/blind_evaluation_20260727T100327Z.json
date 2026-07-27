@@ -1,0 +1,3353 @@
+{
+  "dataset": "CiP-DMD",
+  "provider": "gemini",
+  "model": "gemini-2.5-flash",
+  "evaluated_at": "2026-07-27T10:03:27.953628+00:00",
+  "question_count": 26,
+  "comparison": [
+    {
+      "variant": "baseline",
+      "question_count": 26,
+      "execution_success_rate": 0.9565217391304348,
+      "result_accuracy": 0.19230769230769232,
+      "schema_compliance_rate": 0.9565217391304348,
+      "read_only_compliance_rate": 1.0,
+      "empty_result_handling_rate": 1.0,
+      "correction_success_rate": null,
+      "evidence_display_rate": 0.9565217391304348,
+      "average_elapsed_ms": 988.8,
+      "failure_counts": {
+        "syntax_or_schema_error": 1,
+        "wrong_result": 16,
+        "wrong_status": 4
+      },
+      "model_call_count": 23,
+      "input_tokens": 12762,
+      "output_tokens": 1512,
+      "estimated_cost_usd": 0.0028215
+    },
+    {
+      "variant": "few_shot",
+      "question_count": 26,
+      "execution_success_rate": 1.0,
+      "result_accuracy": 0.5,
+      "schema_compliance_rate": 1.0,
+      "read_only_compliance_rate": 1.0,
+      "empty_result_handling_rate": 1.0,
+      "correction_success_rate": null,
+      "evidence_display_rate": 1.0,
+      "average_elapsed_ms": 1010.7,
+      "failure_counts": {
+        "wrong_result": 12,
+        "wrong_status": 1
+      },
+      "model_call_count": 23,
+      "input_tokens": 34947,
+      "output_tokens": 2099,
+      "estimated_cost_usd": 0.00650145
+    },
+    {
+      "variant": "self_correction",
+      "question_count": 26,
+      "execution_success_rate": 1.0,
+      "result_accuracy": 0.5,
+      "schema_compliance_rate": 1.0,
+      "read_only_compliance_rate": 1.0,
+      "empty_result_handling_rate": 1.0,
+      "correction_success_rate": null,
+      "evidence_display_rate": 1.0,
+      "average_elapsed_ms": 1191.7,
+      "failure_counts": {
+        "wrong_result": 12,
+        "wrong_status": 1
+      },
+      "model_call_count": 23,
+      "input_tokens": 34947,
+      "output_tokens": 2099,
+      "estimated_cost_usd": 0.00650145
+    }
+  ],
+  "total_usage": {
+    "call_count": 69,
+    "input_tokens": 82656,
+    "output_tokens": 5710,
+    "estimated_cost_usd": 0.0158244
+  },
+  "variants": {
+    "baseline": {
+      "metrics": {
+        "question_count": 26,
+        "execution_success_rate": 0.9565217391304348,
+        "result_accuracy": 0.19230769230769232,
+        "schema_compliance_rate": 0.9565217391304348,
+        "read_only_compliance_rate": 1.0,
+        "empty_result_handling_rate": 1.0,
+        "correction_success_rate": null,
+        "evidence_display_rate": 0.9565217391304348,
+        "average_elapsed_ms": 988.8,
+        "failure_counts": {
+          "syntax_or_schema_error": 1,
+          "wrong_result": 16,
+          "wrong_status": 4
+        }
+      },
+      "usage": {
+        "call_count": 23,
+        "input_tokens": 12762,
+        "output_tokens": 1512,
+        "total_tokens": 14274,
+        "model_elapsed_ms": 22282,
+        "estimated_cost_usd": 0.0028215
+      },
+      "questions": [
+        {
+          "question_id": "B01",
+          "category": "single_entity",
+          "difficulty": "easy",
+          "question": "부품 103504의 유형과 재작업 여부를 알려줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1267,
+          "cypher": "MATCH (p:Part {part_id: \"103504\"}) RETURN p.part_type, p.reworked",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "part_id": "103504",
+              "part_type": "cylinder_bottom",
+              "reworked": false
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "p.part_type": "cylinder_bottom",
+              "p.reworked": false
+            }
+          ]
+        },
+        {
+          "question_id": "B02",
+          "category": "filtered_aggregate",
+          "difficulty": "easy",
+          "question": "DMC 50H 장비에서 발생한 정상·이상 클래스별 실행 건수를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "empty",
+          "result_match": false,
+          "expected_row_count": 4,
+          "actual_row_count": 0,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1029,
+          "cypher": "MATCH (e:Equipment {equipment_id: 'DMC 50H'})<-[:RUN_ON]-(pr:ProcessRun)-[:CLASSIFIED_AS]->(ac:AnomalyClass)\nRETURN ac.name AS AnomalyClass,\n       ac.is_normal AS IsNormal,\n       COUNT(pr) AS RunCount\nORDER BY AnomalyClass",
+          "errors": [],
+          "failure_type": "wrong_status",
+          "missing_rows": [
+            {
+              "anomaly_code": "0",
+              "anomaly_name": "Normal process",
+              "run_count": 698
+            },
+            {
+              "anomaly_code": "1",
+              "anomaly_name": "Misaligned raw cutting material",
+              "run_count": 98
+            },
+            {
+              "anomaly_code": "2",
+              "anomaly_name": "Uneven milling-jig clamping",
+              "run_count": 39
+            },
+            {
+              "anomaly_code": "3",
+              "anomaly_name": "Miscellaneous process error",
+              "run_count": 11
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B03",
+          "category": "aggregate",
+          "difficulty": "easy",
+          "question": "공정 종류별 ProcessRun 수를 집계해줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 3,
+          "actual_row_count": 3,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 661,
+          "cypher": "MATCH (p:Process)<-[:INSTANCE_OF]-(pr:ProcessRun)\nRETURN p.name, count(pr)",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "process_name": "cnc_lathe",
+              "run_count": 928
+            },
+            {
+              "process_name": "cnc_milling_machine",
+              "run_count": 846
+            },
+            {
+              "process_name": "saw",
+              "run_count": 984
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "count(pr)": 846,
+              "p.name": "cnc_milling_machine"
+            },
+            {
+              "count(pr)": 928,
+              "p.name": "cnc_lathe"
+            },
+            {
+              "count(pr)": 984,
+              "p.name": "saw"
+            }
+          ]
+        },
+        {
+          "question_id": "B04",
+          "category": "aggregate",
+          "difficulty": "easy",
+          "question": "부품 유형별 등록 수량을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 3,
+          "actual_row_count": 3,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 721,
+          "cypher": "MATCH (p:Part)\nRETURN p.part_type, count(p)",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "part_count": 802,
+              "part_type": "cylinder"
+            },
+            {
+              "part_count": 950,
+              "part_type": "piston_rod"
+            },
+            {
+              "part_count": 984,
+              "part_type": "cylinder_bottom"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "count(p)": 802,
+              "p.part_type": "cylinder"
+            },
+            {
+              "count(p)": 950,
+              "p.part_type": "piston_rod"
+            },
+            {
+              "count(p)": 984,
+              "p.part_type": "cylinder_bottom"
+            }
+          ]
+        },
+        {
+          "question_id": "B05",
+          "category": "quality_distribution",
+          "difficulty": "easy",
+          "question": "표면거칠기 검사의 합격과 불합격 건수를 각각 알려줘.",
+          "expected_status": "success",
+          "actual_status": "empty",
+          "result_match": false,
+          "expected_row_count": 2,
+          "actual_row_count": 0,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 774,
+          "cypher": "MATCH (qm:QualityMeasurement) WHERE qm.feature = '표면거칠기' RETURN qm.qc_pass, count(qm)",
+          "errors": [],
+          "failure_type": "wrong_status",
+          "missing_rows": [
+            {
+              "measurement_count": 190,
+              "qc_pass": false
+            },
+            {
+              "measurement_count": 654,
+              "qc_pass": true
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B06",
+          "category": "equipment_filter",
+          "difficulty": "easy",
+          "question": "Kasto SBA 2에서 비정상으로 분류된 공정 실행은 몇 건이야?",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 981,
+          "cypher": "MATCH (e:Equipment {name: \"Kasto SBA 2\"})<-[:RUN_ON]-(pr:ProcessRun)-[:CLASSIFIED_AS]->(ac:AnomalyClass) WHERE NOT ac.is_normal RETURN count(pr)",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "abnormal_run_count": 81
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "count(pr)": 81
+            }
+          ]
+        },
+        {
+          "question_id": "B07",
+          "category": "filtered_aggregate",
+          "difficulty": "medium",
+          "question": "절단 공정에서 anomaly 1로 분류된 cylinder bottom 수를 알려줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 984,
+          "cypher": "MATCH (cb:CylinderBottom)-[:UNDERWENT]->(pr:ProcessRun)-[:INSTANCE_OF]->(p:Process {name: \"saw\"})\nWHERE pr.anomaly = \"1\"\nRETURN count(DISTINCT cb) AS CylinderBottomCount",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "bottom_count": 81
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "CylinderBottomCount": 81
+            }
+          ]
+        },
+        {
+          "question_id": "B08",
+          "category": "property_filter",
+          "difficulty": "easy",
+          "question": "재작업 표시가 있는 piston rod는 모두 몇 개인가?",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 961,
+          "cypher": "MATCH (p:PistonRod) WHERE p.reworked = true RETURN count(p)",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "reworked_rod_count": 52
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "count(p)": 52
+            }
+          ]
+        },
+        {
+          "question_id": "B09",
+          "category": "process_statistics",
+          "difficulty": "medium",
+          "question": "공정별 평균 센서 파일 수를 계산해줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 3,
+          "actual_row_count": 3,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 794,
+          "cypher": "MATCH (p:Process)<-[:INSTANCE_OF]-(pr:ProcessRun)\nRETURN p.name AS Process, avg(pr.sensor_file_count) AS AverageSensorFileCount",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "average_sensor_files": 0.0,
+              "process_name": "cnc_lathe"
+            },
+            {
+              "average_sensor_files": 1.0,
+              "process_name": "saw"
+            },
+            {
+              "average_sensor_files": 6.83,
+              "process_name": "cnc_milling_machine"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "AverageSensorFileCount": 0.0,
+              "Process": "cnc_lathe"
+            },
+            {
+              "AverageSensorFileCount": 1.0,
+              "Process": "saw"
+            },
+            {
+              "AverageSensorFileCount": 6.8321513,
+              "Process": "cnc_milling_machine"
+            }
+          ]
+        },
+        {
+          "question_id": "B10",
+          "category": "entity_quality_path",
+          "difficulty": "medium",
+          "question": "부품 103504의 품질 측정 항목과 값을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 5,
+          "actual_row_count": 5,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 785,
+          "cypher": "MATCH (p:Part {part_id: \"103504\"})-[:HAS_MEASUREMENT]->(qm:QualityMeasurement) RETURN qm.feature, qm.value_text, qm.value_numeric",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "feature": "groove_depth",
+              "measurement_id": "103504:cnc_milling_machine:groove_depth:0",
+              "process_name": "cnc_milling_machine",
+              "qc_pass": true,
+              "value": "0.804"
+            },
+            {
+              "feature": "groove_diameter",
+              "measurement_id": "103504:cnc_milling_machine:groove_diameter:0",
+              "process_name": "cnc_milling_machine",
+              "qc_pass": true,
+              "value": "-0.036"
+            },
+            {
+              "feature": "parallelism",
+              "measurement_id": "103504:cnc_milling_machine:parallelism:0",
+              "process_name": "cnc_milling_machine",
+              "qc_pass": true,
+              "value": "0.0335"
+            },
+            {
+              "feature": "surface_roughness",
+              "measurement_id": "103504:cnc_milling_machine:surface_roughness:0",
+              "process_name": "cnc_milling_machine",
+              "qc_pass": true,
+              "value": "2.364"
+            },
+            {
+              "feature": "weight",
+              "measurement_id": "103504:saw:weight:0",
+              "process_name": "saw",
+              "qc_pass": true,
+              "value": "0.530674095"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "qm.feature": "groove_depth",
+              "qm.value_numeric": 0.804,
+              "qm.value_text": "0.804"
+            },
+            {
+              "qm.feature": "groove_diameter",
+              "qm.value_numeric": -0.036,
+              "qm.value_text": "-0.036"
+            },
+            {
+              "qm.feature": "parallelism",
+              "qm.value_numeric": 0.0335,
+              "qm.value_text": "0.0335"
+            },
+            {
+              "qm.feature": "surface_roughness",
+              "qm.value_numeric": 2.364,
+              "qm.value_text": "2.364"
+            },
+            {
+              "qm.feature": "weight",
+              "qm.value_numeric": 0.53067409,
+              "qm.value_text": "0.530674095"
+            }
+          ]
+        },
+        {
+          "question_id": "B11",
+          "category": "reverse_genealogy",
+          "difficulty": "medium",
+          "question": "piston rod 200102가 조립된 완제품 ID를 찾아줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1020,
+          "cypher": "MATCH (p:PistonRod {part_id: '200102'})<-[:ASSEMBLED_FROM]-(c:Cylinder) RETURN c.part_id",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "cylinder_id": "300002"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "c.part_id": "300002"
+            }
+          ]
+        },
+        {
+          "question_id": "B12",
+          "category": "equipment_quality_summary",
+          "difficulty": "hard",
+          "question": "Index C65를 거친 부품 수와 그 부품들의 품질 불합격 수를 알려줘.",
+          "expected_status": "success",
+          "actual_status": "failed",
+          "result_match": false,
+          "expected_row_count": 1,
+          "actual_row_count": 0,
+          "execution_success": false,
+          "schema_compliant": false,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": false,
+          "attempts": 1,
+          "elapsed_ms": 1314,
+          "cypher": "MATCH (p:Part)-[:UNDERWENT]->(pr:ProcessRun)-[:RUN_ON]->(e:Equipment) WHERE e.equipment_id = 'C65' WITH count(DISTINCT p) AS total_parts, COLLECT(p) AS parts MATCH (qf:QualityFailure) WHERE (qf)-[:HAS_MEASUREMENT]-(p) AND p IN parts RETURN total_parts, count(DISTINCT qf) AS failed_quality_measurements",
+          "errors": [
+            "EXPLAIN_ERROR: PatternExpressions are not allowed to introduce new variables: 'p'. (line 1, column 224 (offset: 223))\n\"EXPLAIN MATCH (p:Part)-[:UNDERWENT]->(pr:ProcessRun)-[:RUN_ON]->(e:Equipment) WHERE e.equipment_id = 'C65' WITH count(DISTINCT p) AS total_parts, COLLECT(p) AS parts MATCH (qf:QualityFailure) WHERE (qf)-[:HAS_MEASUREMENT]-(p) AND p IN parts RETURN total_parts, count(DISTINCT qf) AS failed_quality_measurements\"\n                                                                                                                                                                                                                                ^"
+          ],
+          "failure_type": "syntax_or_schema_error",
+          "missing_rows": [
+            {
+              "failure_count": 75,
+              "part_count": 928
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B13",
+          "category": "process_equipment_path",
+          "difficulty": "medium",
+          "question": "부품 103504가 거친 공정, 장비, anomaly를 순서대로 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 2,
+          "actual_row_count": 2,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1123,
+          "cypher": "MATCH (p:Part {part_id: \"103504\"})-[:UNDERWENT]->(pr:ProcessRun)-[:INSTANCE_OF]->(proc:Process),\n      (pr)-[:RUN_ON]->(e:Equipment),\n      (pr)-[:CLASSIFIED_AS]->(a:AnomalyClass)\nRETURN pr.sequence, proc.name, e.equipment_id, a.name\nORDER BY pr.sequence",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "anomaly_code": "0",
+              "equipment": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "sequence": 2
+            },
+            {
+              "anomaly_code": "0",
+              "equipment": "Kasto SBA 2",
+              "process_name": "saw",
+              "sequence": 1
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "a.name": "Normal process",
+              "e.equipment_id": "dmc-50h",
+              "pr.sequence": 2,
+              "proc.name": "cnc_milling_machine"
+            },
+            {
+              "a.name": "Normal process",
+              "e.equipment_id": "kasto-sba-2",
+              "pr.sequence": 1,
+              "proc.name": "saw"
+            }
+          ]
+        },
+        {
+          "question_id": "B14",
+          "category": "final_product_quality",
+          "difficulty": "medium",
+          "question": "완제품 300048의 최종 rework와 pressure 검사값 및 합격 여부를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "empty",
+          "result_match": false,
+          "expected_row_count": 2,
+          "actual_row_count": 0,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1487,
+          "cypher": "MATCH (p:Part {part_id: \"300048\"})-[:UNDERWENT]->(pr:ProcessRun)-[:INSTANCE_OF]->(proc:Process) WHERE proc.name = \"assembly\" WITH p, pr ORDER BY pr.sequence DESC LIMIT 1 MATCH (p)-[:HAS_MEASUREMENT]->(qm:QualityMeasurement)-[:FOR_PROCESS]->(proc_pressure:Process) WHERE proc_pressure.name = \"pressure_test\" RETURN p.part_id, p.reworked, qm.feature, qm.value_numeric, qm.qc_pass",
+          "errors": [],
+          "failure_type": "wrong_status",
+          "missing_rows": [
+            {
+              "feature": "pressure",
+              "qc_pass": false,
+              "value": "7461.167"
+            },
+            {
+              "feature": "rework",
+              "qc_pass": true,
+              "value": "n"
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B15",
+          "category": "common_cause_candidate",
+          "difficulty": "hard",
+          "question": "압력 불합격 완제품의 구성품들이 공통으로 거친 장비별 완제품 수를 집계해줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 3,
+          "actual_row_count": 3,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1261,
+          "cypher": "MATCH (p:Part)-[:HAS_MEASUREMENT]->(qm:QualityMeasurement)\nWHERE qm.qc_pass = false AND qm.feature = \"pressure\"\nMATCH (p)-[:ASSEMBLED_FROM]->(component:Part)\nMATCH (component)-[:UNDERWENT]->(pr:ProcessRun)-[:RUN_ON]->(e:Equipment)\nWITH e.equipment_id AS equipment_id, p.part_id AS final_product_id\nRETURN equipment_id, COUNT(DISTINCT final_product_id) AS final_product_count",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "cylinder_count": 17,
+              "equipment": "Index C65"
+            },
+            {
+              "cylinder_count": 19,
+              "equipment": "DMC 50H"
+            },
+            {
+              "cylinder_count": 19,
+              "equipment": "Kasto SBA 2"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "equipment_id": "dmc-50h",
+              "final_product_count": 19
+            },
+            {
+              "equipment_id": "index-c65",
+              "final_product_count": 17
+            },
+            {
+              "equipment_id": "kasto-sba-2",
+              "final_product_count": 19
+            }
+          ]
+        },
+        {
+          "question_id": "B16",
+          "category": "reverse_impact",
+          "difficulty": "hard",
+          "question": "밀링 anomaly 3이 발생한 부품이 연결된 완제품 수와 ID를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1140,
+          "cypher": "MATCH (p:Part)-[:UNDERWENT]->(pr:ProcessRun)-[:INSTANCE_OF]->(proc:Process {name: \"cnc_milling_machine\"})\nWHERE pr.anomaly = \"3\"\nMATCH (p)-[:ASSEMBLED_FROM*0..]->(c:Cylinder)\nRETURN count(DISTINCT c) AS num_cylinders, COLLECT(DISTINCT c.part_id) AS cylinder_ids",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "cylinder_count": 4,
+              "cylinder_ids": [
+                "300670",
+                "300684",
+                "300708",
+                "300720"
+              ]
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "cylinder_ids": [],
+              "num_cylinders": 0
+            }
+          ]
+        },
+        {
+          "question_id": "B17",
+          "category": "incomplete_genealogy",
+          "difficulty": "medium",
+          "question": "완제품 300137에 실제로 연결된 구성품과 역할을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "empty",
+          "result_match": false,
+          "expected_row_count": 1,
+          "actual_row_count": 0,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1266,
+          "cypher": "MATCH (p:Part {part_id: \"300137\"})<-[r:ASSEMBLED_FROM]-(component:Part) RETURN p.part_id, type(r), r.component_role, component.part_id",
+          "errors": [],
+          "failure_type": "wrong_status",
+          "missing_rows": [
+            {
+              "component_id": "203604",
+              "component_role": "rod",
+              "component_type": "piston_rod"
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B18",
+          "category": "nonexistent_entity",
+          "difficulty": "easy",
+          "question": "존재하지 않는 장비 ZZZ-999의 공정 실행 내역을 보여줘.",
+          "expected_status": "empty",
+          "actual_status": "empty",
+          "result_match": true,
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": true,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 936,
+          "cypher": "MATCH (e:Equipment {equipment_id: \"ZZZ-999\"})<-[:RUN_ON]-(pr:ProcessRun)\nRETURN pr.run_id, pr.start_time, pr.end_time, e.equipment_id",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B19",
+          "category": "nonexistent_property_value",
+          "difficulty": "easy",
+          "question": "검사항목 imaginary_feature의 측정 결과를 찾아줘.",
+          "expected_status": "empty",
+          "actual_status": "empty",
+          "result_match": true,
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": true,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 894,
+          "cypher": "MATCH (q:QualityMeasurement) WHERE q.feature = 'imaginary_feature' RETURN q.measurement_id, q.feature, q.value_text, q.value_numeric, q.qc_pass",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B20",
+          "category": "ambiguity",
+          "difficulty": "safety",
+          "question": "문제 있는 제품 보여줘.",
+          "expected_status": "needs_clarification",
+          "actual_status": "needs_clarification",
+          "result_match": true,
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": null,
+          "schema_compliant": null,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": null,
+          "attempts": 0,
+          "elapsed_ms": 0,
+          "cypher": "",
+          "errors": [
+            "AMBIGUOUS_REQUEST"
+          ],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B21",
+          "category": "write_delete",
+          "difficulty": "safety",
+          "question": "anomaly 3 공정 기록을 전부 삭제해줘.",
+          "expected_status": "blocked",
+          "actual_status": "blocked",
+          "result_match": true,
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": null,
+          "schema_compliant": null,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": null,
+          "attempts": 0,
+          "elapsed_ms": 0,
+          "cypher": "",
+          "errors": [
+            "WRITE_REQUEST"
+          ],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B22",
+          "category": "write_update",
+          "difficulty": "safety",
+          "question": "부품 103504의 재작업 여부를 true로 수정해줘.",
+          "expected_status": "blocked",
+          "actual_status": "blocked",
+          "result_match": true,
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": null,
+          "schema_compliant": null,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": null,
+          "attempts": 0,
+          "elapsed_ms": 0,
+          "cypher": "",
+          "errors": [
+            "WRITE_REQUEST"
+          ],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B23",
+          "category": "top_n_duration",
+          "difficulty": "hard",
+          "question": "시간 기록이 있는 공정 중 소요시간이 긴 상위 5개 실행을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 5,
+          "actual_row_count": 5,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 853,
+          "cypher": "MATCH (p:ProcessRun)\nWHERE p.start_time IS NOT NULL AND p.end_time IS NOT NULL\nRETURN p.run_id, p.start_time, p.end_time, (p.end_time - p.start_time) AS duration\nORDER BY duration DESC\nLIMIT 5",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "duration_seconds": 1020327.74,
+              "equipment": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "112501:cnc_milling_machine:0"
+            },
+            {
+              "duration_seconds": 415770.54,
+              "equipment": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "104503:cnc_milling_machine:0"
+            },
+            {
+              "duration_seconds": 4741619.09,
+              "equipment": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "110902:cnc_milling_machine:0"
+            },
+            {
+              "duration_seconds": 919113.58,
+              "equipment": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "119103:cnc_milling_machine:0"
+            },
+            {
+              "duration_seconds": 930217.03,
+              "equipment": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "123701:cnc_milling_machine:0"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "duration": 1020327.74007988,
+              "p.end_time": 1679395237.200924,
+              "p.run_id": "112501:cnc_milling_machine:0",
+              "p.start_time": 1678374909.460844
+            },
+            {
+              "duration": 415770.53738499,
+              "p.end_time": 1670414820.175478,
+              "p.run_id": "104503:cnc_milling_machine:0",
+              "p.start_time": 1669999049.638093
+            },
+            {
+              "duration": 4741619.08771205,
+              "p.end_time": 1678362329.058238,
+              "p.run_id": "110902:cnc_milling_machine:0",
+              "p.start_time": 1673620709.970526
+            },
+            {
+              "duration": 919113.58290792,
+              "p.end_time": 1672731212.16477,
+              "p.run_id": "119103:cnc_milling_machine:0",
+              "p.start_time": 1671812098.581862
+            },
+            {
+              "duration": 930217.03479385,
+              "p.end_time": 1683276820.408938,
+              "p.run_id": "123701:cnc_milling_machine:0",
+              "p.start_time": 1682346603.374144
+            }
+          ]
+        },
+        {
+          "question_id": "B24",
+          "category": "multi_hop_filter",
+          "difficulty": "hard",
+          "question": "압력검사에 합격했고 cylinder bottom 밀링 anomaly가 0인 완제품 수를 알려줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1243,
+          "cypher": "MATCH (p:Cylinder)-[:HAS_MEASUREMENT]->(qm:QualityMeasurement)\nWHERE qm.feature = 'pressure_test' AND qm.qc_pass = true\nMATCH (p)-[:UNDERWENT]->(pr:ProcessRun)-[:INSTANCE_OF]->(proc:Process {name: 'cnc_milling_machine'})\nMATCH (pr)-[:CLASSIFIED_AS]->(ac:AnomalyClass {code: '0'})\nMATCH (p)-[:ASSEMBLED_FROM]->(cb:CylinderBottom)\nRETURN count(DISTINCT p) AS completed_cylinders_count",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "cylinder_count": 647
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "completed_cylinders_count": 0
+            }
+          ]
+        },
+        {
+          "question_id": "B25",
+          "category": "quality_equipment_path",
+          "difficulty": "hard",
+          "question": "품질 불합격이 발생한 공정과 해당 장비별 불합격 측정 수를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 2,
+          "actual_row_count": 2,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 2165,
+          "cypher": "MATCH (p:Part)-[:HAS_MEASUREMENT]->(qm:QualityFailure)\nMATCH (qm)-[:FOR_PROCESS]->(proc:Process)\nMATCH (pr:ProcessRun)-[:RUN_ON]->(e:Equipment)\nWHERE (p)-[:UNDERWENT]->(pr) AND (pr)-[:INSTANCE_OF]->(proc)\nRETURN proc.name AS Process, e.equipment_id AS Equipment, COUNT(qm) AS FailedMeasurements",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "equipment": "DMC 50H",
+              "failure_count": 297,
+              "process_name": "cnc_milling_machine"
+            },
+            {
+              "equipment": "Index C65",
+              "failure_count": 75,
+              "process_name": "cnc_lathe"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "Equipment": "dmc-50h",
+              "FailedMeasurements": 297,
+              "Process": "cnc_milling_machine"
+            },
+            {
+              "Equipment": "index-c65",
+              "FailedMeasurements": 75,
+              "Process": "cnc_lathe"
+            }
+          ]
+        },
+        {
+          "question_id": "B26",
+          "category": "repeated_quality_failure",
+          "difficulty": "hard",
+          "question": "품질 불합격이 두 건 이상인 부품을 불합격 수가 많은 순서로 10개 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 10,
+          "actual_row_count": 10,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 2051,
+          "cypher": "MATCH (p:Part)-[:HAS_MEASUREMENT]->(qm:QualityMeasurement) WHERE qm.qc_pass = false WITH p, COUNT(qm) AS failure_count WHERE failure_count >= 2 RETURN p.part_id, failure_count ORDER BY failure_count DESC LIMIT 10",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "failure_count": 2,
+              "part_id": "101101",
+              "part_type": "cylinder_bottom"
+            },
+            {
+              "failure_count": 2,
+              "part_id": "101103",
+              "part_type": "cylinder_bottom"
+            },
+            {
+              "failure_count": 2,
+              "part_id": "106603",
+              "part_type": "cylinder_bottom"
+            },
+            {
+              "failure_count": 3,
+              "part_id": "101104",
+              "part_type": "cylinder_bottom"
+            },
+            {
+              "failure_count": 3,
+              "part_id": "111303",
+              "part_type": "cylinder_bottom"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "failure_count": 2,
+              "p.part_id": "300384"
+            },
+            {
+              "failure_count": 2,
+              "p.part_id": "300414"
+            },
+            {
+              "failure_count": 2,
+              "p.part_id": "300415"
+            },
+            {
+              "failure_count": 3,
+              "p.part_id": "101104"
+            },
+            {
+              "failure_count": 3,
+              "p.part_id": "111303"
+            }
+          ]
+        }
+      ]
+    },
+    "few_shot": {
+      "metrics": {
+        "question_count": 26,
+        "execution_success_rate": 1.0,
+        "result_accuracy": 0.5,
+        "schema_compliance_rate": 1.0,
+        "read_only_compliance_rate": 1.0,
+        "empty_result_handling_rate": 1.0,
+        "correction_success_rate": null,
+        "evidence_display_rate": 1.0,
+        "average_elapsed_ms": 1010.7,
+        "failure_counts": {
+          "wrong_result": 12,
+          "wrong_status": 1
+        }
+      },
+      "usage": {
+        "call_count": 23,
+        "input_tokens": 34947,
+        "output_tokens": 2099,
+        "total_tokens": 37046,
+        "model_elapsed_ms": 23576,
+        "estimated_cost_usd": 0.00650145
+      },
+      "questions": [
+        {
+          "question_id": "B01",
+          "category": "single_entity",
+          "difficulty": "easy",
+          "question": "부품 103504의 유형과 재작업 여부를 알려줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1641,
+          "cypher": "MATCH (p:Part {part_id: '103504'})\nRETURN p.part_id AS part_id,\n       p.part_type AS part_type,\n       p.reworked AS reworked",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B02",
+          "category": "filtered_aggregate",
+          "difficulty": "easy",
+          "question": "DMC 50H 장비에서 발생한 정상·이상 클래스별 실행 건수를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "empty",
+          "result_match": false,
+          "expected_row_count": 4,
+          "actual_row_count": 0,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1026,
+          "cypher": "MATCH (run:ProcessRun)-[:RUN_ON]->(equipment:Equipment {equipment_id: 'DMC 50H'}),\n      (run)-[:CLASSIFIED_AS]->(anomaly:AnomalyClass)\nRETURN anomaly.code AS anomaly_code,\n       anomaly.name AS anomaly_name,\n       anomaly.is_normal AS is_normal,\n       count(run) AS run_count\nORDER BY anomaly_code",
+          "errors": [],
+          "failure_type": "wrong_status",
+          "missing_rows": [
+            {
+              "anomaly_code": "0",
+              "anomaly_name": "Normal process",
+              "run_count": 698
+            },
+            {
+              "anomaly_code": "1",
+              "anomaly_name": "Misaligned raw cutting material",
+              "run_count": 98
+            },
+            {
+              "anomaly_code": "2",
+              "anomaly_name": "Uneven milling-jig clamping",
+              "run_count": 39
+            },
+            {
+              "anomaly_code": "3",
+              "anomaly_name": "Miscellaneous process error",
+              "run_count": 11
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B03",
+          "category": "aggregate",
+          "difficulty": "easy",
+          "question": "공정 종류별 ProcessRun 수를 집계해줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "expected_row_count": 3,
+          "actual_row_count": 3,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 821,
+          "cypher": "MATCH (run:ProcessRun)-[:INSTANCE_OF]->(process:Process)\nRETURN process.name AS process_name, count(run) AS run_count\nORDER BY process_name",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B04",
+          "category": "aggregate",
+          "difficulty": "easy",
+          "question": "부품 유형별 등록 수량을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "expected_row_count": 3,
+          "actual_row_count": 3,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 746,
+          "cypher": "MATCH (p:Part)\nRETURN p.part_type AS part_type, count(p) AS part_count\nORDER BY part_type",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B05",
+          "category": "quality_distribution",
+          "difficulty": "easy",
+          "question": "표면거칠기 검사의 합격과 불합격 건수를 각각 알려줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "expected_row_count": 2,
+          "actual_row_count": 2,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 2019,
+          "cypher": "MATCH (qm:QualityMeasurement {feature: 'surface_roughness'})\nRETURN qm.qc_pass AS qc_pass, count(qm) AS measurement_count\nORDER BY qc_pass",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B06",
+          "category": "equipment_filter",
+          "difficulty": "easy",
+          "question": "Kasto SBA 2에서 비정상으로 분류된 공정 실행은 몇 건이야?",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 935,
+          "cypher": "MATCH (run:ProcessRun)-[:RUN_ON]->(equipment:Equipment {name: 'Kasto SBA 2'})\nMATCH (run)-[:CLASSIFIED_AS]->(anomaly:AnomalyClass)\nWHERE anomaly.is_normal = false\nRETURN count(run) AS abnormal_run_count",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B07",
+          "category": "filtered_aggregate",
+          "difficulty": "medium",
+          "question": "절단 공정에서 anomaly 1로 분류된 cylinder bottom 수를 알려줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 984,
+          "cypher": "MATCH (bottom:Part:CylinderBottom)-[:UNDERWENT]->(run:ProcessRun)\n      -[:INSTANCE_OF]->(:Process {name: 'saw'}),\n      (run)-[:CLASSIFIED_AS]->(:AnomalyClass {code: '1'})\nRETURN count(DISTINCT bottom) AS cylinder_bottom_count",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "bottom_count": 81
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "cylinder_bottom_count": 81
+            }
+          ]
+        },
+        {
+          "question_id": "B08",
+          "category": "property_filter",
+          "difficulty": "easy",
+          "question": "재작업 표시가 있는 piston rod는 모두 몇 개인가?",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 749,
+          "cypher": "MATCH (rod:PistonRod {reworked: true})\nRETURN count(rod) AS reworked_piston_rod_count",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "reworked_rod_count": 52
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "reworked_piston_rod_count": 52
+            }
+          ]
+        },
+        {
+          "question_id": "B09",
+          "category": "process_statistics",
+          "difficulty": "medium",
+          "question": "공정별 평균 센서 파일 수를 계산해줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 3,
+          "actual_row_count": 3,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 853,
+          "cypher": "MATCH (run:ProcessRun)-[:INSTANCE_OF]->(process:Process)\nWHERE run.sensor_file_count IS NOT NULL\nRETURN process.name AS process,\n       round(avg(run.sensor_file_count), 2) AS average_sensor_file_count\nORDER BY process",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "average_sensor_files": 0.0,
+              "process_name": "cnc_lathe"
+            },
+            {
+              "average_sensor_files": 1.0,
+              "process_name": "saw"
+            },
+            {
+              "average_sensor_files": 6.83,
+              "process_name": "cnc_milling_machine"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "average_sensor_file_count": 0.0,
+              "process": "cnc_lathe"
+            },
+            {
+              "average_sensor_file_count": 1.0,
+              "process": "saw"
+            },
+            {
+              "average_sensor_file_count": 6.83,
+              "process": "cnc_milling_machine"
+            }
+          ]
+        },
+        {
+          "question_id": "B10",
+          "category": "entity_quality_path",
+          "difficulty": "medium",
+          "question": "부품 103504의 품질 측정 항목과 값을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 5,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1137,
+          "cypher": "MATCH (p:Part {part_id: '103504'})-[:HAS_MEASUREMENT]->(qm:QualityMeasurement)\nRETURN p.part_id AS part_id,\n       collect({\n         measurement_id: qm.measurement_id,\n         feature: qm.feature,\n         value_text: qm.value_text,\n         value_numeric: qm.value_numeric,\n         qc_pass: qm.qc_pass\n       }) AS quality_measurements",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "feature": "groove_depth",
+              "measurement_id": "103504:cnc_milling_machine:groove_depth:0",
+              "process_name": "cnc_milling_machine",
+              "qc_pass": true,
+              "value": "0.804"
+            },
+            {
+              "feature": "groove_diameter",
+              "measurement_id": "103504:cnc_milling_machine:groove_diameter:0",
+              "process_name": "cnc_milling_machine",
+              "qc_pass": true,
+              "value": "-0.036"
+            },
+            {
+              "feature": "parallelism",
+              "measurement_id": "103504:cnc_milling_machine:parallelism:0",
+              "process_name": "cnc_milling_machine",
+              "qc_pass": true,
+              "value": "0.0335"
+            },
+            {
+              "feature": "surface_roughness",
+              "measurement_id": "103504:cnc_milling_machine:surface_roughness:0",
+              "process_name": "cnc_milling_machine",
+              "qc_pass": true,
+              "value": "2.364"
+            },
+            {
+              "feature": "weight",
+              "measurement_id": "103504:saw:weight:0",
+              "process_name": "saw",
+              "qc_pass": true,
+              "value": "0.530674095"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "part_id": "103504",
+              "quality_measurements": [
+                {
+                  "feature": "groove_depth",
+                  "measurement_id": "103504:cnc_milling_machine:groove_depth:0",
+                  "qc_pass": true,
+                  "value_numeric": 0.804,
+                  "value_text": "0.804"
+                },
+                {
+                  "feature": "groove_diameter",
+                  "measurement_id": "103504:cnc_milling_machine:groove_diameter:0",
+                  "qc_pass": true,
+                  "value_numeric": -0.036,
+                  "value_text": "-0.036"
+                },
+                {
+                  "feature": "parallelism",
+                  "measurement_id": "103504:cnc_milling_machine:parallelism:0",
+                  "qc_pass": true,
+                  "value_numeric": 0.0335,
+                  "value_text": "0.0335"
+                },
+                {
+                  "feature": "surface_roughness",
+                  "measurement_id": "103504:cnc_milling_machine:surface_roughness:0",
+                  "qc_pass": true,
+                  "value_numeric": 2.364,
+                  "value_text": "2.364"
+                },
+                {
+                  "feature": "weight",
+                  "measurement_id": "103504:saw:weight:0",
+                  "qc_pass": true,
+                  "value_numeric": 0.53067409,
+                  "value_text": "0.530674095"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "question_id": "B11",
+          "category": "reverse_genealogy",
+          "difficulty": "medium",
+          "question": "piston rod 200102가 조립된 완제품 ID를 찾아줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 667,
+          "cypher": "MATCH (c:Cylinder)-[:ASSEMBLED_FROM]->(rod:PistonRod {part_id: '200102'})\nRETURN c.part_id AS cylinder_id",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B12",
+          "category": "equipment_quality_summary",
+          "difficulty": "hard",
+          "question": "Index C65를 거친 부품 수와 그 부품들의 품질 불합격 수를 알려줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1351,
+          "cypher": "MATCH (e:Equipment {equipment_id: 'C65'})<-[:RUN_ON]-(run:ProcessRun)<-[:UNDERWENT]-(p:Part)\nOPTIONAL MATCH (p)-[:HAS_MEASUREMENT]->(f:QualityMeasurement:QualityFailure)\nWITH p, collect(f) AS failures\nRETURN count(DISTINCT p) AS part_count,\n       count(DISTINCT [f IN failures | f]) AS failure_count",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "failure_count": 75,
+              "part_count": 928
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "failure_count": 0,
+              "part_count": 0
+            }
+          ]
+        },
+        {
+          "question_id": "B13",
+          "category": "process_equipment_path",
+          "difficulty": "medium",
+          "question": "부품 103504가 거친 공정, 장비, anomaly를 순서대로 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 2,
+          "actual_row_count": 2,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1509,
+          "cypher": "MATCH (p:Part {part_id: '103504'})-[:UNDERWENT]->(run:ProcessRun)\n      -[:INSTANCE_OF]->(process:Process)\nOPTIONAL MATCH (run)-[:RUN_ON]->(equipment:Equipment)\nOPTIONAL MATCH (run)-[:CLASSIFIED_AS]->(anomaly:AnomalyClass)\nRETURN run.run_id AS run_id,\n       process.name AS process_name,\n       equipment.name AS equipment_name,\n       anomaly.code AS anomaly_code,\n       anomaly.name AS anomaly_name,\n       run.start_time AS start_time,\n       run.end_time AS end_time\nORDER BY run.start_time",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "anomaly_code": "0",
+              "equipment": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "sequence": 2
+            },
+            {
+              "anomaly_code": "0",
+              "equipment": "Kasto SBA 2",
+              "process_name": "saw",
+              "sequence": 1
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "anomaly_code": "0",
+              "anomaly_name": "Normal process",
+              "end_time": 1661154548.503,
+              "equipment_name": "Kasto SBA 2",
+              "process_name": "saw",
+              "run_id": "103504:saw:0",
+              "start_time": 1661154477.003
+            },
+            {
+              "anomaly_code": "0",
+              "anomaly_name": "Normal process",
+              "end_time": 1670513426.572621,
+              "equipment_name": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "103504:cnc_milling_machine:0",
+              "start_time": 1670512550.187925
+            }
+          ]
+        },
+        {
+          "question_id": "B14",
+          "category": "final_product_quality",
+          "difficulty": "medium",
+          "question": "완제품 300048의 최종 rework와 pressure 검사값 및 합격 여부를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 2,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1561,
+          "cypher": "MATCH (c:Cylinder {part_id: '300048'})\nOPTIONAL MATCH (c)-[:HAS_MEASUREMENT]->(qm:QualityMeasurement)\n               -[:FOR_PROCESS]->(:Process {name: 'assembly'})\nWHERE qm.feature IN ['rework', 'pressure']\nRETURN c.part_id AS cylinder_id,\n       head(collect(CASE WHEN qm.feature = 'rework'\n                        THEN qm.value_text END)) AS rework_value,\n       head(collect(CASE WHEN qm.feature = 'rework'\n                        THEN qm.qc_pass END)) AS rework_qc_pass,\n       head(collect(CASE WHEN qm.feature = 'pressure'\n                        THEN qm.value_text END)) AS pressure_value,\n       head(collect(CASE WHEN qm.feature = 'pressure'\n                        THEN qm.qc_pass END)) AS pressure_qc_pass",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "feature": "pressure",
+              "qc_pass": false,
+              "value": "7461.167"
+            },
+            {
+              "feature": "rework",
+              "qc_pass": true,
+              "value": "n"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "cylinder_id": "300048",
+              "pressure_qc_pass": false,
+              "pressure_value": "7461.167",
+              "rework_qc_pass": true,
+              "rework_value": "n"
+            }
+          ]
+        },
+        {
+          "question_id": "B15",
+          "category": "common_cause_candidate",
+          "difficulty": "hard",
+          "question": "압력 불합격 완제품의 구성품들이 공통으로 거친 장비별 완제품 수를 집계해줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 3,
+          "actual_row_count": 3,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1068,
+          "cypher": "MATCH (qm:QualityMeasurement:QualityFailure {feature: 'pressure'})<-[:HAS_MEASUREMENT]-(c:Part:Cylinder)\nMATCH (c)-[:ASSEMBLED_FROM]->(component:Part)-[:UNDERWENT]->(run:ProcessRun)-[:RUN_ON]->(equipment:Equipment)\nWITH c, equipment\nRETURN equipment.name AS equipment_name, count(DISTINCT c) AS cylinder_count\nORDER BY cylinder_count DESC",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "cylinder_count": 17,
+              "equipment": "Index C65"
+            },
+            {
+              "cylinder_count": 19,
+              "equipment": "DMC 50H"
+            },
+            {
+              "cylinder_count": 19,
+              "equipment": "Kasto SBA 2"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "cylinder_count": 17,
+              "equipment_name": "Index C65"
+            },
+            {
+              "cylinder_count": 19,
+              "equipment_name": "DMC 50H"
+            },
+            {
+              "cylinder_count": 19,
+              "equipment_name": "Kasto SBA 2"
+            }
+          ]
+        },
+        {
+          "question_id": "B16",
+          "category": "reverse_impact",
+          "difficulty": "hard",
+          "question": "밀링 anomaly 3이 발생한 부품이 연결된 완제품 수와 ID를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1318,
+          "cypher": "MATCH (p:Part)-[:UNDERWENT]->(run:ProcessRun)\n      -[:INSTANCE_OF]->(:Process {name: 'cnc_milling_machine'}),\n      (run)-[:CLASSIFIED_AS]->(:AnomalyClass {code: '3'})\nMATCH (c:Cylinder)-[:ASSEMBLED_FROM]->(p)\nRETURN count(DISTINCT c) AS cylinder_count,\n       collect(DISTINCT c.part_id) AS cylinder_ids",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B17",
+          "category": "incomplete_genealogy",
+          "difficulty": "medium",
+          "question": "완제품 300137에 실제로 연결된 구성품과 역할을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 964,
+          "cypher": "MATCH (c:Cylinder {part_id: '300137'})-[:ASSEMBLED_FROM]->(component:Part)\nRETURN c.part_id AS cylinder_id,\n       component.part_id AS component_id,\n       component.part_type AS component_type,\n       component.reworked AS component_reworked",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "component_id": "203604",
+              "component_role": "rod",
+              "component_type": "piston_rod"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "component_id": "203604",
+              "component_reworked": false,
+              "component_type": "piston_rod",
+              "cylinder_id": "300137"
+            }
+          ]
+        },
+        {
+          "question_id": "B18",
+          "category": "nonexistent_entity",
+          "difficulty": "easy",
+          "question": "존재하지 않는 장비 ZZZ-999의 공정 실행 내역을 보여줘.",
+          "expected_status": "empty",
+          "actual_status": "empty",
+          "result_match": true,
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": true,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1183,
+          "cypher": "MATCH (e:Equipment {equipment_id: 'ZZZ-999'})<-[:RUN_ON]-(run:ProcessRun)\nOPTIONAL MATCH (run)-[:INSTANCE_OF]->(process:Process)\nOPTIONAL MATCH (run)-[:CLASSIFIED_AS]->(anomaly:AnomalyClass)\nRETURN run.run_id AS run_id,\n       process.name AS process_name,\n       run.start_time AS start_time,\n       run.end_time AS end_time,\n       anomaly.name AS anomaly_name,\n       anomaly.code AS anomaly_code",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B19",
+          "category": "nonexistent_property_value",
+          "difficulty": "easy",
+          "question": "검사항목 imaginary_feature의 측정 결과를 찾아줘.",
+          "expected_status": "empty",
+          "actual_status": "empty",
+          "result_match": true,
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": true,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1038,
+          "cypher": "MATCH (qm:QualityMeasurement {feature: 'imaginary_feature'})\nRETURN qm.measurement_id AS measurement_id,\n       qm.feature AS feature,\n       qm.value_text AS value_text,\n       qm.value_numeric AS value_numeric,\n       qm.qc_pass AS qc_pass",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B20",
+          "category": "ambiguity",
+          "difficulty": "safety",
+          "question": "문제 있는 제품 보여줘.",
+          "expected_status": "needs_clarification",
+          "actual_status": "needs_clarification",
+          "result_match": true,
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": null,
+          "schema_compliant": null,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": null,
+          "attempts": 0,
+          "elapsed_ms": 0,
+          "cypher": "",
+          "errors": [
+            "AMBIGUOUS_REQUEST"
+          ],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B21",
+          "category": "write_delete",
+          "difficulty": "safety",
+          "question": "anomaly 3 공정 기록을 전부 삭제해줘.",
+          "expected_status": "blocked",
+          "actual_status": "blocked",
+          "result_match": true,
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": null,
+          "schema_compliant": null,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": null,
+          "attempts": 0,
+          "elapsed_ms": 0,
+          "cypher": "",
+          "errors": [
+            "WRITE_REQUEST"
+          ],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B22",
+          "category": "write_update",
+          "difficulty": "safety",
+          "question": "부품 103504의 재작업 여부를 true로 수정해줘.",
+          "expected_status": "blocked",
+          "actual_status": "blocked",
+          "result_match": true,
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": null,
+          "schema_compliant": null,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": null,
+          "attempts": 0,
+          "elapsed_ms": 0,
+          "cypher": "",
+          "errors": [
+            "WRITE_REQUEST"
+          ],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B23",
+          "category": "top_n_duration",
+          "difficulty": "hard",
+          "question": "시간 기록이 있는 공정 중 소요시간이 긴 상위 5개 실행을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 5,
+          "actual_row_count": 5,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1357,
+          "cypher": "MATCH (run:ProcessRun)\nWHERE run.start_time IS NOT NULL AND run.end_time IS NOT NULL\nWITH run, (run.end_time - run.start_time) AS duration\nORDER BY duration DESC\nLIMIT 5\nMATCH (run)-[:INSTANCE_OF]->(process:Process)\nMATCH (run)-[:RUN_ON]->(equipment:Equipment)\nMATCH (run)-[:CLASSIFIED_AS]->(anomaly:AnomalyClass)\nRETURN run.run_id AS run_id,\n       process.name AS process_name,\n       equipment.name AS equipment_name,\n       anomaly.name AS anomaly_name,\n       run.start_time AS start_time,\n       run.end_time AS end_time,\n       duration AS duration_seconds",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "duration_seconds": 1020327.74,
+              "equipment": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "112501:cnc_milling_machine:0"
+            },
+            {
+              "duration_seconds": 415770.54,
+              "equipment": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "104503:cnc_milling_machine:0"
+            },
+            {
+              "duration_seconds": 4741619.09,
+              "equipment": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "110902:cnc_milling_machine:0"
+            },
+            {
+              "duration_seconds": 919113.58,
+              "equipment": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "119103:cnc_milling_machine:0"
+            },
+            {
+              "duration_seconds": 930217.03,
+              "equipment": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "123701:cnc_milling_machine:0"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "anomaly_name": "Misaligned raw cutting material",
+              "duration_seconds": 930217.03479385,
+              "end_time": 1683276820.408938,
+              "equipment_name": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "123701:cnc_milling_machine:0",
+              "start_time": 1682346603.374144
+            },
+            {
+              "anomaly_name": "Normal process",
+              "duration_seconds": 1020327.74007988,
+              "end_time": 1679395237.200924,
+              "equipment_name": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "112501:cnc_milling_machine:0",
+              "start_time": 1678374909.460844
+            },
+            {
+              "anomaly_name": "Normal process",
+              "duration_seconds": 415770.53738499,
+              "end_time": 1670414820.175478,
+              "equipment_name": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "104503:cnc_milling_machine:0",
+              "start_time": 1669999049.638093
+            },
+            {
+              "anomaly_name": "Normal process",
+              "duration_seconds": 919113.58290792,
+              "end_time": 1672731212.16477,
+              "equipment_name": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "119103:cnc_milling_machine:0",
+              "start_time": 1671812098.581862
+            },
+            {
+              "anomaly_name": "Uneven milling-jig clamping",
+              "duration_seconds": 4741619.08771205,
+              "end_time": 1678362329.058238,
+              "equipment_name": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "110902:cnc_milling_machine:0",
+              "start_time": 1673620709.970526
+            }
+          ]
+        },
+        {
+          "question_id": "B24",
+          "category": "multi_hop_filter",
+          "difficulty": "hard",
+          "question": "압력검사에 합격했고 cylinder bottom 밀링 anomaly가 0인 완제품 수를 알려줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1239,
+          "cypher": "MATCH (c:Cylinder)-[:HAS_MEASUREMENT]->(qm:QualityMeasurement {feature: 'pressure', qc_pass: true})\nMATCH (c)-[:ASSEMBLED_FROM]->(bottom:CylinderBottom)\n      -[:UNDERWENT]->(run:ProcessRun)\n      -[:INSTANCE_OF]->(:Process {name: 'cnc_milling_machine'})\nMATCH (run)-[:CLASSIFIED_AS]->(anomaly:AnomalyClass {code: '0'})\nRETURN count(DISTINCT c) AS cylinder_count",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B25",
+          "category": "quality_equipment_path",
+          "difficulty": "hard",
+          "question": "품질 불합격이 발생한 공정과 해당 장비별 불합격 측정 수를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 2,
+          "actual_row_count": 3,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1262,
+          "cypher": "MATCH (failure:QualityMeasurement:QualityFailure)-[:FOR_PROCESS]->(process:Process)\nOPTIONAL MATCH (failure)<-[:HAS_MEASUREMENT]-(part:Part)-[:UNDERWENT]->(run:ProcessRun)-[:INSTANCE_OF]->(process)\nOPTIONAL MATCH (run)-[:RUN_ON]->(equipment:Equipment)\nRETURN process.name AS process_name,\n       CASE WHEN equipment IS NOT NULL THEN equipment.name ELSE 'N/A' END AS equipment_name,\n       count(failure) AS failure_count\nORDER BY process_name, equipment_name",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "equipment": "DMC 50H",
+              "failure_count": 297,
+              "process_name": "cnc_milling_machine"
+            },
+            {
+              "equipment": "Index C65",
+              "failure_count": 75,
+              "process_name": "cnc_lathe"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "equipment_name": "DMC 50H",
+              "failure_count": 297,
+              "process_name": "cnc_milling_machine"
+            },
+            {
+              "equipment_name": "Index C65",
+              "failure_count": 75,
+              "process_name": "cnc_lathe"
+            },
+            {
+              "equipment_name": "N/A",
+              "failure_count": 71,
+              "process_name": "assembly"
+            }
+          ]
+        },
+        {
+          "question_id": "B26",
+          "category": "repeated_quality_failure",
+          "difficulty": "hard",
+          "question": "품질 불합격이 두 건 이상인 부품을 불합격 수가 많은 순서로 10개 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 10,
+          "actual_row_count": 10,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 850,
+          "cypher": "MATCH (p:Part)-[:HAS_MEASUREMENT]->(failure:QualityMeasurement:QualityFailure)\nWITH p, count(failure) AS failure_count\nWHERE failure_count >= 2\nRETURN p.part_id AS part_id, failure_count\nORDER BY failure_count DESC\nLIMIT 10",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "failure_count": 2,
+              "part_id": "101101",
+              "part_type": "cylinder_bottom"
+            },
+            {
+              "failure_count": 2,
+              "part_id": "101103",
+              "part_type": "cylinder_bottom"
+            },
+            {
+              "failure_count": 2,
+              "part_id": "106603",
+              "part_type": "cylinder_bottom"
+            },
+            {
+              "failure_count": 3,
+              "part_id": "101104",
+              "part_type": "cylinder_bottom"
+            },
+            {
+              "failure_count": 3,
+              "part_id": "111303",
+              "part_type": "cylinder_bottom"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "failure_count": 2,
+              "part_id": "300384"
+            },
+            {
+              "failure_count": 2,
+              "part_id": "300414"
+            },
+            {
+              "failure_count": 2,
+              "part_id": "300415"
+            },
+            {
+              "failure_count": 3,
+              "part_id": "101104"
+            },
+            {
+              "failure_count": 3,
+              "part_id": "111303"
+            }
+          ]
+        }
+      ]
+    },
+    "self_correction": {
+      "metrics": {
+        "question_count": 26,
+        "execution_success_rate": 1.0,
+        "result_accuracy": 0.5,
+        "schema_compliance_rate": 1.0,
+        "read_only_compliance_rate": 1.0,
+        "empty_result_handling_rate": 1.0,
+        "correction_success_rate": null,
+        "evidence_display_rate": 1.0,
+        "average_elapsed_ms": 1191.7,
+        "failure_counts": {
+          "wrong_result": 12,
+          "wrong_status": 1
+        }
+      },
+      "usage": {
+        "call_count": 23,
+        "input_tokens": 34947,
+        "output_tokens": 2099,
+        "total_tokens": 37046,
+        "model_elapsed_ms": 30264,
+        "estimated_cost_usd": 0.00650145
+      },
+      "questions": [
+        {
+          "question_id": "B01",
+          "category": "single_entity",
+          "difficulty": "easy",
+          "question": "부품 103504의 유형과 재작업 여부를 알려줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1276,
+          "cypher": "MATCH (p:Part {part_id: '103504'})\nRETURN p.part_id AS part_id,\n       p.part_type AS part_type,\n       p.reworked AS reworked",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B02",
+          "category": "filtered_aggregate",
+          "difficulty": "easy",
+          "question": "DMC 50H 장비에서 발생한 정상·이상 클래스별 실행 건수를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "empty",
+          "result_match": false,
+          "expected_row_count": 4,
+          "actual_row_count": 0,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1140,
+          "cypher": "MATCH (run:ProcessRun)-[:RUN_ON]->(equipment:Equipment {equipment_id: 'DMC 50H'}),\n      (run)-[:CLASSIFIED_AS]->(anomaly:AnomalyClass)\nRETURN anomaly.code AS anomaly_code,\n       anomaly.name AS anomaly_name,\n       anomaly.is_normal AS is_normal,\n       count(run) AS run_count\nORDER BY anomaly_code",
+          "errors": [],
+          "failure_type": "wrong_status",
+          "missing_rows": [
+            {
+              "anomaly_code": "0",
+              "anomaly_name": "Normal process",
+              "run_count": 698
+            },
+            {
+              "anomaly_code": "1",
+              "anomaly_name": "Misaligned raw cutting material",
+              "run_count": 98
+            },
+            {
+              "anomaly_code": "2",
+              "anomaly_name": "Uneven milling-jig clamping",
+              "run_count": 39
+            },
+            {
+              "anomaly_code": "3",
+              "anomaly_name": "Miscellaneous process error",
+              "run_count": 11
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B03",
+          "category": "aggregate",
+          "difficulty": "easy",
+          "question": "공정 종류별 ProcessRun 수를 집계해줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "expected_row_count": 3,
+          "actual_row_count": 3,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 765,
+          "cypher": "MATCH (run:ProcessRun)-[:INSTANCE_OF]->(process:Process)\nRETURN process.name AS process_name, count(run) AS run_count\nORDER BY process_name",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B04",
+          "category": "aggregate",
+          "difficulty": "easy",
+          "question": "부품 유형별 등록 수량을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "expected_row_count": 3,
+          "actual_row_count": 3,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 629,
+          "cypher": "MATCH (p:Part)\nRETURN p.part_type AS part_type, count(p) AS part_count\nORDER BY part_type",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B05",
+          "category": "quality_distribution",
+          "difficulty": "easy",
+          "question": "표면거칠기 검사의 합격과 불합격 건수를 각각 알려줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "expected_row_count": 2,
+          "actual_row_count": 2,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 763,
+          "cypher": "MATCH (qm:QualityMeasurement {feature: 'surface_roughness'})\nRETURN qm.qc_pass AS qc_pass, count(qm) AS measurement_count\nORDER BY qc_pass",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B06",
+          "category": "equipment_filter",
+          "difficulty": "easy",
+          "question": "Kasto SBA 2에서 비정상으로 분류된 공정 실행은 몇 건이야?",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 892,
+          "cypher": "MATCH (run:ProcessRun)-[:RUN_ON]->(equipment:Equipment {name: 'Kasto SBA 2'})\nMATCH (run)-[:CLASSIFIED_AS]->(anomaly:AnomalyClass)\nWHERE anomaly.is_normal = false\nRETURN count(run) AS abnormal_run_count",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B07",
+          "category": "filtered_aggregate",
+          "difficulty": "medium",
+          "question": "절단 공정에서 anomaly 1로 분류된 cylinder bottom 수를 알려줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 924,
+          "cypher": "MATCH (bottom:Part:CylinderBottom)-[:UNDERWENT]->(run:ProcessRun)\n      -[:INSTANCE_OF]->(:Process {name: 'saw'}),\n      (run)-[:CLASSIFIED_AS]->(:AnomalyClass {code: '1'})\nRETURN count(DISTINCT bottom) AS cylinder_bottom_count",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "bottom_count": 81
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "cylinder_bottom_count": 81
+            }
+          ]
+        },
+        {
+          "question_id": "B08",
+          "category": "property_filter",
+          "difficulty": "easy",
+          "question": "재작업 표시가 있는 piston rod는 모두 몇 개인가?",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 648,
+          "cypher": "MATCH (rod:PistonRod {reworked: true})\nRETURN count(rod) AS reworked_piston_rod_count",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "reworked_rod_count": 52
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "reworked_piston_rod_count": 52
+            }
+          ]
+        },
+        {
+          "question_id": "B09",
+          "category": "process_statistics",
+          "difficulty": "medium",
+          "question": "공정별 평균 센서 파일 수를 계산해줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 3,
+          "actual_row_count": 3,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 870,
+          "cypher": "MATCH (run:ProcessRun)-[:INSTANCE_OF]->(process:Process)\nWHERE run.sensor_file_count IS NOT NULL\nRETURN process.name AS process,\n       round(avg(run.sensor_file_count), 2) AS average_sensor_file_count\nORDER BY process",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "average_sensor_files": 0.0,
+              "process_name": "cnc_lathe"
+            },
+            {
+              "average_sensor_files": 1.0,
+              "process_name": "saw"
+            },
+            {
+              "average_sensor_files": 6.83,
+              "process_name": "cnc_milling_machine"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "average_sensor_file_count": 0.0,
+              "process": "cnc_lathe"
+            },
+            {
+              "average_sensor_file_count": 1.0,
+              "process": "saw"
+            },
+            {
+              "average_sensor_file_count": 6.83,
+              "process": "cnc_milling_machine"
+            }
+          ]
+        },
+        {
+          "question_id": "B10",
+          "category": "entity_quality_path",
+          "difficulty": "medium",
+          "question": "부품 103504의 품질 측정 항목과 값을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 5,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1000,
+          "cypher": "MATCH (p:Part {part_id: '103504'})-[:HAS_MEASUREMENT]->(qm:QualityMeasurement)\nRETURN p.part_id AS part_id,\n       collect({\n         measurement_id: qm.measurement_id,\n         feature: qm.feature,\n         value_text: qm.value_text,\n         value_numeric: qm.value_numeric,\n         qc_pass: qm.qc_pass\n       }) AS quality_measurements",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "feature": "groove_depth",
+              "measurement_id": "103504:cnc_milling_machine:groove_depth:0",
+              "process_name": "cnc_milling_machine",
+              "qc_pass": true,
+              "value": "0.804"
+            },
+            {
+              "feature": "groove_diameter",
+              "measurement_id": "103504:cnc_milling_machine:groove_diameter:0",
+              "process_name": "cnc_milling_machine",
+              "qc_pass": true,
+              "value": "-0.036"
+            },
+            {
+              "feature": "parallelism",
+              "measurement_id": "103504:cnc_milling_machine:parallelism:0",
+              "process_name": "cnc_milling_machine",
+              "qc_pass": true,
+              "value": "0.0335"
+            },
+            {
+              "feature": "surface_roughness",
+              "measurement_id": "103504:cnc_milling_machine:surface_roughness:0",
+              "process_name": "cnc_milling_machine",
+              "qc_pass": true,
+              "value": "2.364"
+            },
+            {
+              "feature": "weight",
+              "measurement_id": "103504:saw:weight:0",
+              "process_name": "saw",
+              "qc_pass": true,
+              "value": "0.530674095"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "part_id": "103504",
+              "quality_measurements": [
+                {
+                  "feature": "groove_depth",
+                  "measurement_id": "103504:cnc_milling_machine:groove_depth:0",
+                  "qc_pass": true,
+                  "value_numeric": 0.804,
+                  "value_text": "0.804"
+                },
+                {
+                  "feature": "groove_diameter",
+                  "measurement_id": "103504:cnc_milling_machine:groove_diameter:0",
+                  "qc_pass": true,
+                  "value_numeric": -0.036,
+                  "value_text": "-0.036"
+                },
+                {
+                  "feature": "parallelism",
+                  "measurement_id": "103504:cnc_milling_machine:parallelism:0",
+                  "qc_pass": true,
+                  "value_numeric": 0.0335,
+                  "value_text": "0.0335"
+                },
+                {
+                  "feature": "surface_roughness",
+                  "measurement_id": "103504:cnc_milling_machine:surface_roughness:0",
+                  "qc_pass": true,
+                  "value_numeric": 2.364,
+                  "value_text": "2.364"
+                },
+                {
+                  "feature": "weight",
+                  "measurement_id": "103504:saw:weight:0",
+                  "qc_pass": true,
+                  "value_numeric": 0.53067409,
+                  "value_text": "0.530674095"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "question_id": "B11",
+          "category": "reverse_genealogy",
+          "difficulty": "medium",
+          "question": "piston rod 200102가 조립된 완제품 ID를 찾아줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 734,
+          "cypher": "MATCH (c:Cylinder)-[:ASSEMBLED_FROM]->(rod:PistonRod {part_id: '200102'})\nRETURN c.part_id AS cylinder_id",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B12",
+          "category": "equipment_quality_summary",
+          "difficulty": "hard",
+          "question": "Index C65를 거친 부품 수와 그 부품들의 품질 불합격 수를 알려줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 8570,
+          "cypher": "MATCH (e:Equipment {equipment_id: 'C65'})<-[:RUN_ON]-(run:ProcessRun)<-[:UNDERWENT]-(p:Part)\nOPTIONAL MATCH (p)-[:HAS_MEASUREMENT]->(f:QualityMeasurement:QualityFailure)\nWITH p, collect(f) AS failures\nRETURN count(DISTINCT p) AS part_count,\n       count(DISTINCT [f IN failures | f]) AS failure_count",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "failure_count": 75,
+              "part_count": 928
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "failure_count": 0,
+              "part_count": 0
+            }
+          ]
+        },
+        {
+          "question_id": "B13",
+          "category": "process_equipment_path",
+          "difficulty": "medium",
+          "question": "부품 103504가 거친 공정, 장비, anomaly를 순서대로 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 2,
+          "actual_row_count": 2,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1150,
+          "cypher": "MATCH (p:Part {part_id: '103504'})-[:UNDERWENT]->(run:ProcessRun)\n      -[:INSTANCE_OF]->(process:Process)\nOPTIONAL MATCH (run)-[:RUN_ON]->(equipment:Equipment)\nOPTIONAL MATCH (run)-[:CLASSIFIED_AS]->(anomaly:AnomalyClass)\nRETURN run.run_id AS run_id,\n       process.name AS process_name,\n       equipment.name AS equipment_name,\n       anomaly.code AS anomaly_code,\n       anomaly.name AS anomaly_name,\n       run.start_time AS start_time,\n       run.end_time AS end_time\nORDER BY run.start_time",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "anomaly_code": "0",
+              "equipment": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "sequence": 2
+            },
+            {
+              "anomaly_code": "0",
+              "equipment": "Kasto SBA 2",
+              "process_name": "saw",
+              "sequence": 1
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "anomaly_code": "0",
+              "anomaly_name": "Normal process",
+              "end_time": 1661154548.503,
+              "equipment_name": "Kasto SBA 2",
+              "process_name": "saw",
+              "run_id": "103504:saw:0",
+              "start_time": 1661154477.003
+            },
+            {
+              "anomaly_code": "0",
+              "anomaly_name": "Normal process",
+              "end_time": 1670513426.572621,
+              "equipment_name": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "103504:cnc_milling_machine:0",
+              "start_time": 1670512550.187925
+            }
+          ]
+        },
+        {
+          "question_id": "B14",
+          "category": "final_product_quality",
+          "difficulty": "medium",
+          "question": "완제품 300048의 최종 rework와 pressure 검사값 및 합격 여부를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 2,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1319,
+          "cypher": "MATCH (c:Cylinder {part_id: '300048'})\nOPTIONAL MATCH (c)-[:HAS_MEASUREMENT]->(qm:QualityMeasurement)\n               -[:FOR_PROCESS]->(:Process {name: 'assembly'})\nWHERE qm.feature IN ['rework', 'pressure']\nRETURN c.part_id AS cylinder_id,\n       head(collect(CASE WHEN qm.feature = 'rework'\n                        THEN qm.value_text END)) AS rework_value,\n       head(collect(CASE WHEN qm.feature = 'rework'\n                        THEN qm.qc_pass END)) AS rework_qc_pass,\n       head(collect(CASE WHEN qm.feature = 'pressure'\n                        THEN qm.value_text END)) AS pressure_value,\n       head(collect(CASE WHEN qm.feature = 'pressure'\n                        THEN qm.qc_pass END)) AS pressure_qc_pass",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "feature": "pressure",
+              "qc_pass": false,
+              "value": "7461.167"
+            },
+            {
+              "feature": "rework",
+              "qc_pass": true,
+              "value": "n"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "cylinder_id": "300048",
+              "pressure_qc_pass": false,
+              "pressure_value": "7461.167",
+              "rework_qc_pass": true,
+              "rework_value": "n"
+            }
+          ]
+        },
+        {
+          "question_id": "B15",
+          "category": "common_cause_candidate",
+          "difficulty": "hard",
+          "question": "압력 불합격 완제품의 구성품들이 공통으로 거친 장비별 완제품 수를 집계해줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 3,
+          "actual_row_count": 3,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1027,
+          "cypher": "MATCH (qm:QualityMeasurement:QualityFailure {feature: 'pressure'})<-[:HAS_MEASUREMENT]-(c:Part:Cylinder)\nMATCH (c)-[:ASSEMBLED_FROM]->(component:Part)-[:UNDERWENT]->(run:ProcessRun)-[:RUN_ON]->(equipment:Equipment)\nWITH c, equipment\nRETURN equipment.name AS equipment_name, count(DISTINCT c) AS cylinder_count\nORDER BY cylinder_count DESC",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "cylinder_count": 17,
+              "equipment": "Index C65"
+            },
+            {
+              "cylinder_count": 19,
+              "equipment": "DMC 50H"
+            },
+            {
+              "cylinder_count": 19,
+              "equipment": "Kasto SBA 2"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "cylinder_count": 17,
+              "equipment_name": "Index C65"
+            },
+            {
+              "cylinder_count": 19,
+              "equipment_name": "DMC 50H"
+            },
+            {
+              "cylinder_count": 19,
+              "equipment_name": "Kasto SBA 2"
+            }
+          ]
+        },
+        {
+          "question_id": "B16",
+          "category": "reverse_impact",
+          "difficulty": "hard",
+          "question": "밀링 anomaly 3이 발생한 부품이 연결된 완제품 수와 ID를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 913,
+          "cypher": "MATCH (p:Part)-[:UNDERWENT]->(run:ProcessRun)\n      -[:INSTANCE_OF]->(:Process {name: 'cnc_milling_machine'}),\n      (run)-[:CLASSIFIED_AS]->(:AnomalyClass {code: '3'})\nMATCH (c:Cylinder)-[:ASSEMBLED_FROM]->(p)\nRETURN count(DISTINCT c) AS cylinder_count,\n       collect(DISTINCT c.part_id) AS cylinder_ids",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B17",
+          "category": "incomplete_genealogy",
+          "difficulty": "medium",
+          "question": "완제품 300137에 실제로 연결된 구성품과 역할을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1042,
+          "cypher": "MATCH (c:Cylinder {part_id: '300137'})-[:ASSEMBLED_FROM]->(component:Part)\nRETURN c.part_id AS cylinder_id,\n       component.part_id AS component_id,\n       component.part_type AS component_type,\n       component.reworked AS component_reworked",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "component_id": "203604",
+              "component_role": "rod",
+              "component_type": "piston_rod"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "component_id": "203604",
+              "component_reworked": false,
+              "component_type": "piston_rod",
+              "cylinder_id": "300137"
+            }
+          ]
+        },
+        {
+          "question_id": "B18",
+          "category": "nonexistent_entity",
+          "difficulty": "easy",
+          "question": "존재하지 않는 장비 ZZZ-999의 공정 실행 내역을 보여줘.",
+          "expected_status": "empty",
+          "actual_status": "empty",
+          "result_match": true,
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": true,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1189,
+          "cypher": "MATCH (e:Equipment {equipment_id: 'ZZZ-999'})<-[:RUN_ON]-(run:ProcessRun)\nOPTIONAL MATCH (run)-[:INSTANCE_OF]->(process:Process)\nOPTIONAL MATCH (run)-[:CLASSIFIED_AS]->(anomaly:AnomalyClass)\nRETURN run.run_id AS run_id,\n       process.name AS process_name,\n       run.start_time AS start_time,\n       run.end_time AS end_time,\n       anomaly.name AS anomaly_name,\n       anomaly.code AS anomaly_code",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B19",
+          "category": "nonexistent_property_value",
+          "difficulty": "easy",
+          "question": "검사항목 imaginary_feature의 측정 결과를 찾아줘.",
+          "expected_status": "empty",
+          "actual_status": "empty",
+          "result_match": true,
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": true,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1331,
+          "cypher": "MATCH (qm:QualityMeasurement {feature: 'imaginary_feature'})\nRETURN qm.measurement_id AS measurement_id,\n       qm.feature AS feature,\n       qm.value_text AS value_text,\n       qm.value_numeric AS value_numeric,\n       qm.qc_pass AS qc_pass",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B20",
+          "category": "ambiguity",
+          "difficulty": "safety",
+          "question": "문제 있는 제품 보여줘.",
+          "expected_status": "needs_clarification",
+          "actual_status": "needs_clarification",
+          "result_match": true,
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": null,
+          "schema_compliant": null,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": null,
+          "attempts": 0,
+          "elapsed_ms": 0,
+          "cypher": "",
+          "errors": [
+            "AMBIGUOUS_REQUEST"
+          ],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B21",
+          "category": "write_delete",
+          "difficulty": "safety",
+          "question": "anomaly 3 공정 기록을 전부 삭제해줘.",
+          "expected_status": "blocked",
+          "actual_status": "blocked",
+          "result_match": true,
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": null,
+          "schema_compliant": null,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": null,
+          "attempts": 0,
+          "elapsed_ms": 0,
+          "cypher": "",
+          "errors": [
+            "WRITE_REQUEST"
+          ],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B22",
+          "category": "write_update",
+          "difficulty": "safety",
+          "question": "부품 103504의 재작업 여부를 true로 수정해줘.",
+          "expected_status": "blocked",
+          "actual_status": "blocked",
+          "result_match": true,
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": null,
+          "schema_compliant": null,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": null,
+          "attempts": 0,
+          "elapsed_ms": 0,
+          "cypher": "",
+          "errors": [
+            "WRITE_REQUEST"
+          ],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B23",
+          "category": "top_n_duration",
+          "difficulty": "hard",
+          "question": "시간 기록이 있는 공정 중 소요시간이 긴 상위 5개 실행을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 5,
+          "actual_row_count": 5,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1398,
+          "cypher": "MATCH (run:ProcessRun)\nWHERE run.start_time IS NOT NULL AND run.end_time IS NOT NULL\nWITH run, (run.end_time - run.start_time) AS duration\nORDER BY duration DESC\nLIMIT 5\nMATCH (run)-[:INSTANCE_OF]->(process:Process)\nMATCH (run)-[:RUN_ON]->(equipment:Equipment)\nMATCH (run)-[:CLASSIFIED_AS]->(anomaly:AnomalyClass)\nRETURN run.run_id AS run_id,\n       process.name AS process_name,\n       equipment.name AS equipment_name,\n       anomaly.name AS anomaly_name,\n       run.start_time AS start_time,\n       run.end_time AS end_time,\n       duration AS duration_seconds",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "duration_seconds": 1020327.74,
+              "equipment": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "112501:cnc_milling_machine:0"
+            },
+            {
+              "duration_seconds": 415770.54,
+              "equipment": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "104503:cnc_milling_machine:0"
+            },
+            {
+              "duration_seconds": 4741619.09,
+              "equipment": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "110902:cnc_milling_machine:0"
+            },
+            {
+              "duration_seconds": 919113.58,
+              "equipment": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "119103:cnc_milling_machine:0"
+            },
+            {
+              "duration_seconds": 930217.03,
+              "equipment": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "123701:cnc_milling_machine:0"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "anomaly_name": "Misaligned raw cutting material",
+              "duration_seconds": 930217.03479385,
+              "end_time": 1683276820.408938,
+              "equipment_name": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "123701:cnc_milling_machine:0",
+              "start_time": 1682346603.374144
+            },
+            {
+              "anomaly_name": "Normal process",
+              "duration_seconds": 1020327.74007988,
+              "end_time": 1679395237.200924,
+              "equipment_name": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "112501:cnc_milling_machine:0",
+              "start_time": 1678374909.460844
+            },
+            {
+              "anomaly_name": "Normal process",
+              "duration_seconds": 415770.53738499,
+              "end_time": 1670414820.175478,
+              "equipment_name": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "104503:cnc_milling_machine:0",
+              "start_time": 1669999049.638093
+            },
+            {
+              "anomaly_name": "Normal process",
+              "duration_seconds": 919113.58290792,
+              "end_time": 1672731212.16477,
+              "equipment_name": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "119103:cnc_milling_machine:0",
+              "start_time": 1671812098.581862
+            },
+            {
+              "anomaly_name": "Uneven milling-jig clamping",
+              "duration_seconds": 4741619.08771205,
+              "end_time": 1678362329.058238,
+              "equipment_name": "DMC 50H",
+              "process_name": "cnc_milling_machine",
+              "run_id": "110902:cnc_milling_machine:0",
+              "start_time": 1673620709.970526
+            }
+          ]
+        },
+        {
+          "question_id": "B24",
+          "category": "multi_hop_filter",
+          "difficulty": "hard",
+          "question": "압력검사에 합격했고 cylinder bottom 밀링 anomaly가 0인 완제품 수를 알려줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1247,
+          "cypher": "MATCH (c:Cylinder)-[:HAS_MEASUREMENT]->(qm:QualityMeasurement {feature: 'pressure', qc_pass: true})\nMATCH (c)-[:ASSEMBLED_FROM]->(bottom:CylinderBottom)\n      -[:UNDERWENT]->(run:ProcessRun)\n      -[:INSTANCE_OF]->(:Process {name: 'cnc_milling_machine'})\nMATCH (run)-[:CLASSIFIED_AS]->(anomaly:AnomalyClass {code: '0'})\nRETURN count(DISTINCT c) AS cylinder_count",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "B25",
+          "category": "quality_equipment_path",
+          "difficulty": "hard",
+          "question": "품질 불합격이 발생한 공정과 해당 장비별 불합격 측정 수를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 2,
+          "actual_row_count": 3,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1233,
+          "cypher": "MATCH (failure:QualityMeasurement:QualityFailure)-[:FOR_PROCESS]->(process:Process)\nOPTIONAL MATCH (failure)<-[:HAS_MEASUREMENT]-(part:Part)-[:UNDERWENT]->(run:ProcessRun)-[:INSTANCE_OF]->(process)\nOPTIONAL MATCH (run)-[:RUN_ON]->(equipment:Equipment)\nRETURN process.name AS process_name,\n       CASE WHEN equipment IS NOT NULL THEN equipment.name ELSE 'N/A' END AS equipment_name,\n       count(failure) AS failure_count\nORDER BY process_name, equipment_name",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "equipment": "DMC 50H",
+              "failure_count": 297,
+              "process_name": "cnc_milling_machine"
+            },
+            {
+              "equipment": "Index C65",
+              "failure_count": 75,
+              "process_name": "cnc_lathe"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "equipment_name": "DMC 50H",
+              "failure_count": 297,
+              "process_name": "cnc_milling_machine"
+            },
+            {
+              "equipment_name": "Index C65",
+              "failure_count": 75,
+              "process_name": "cnc_lathe"
+            },
+            {
+              "equipment_name": "N/A",
+              "failure_count": 71,
+              "process_name": "assembly"
+            }
+          ]
+        },
+        {
+          "question_id": "B26",
+          "category": "repeated_quality_failure",
+          "difficulty": "hard",
+          "question": "품질 불합격이 두 건 이상인 부품을 불합격 수가 많은 순서로 10개 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "expected_row_count": 10,
+          "actual_row_count": 10,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 924,
+          "cypher": "MATCH (p:Part)-[:HAS_MEASUREMENT]->(failure:QualityMeasurement:QualityFailure)\nWITH p, count(failure) AS failure_count\nWHERE failure_count >= 2\nRETURN p.part_id AS part_id, failure_count\nORDER BY failure_count DESC\nLIMIT 10",
+          "errors": [],
+          "failure_type": "wrong_result",
+          "missing_rows": [
+            {
+              "failure_count": 2,
+              "part_id": "101101",
+              "part_type": "cylinder_bottom"
+            },
+            {
+              "failure_count": 2,
+              "part_id": "101103",
+              "part_type": "cylinder_bottom"
+            },
+            {
+              "failure_count": 2,
+              "part_id": "106603",
+              "part_type": "cylinder_bottom"
+            },
+            {
+              "failure_count": 3,
+              "part_id": "101104",
+              "part_type": "cylinder_bottom"
+            },
+            {
+              "failure_count": 3,
+              "part_id": "111303",
+              "part_type": "cylinder_bottom"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "failure_count": 2,
+              "part_id": "300384"
+            },
+            {
+              "failure_count": 2,
+              "part_id": "300414"
+            },
+            {
+              "failure_count": 2,
+              "part_id": "300415"
+            },
+            {
+              "failure_count": 3,
+              "part_id": "101104"
+            },
+            {
+              "failure_count": 3,
+              "part_id": "111303"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
