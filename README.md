@@ -91,13 +91,41 @@ Text-to-Cypher 엔진을 사용할 수 있도록 FastAPI 경계를 추가했다.
 [제품 리팩터링 1~2단계 검증](./docs/refactor-stage1-2-validation.md)에
 정리했다.
 
+## 제품 리팩터링 2차 — Next.js 제품 UI
+
+AskOosu와 CodeMap에서 참고한 랜딩·내비게이션·대화 기록 패턴을
+FactoryGraph RCA의 실제 업무 흐름에 맞게 다시 설계했다. Streamlit은
+발표·운영 콘솔로 유지하고, Next.js는 외부 사용자가 쓰는 제품 UI다.
+
+```bash
+./scripts/run_product.sh
+```
+
+- 제품 랜딩: `http://127.0.0.1:3000`
+- Query Studio: `http://127.0.0.1:3000/query`
+- 최근 대화: `http://127.0.0.1:3000/history`
+- 그래프 탐색: `http://127.0.0.1:3000/graph`
+- 데이터 운영: `http://127.0.0.1:3000/data`
+- 시스템 상태: `http://127.0.0.1:3000/operations`
+
+Query Studio는 한 화면에서 자연어 답변, 결과표, 인터랙티브 근거
+그래프, 생성 Cypher, 검증·자기수정 이력을 확인한다. 최근 대화 20개는
+브라우저에 로컬 저장한다. 현재 데이터 운영 화면은 검증된 CiP-DMD
+ETL을 안내·진단하는 범위이며, 임의 파일 업로드와 비동기 적재 작업은
+다음 단계로 명시적으로 분리했다.
+
+구현 범위와 검증 결과는
+[제품 리팩터링 3~4단계 검증](./docs/refactor-stage3-4-validation.md)에
+정리했다.
+
 ## MVP 이후로 미룰 것
 
 - HDF5 센서 시계열 전체 적재
 - VectorDB 기반 예제 검색
 - 범용 GraphRAG와 다중 Agent
 - HITL 승인, 외부 알림, PostgreSQL·pgvector·n8n 통합
-- Next.js/FastAPI 풀 분리와 Cytoscape 기반 그래프 탐색기
+- 사용자 계정·서버 동기화 대화 기록
+- 임의 파일 업로드·스키마 매핑·비동기 ETL 작업 관리
 
 ## 발표용 실행
 
