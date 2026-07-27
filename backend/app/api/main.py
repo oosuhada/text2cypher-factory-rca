@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
 from backend.app.services.bootstrap import ServiceBundle, build_service_bundle
+from backend.app.projects import ProjectRegistry
 from backend.app.services.diagnostics import (
     collect_demo_diagnostics,
     diagnostics_pass,
@@ -29,6 +30,9 @@ from .schemas import (
     GraphSchemaResponse,
     HealthResponse,
     NodeSearchResponse,
+    ProjectCreate,
+    ProjectResponse,
+    ProjectUpdate,
     QueryRequest,
     QueryResponse,
     RuntimeResponse,
@@ -88,12 +92,25 @@ def get_bundle(request: Request) -> ServiceBundle:
         ) from error
 
 
-def create_app(bundle_factory: BundleFactory | None = None) -> FastAPI:
+def create_app(
+    bundle_factory: BundleFactory | None = None,
+    project_registry: ProjectRegistry | None = None,
+) -> FastAPI:
     registry = ServiceRegistry(bundle_factory or _default_bundle_factory)
+    projects = project_registry or ProjectRegistry(
+        Path(
+            os.getenv(
+                "P3_PROJECT_REGISTRY_PATH",
+                PROJECT_ROOT / "data" / "processed" / "projects.sqlite3",
+            )
+        )
+    )
+    projects.ensure_default()
 
     @asynccontextmanager
     async def lifespan(application: FastAPI):
         application.state.registry = registry
+        application.state.projects = projects
         yield
         registry.close()
 
@@ -144,15 +161,93 @@ def create_app(bundle_factory: BundleFactory | None = None) -> FastAPI:
             "provider": bundle.provider,
             "model_name": bundle.model_name,
             "transport": "service",
+            "active_project_id": projects.active_project_id() or "cip-dmd",
         }
+
+    @application.get(
+        "/api/v1/projects",
+        response_model=list[ProjectResponse],
+    )
+    def list_projects(include_archived: bool = False) -> list[dict]:
+        return projects.list(include_archived=include_archived)
+
+    @application.post(
+        "/api/v1/projects",
+        response_model=ProjectResponse,
+        status_code=status.HTTP_201_CREATED,
+    )
+    def create_project(payload: ProjectCreate) -> dict:
+        try:
+            return projects.create(**payload.model_dump())
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+
+    @application.get(
+        "/api/v1/projects/active",
+        response_model=ProjectResponse,
+    )
+    def active_project() -> dict:
+        active = projects.active()
+        if active is None:
+            raise HTTPException(status_code=404, detail="활성 프로젝트가 없습니다.")
+        return active
+
+    @application.get(
+        "/api/v1/projects/{project_id}",
+        response_model=ProjectResponse,
+    )
+    def get_project(project_id: str) -> dict:
+        try:
+            return projects.require(project_id)
+        except (KeyError, ValueError) as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+
+    @application.patch(
+        "/api/v1/projects/{project_id}",
+        response_model=ProjectResponse,
+    )
+    def update_project(project_id: str, payload: ProjectUpdate) -> dict:
+        try:
+            return projects.update(
+                project_id,
+                **payload.model_dump(exclude_none=True),
+            )
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+
+    @application.post(
+        "/api/v1/projects/{project_id}/activate",
+        response_model=ProjectResponse,
+    )
+    def activate_project(project_id: str) -> dict:
+        try:
+            return projects.activate(project_id)
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
 
     @application.post("/api/v1/query", response_model=QueryResponse)
     def query_graph(
         payload: QueryRequest,
         bundle: ServiceBundle = Depends(get_bundle),
     ) -> dict:
+        active_project_id = projects.active_project_id()
+        requested_project_id = payload.project_id or active_project_id
+        if requested_project_id != active_project_id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(
+                    f"프로젝트 {requested_project_id}는 아직 활성 상태가 "
+                    "아닙니다. 먼저 activate API를 호출하세요."
+                ),
+            )
         try:
-            return bundle.query_with_fallback(payload.question.strip())
+            result = bundle.query_with_fallback(payload.question.strip())
+            result["project_id"] = requested_project_id
+            return result
         except Exception as error:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,

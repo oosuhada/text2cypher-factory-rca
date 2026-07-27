@@ -19,6 +19,7 @@ QueryStatus = Literal[
 
 class QueryRequest(BaseModel):
     question: str = Field(min_length=1, max_length=2000)
+    project_id: str | None = Field(default=None, min_length=3, max_length=63)
 
     @field_validator("question")
     @classmethod
@@ -62,6 +63,43 @@ class RuntimeResponse(BaseModel):
     provider: str
     model_name: str
     transport: Literal["service"]
+    active_project_id: str
+
+
+ProjectStatus = Literal["draft", "ready", "archived"]
+
+
+class ProjectCreate(BaseModel):
+    project_id: str = Field(min_length=3, max_length=63)
+    name: str = Field(min_length=1, max_length=200)
+    domain_type: str = Field(min_length=1, max_length=200)
+    dataset_name: str = Field(min_length=1, max_length=200)
+    schema_version: str | None = Field(default=None, max_length=80)
+    status: ProjectStatus = "draft"
+
+
+class ProjectUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    domain_type: str | None = Field(
+        default=None, min_length=1, max_length=200
+    )
+    dataset_name: str | None = Field(
+        default=None, min_length=1, max_length=200
+    )
+    schema_version: str | None = Field(default=None, max_length=80)
+    status: ProjectStatus | None = None
+
+
+class ProjectResponse(BaseModel):
+    project_id: str
+    name: str
+    domain_type: str
+    dataset_name: str
+    schema_version: str | None
+    status: ProjectStatus
+    created_at: str
+    updated_at: str
+    is_active: bool = False
 
 
 class NodeIdentity(BaseModel):
