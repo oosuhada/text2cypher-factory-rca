@@ -77,6 +77,14 @@ export type GraphSchema = {
   relationship_types: string[];
 };
 
+export type NodeSearchResponse = {
+  label: string;
+  query: string;
+  identity_property: string;
+  nodes: EvidenceNode[];
+  count: number;
+};
+
 export type SubgraphResponse = {
   root: EvidenceNode | null;
   nodes: EvidenceNode[];

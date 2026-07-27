@@ -69,6 +69,14 @@ class GraphSchemaResponse(BaseModel):
     relationship_types: list[str]
 
 
+class NodeSearchResponse(BaseModel):
+    label: str
+    query: str
+    identity_property: str
+    nodes: list[dict[str, Any]]
+    count: int
+
+
 class SubgraphResponse(BaseModel):
     root: dict[str, Any] | None
     nodes: list[dict[str, Any]]

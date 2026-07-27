@@ -33,6 +33,27 @@ RELATIONSHIP_TYPES = (
     "FOR_PROCESS",
 )
 
+NODE_SEARCH_PROPERTIES = {
+    "Part": ("part_id", "part_type"),
+    "Cylinder": ("part_id", "part_type"),
+    "CylinderBottom": ("part_id", "part_type"),
+    "PistonRod": ("part_id", "part_type"),
+    "Process": ("name", "display_name"),
+    "ProcessRun": ("run_id", "anomaly", "start_time", "end_time"),
+    "Equipment": ("equipment_id", "name", "equipment_type"),
+    "AnomalyClass": ("code", "name", "description"),
+    "QualityMeasurement": (
+        "measurement_id",
+        "feature",
+        "value_text",
+    ),
+    "QualityFailure": (
+        "measurement_id",
+        "feature",
+        "value_text",
+    ),
+}
+
 
 def schema_contract() -> dict[str, Any]:
     return {
@@ -80,6 +101,48 @@ class GraphCatalogService:
 
     def schema(self) -> dict[str, Any]:
         return schema_contract()
+
+    def search_nodes(
+        self,
+        label: str,
+        query: str,
+        limit: int = 12,
+    ) -> dict[str, Any]:
+        if label not in NODE_IDENTITIES:
+            raise ValueError(f"지원하지 않는 노드 라벨입니다: {label}")
+        normalized = query.strip().lower()
+        if not normalized:
+            raise ValueError("검색어는 공백일 수 없습니다.")
+        if not 1 <= limit <= 50:
+            raise ValueError("limit은 1~50이어야 합니다.")
+        identity_property = NODE_IDENTITIES[label]
+        statement = f"""
+        MATCH (node:`{label}`)
+        WHERE any(property IN $properties
+          WHERE toLower(toString(node[property])) CONTAINS $search_term
+        )
+        RETURN node
+        ORDER BY toString(node.`{identity_property}`)
+        LIMIT $limit
+        """
+        with self.driver.session(
+            database=self.database,
+            default_access_mode=READ_ACCESS,
+        ) as session:
+            records = session.run(
+                Query(statement, timeout=self.timeout_seconds),
+                properties=list(NODE_SEARCH_PROPERTIES[label]),
+                search_term=normalized,
+                limit=limit,
+            )
+            nodes = [_node_payload(record["node"]) for record in records]
+        return {
+            "label": label,
+            "query": query.strip(),
+            "identity_property": identity_property,
+            "nodes": nodes,
+            "count": len(nodes),
+        }
 
     def subgraph(
         self,

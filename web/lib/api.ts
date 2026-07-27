@@ -1,6 +1,7 @@
 import type {
   GraphSchema,
   HealthResponse,
+  NodeSearchResponse,
   QueryResponse,
   SubgraphResponse,
 } from "@/lib/types";
@@ -46,6 +47,21 @@ export function getMetrics() {
 
 export function getGraphSchema() {
   return request<GraphSchema>("/api/v1/graph/schema");
+}
+
+export function searchGraphNodes(
+  label: string,
+  searchTerm: string,
+  limit = 12,
+) {
+  const query = new URLSearchParams({
+    label,
+    q: searchTerm,
+    limit: String(limit),
+  });
+  return request<NodeSearchResponse>(
+    `/api/v1/graph/search?${query.toString()}`,
+  );
 }
 
 export function getSubgraph(

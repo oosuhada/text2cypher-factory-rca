@@ -174,6 +174,7 @@ def initialize_session() -> None:
         "active_conversation_id", str(uuid4())
     )
     st.session_state.setdefault("explorer_result", None)
+    st.session_state.setdefault("explorer_search_result", None)
     st.session_state.setdefault("intake_record", None)
     st.session_state.setdefault("intake_approval_token", None)
 
@@ -489,28 +490,136 @@ def render_graph_explorer(services: ServiceBundle) -> None:
         "QualityMeasurement": "품질 측정",
         "QualityFailure": "품질 불합격",
     }
-    with st.form("graph-explorer-form"):
-        label_column, identity_column, depth_column = st.columns([1, 1.5, 1])
-        with label_column:
-            label = st.selectbox(
-                "노드 유형",
-                options=tuple(NODE_IDENTITIES),
-                index=1,
-                format_func=lambda value: label_names.get(value, value),
+    label = st.selectbox(
+        "노드 유형",
+        options=tuple(NODE_IDENTITIES),
+        index=1,
+        format_func=lambda value: label_names.get(value, value),
+        key="graph-explorer-label",
+    )
+
+    st.markdown("#### ID를 몰라도 검색")
+    st.caption(
+        "노드 ID, 공정·장비 이름, 이상 유형, 측정 항목의 일부를 "
+        "검색한 뒤 관계를 펼칠 수 있습니다."
+    )
+    with st.form("graph-node-search-form"):
+        search_column, button_column = st.columns([3, 1])
+        with search_column:
+            search_term = st.text_input(
+                "노드 검색어",
+                placeholder="예: pressure, anomaly, 3000",
+                label_visibility="collapsed",
             )
-        with identity_column:
-            identity = st.text_input(
-                f"식별값 · {NODE_IDENTITIES[label]}",
-                value="300002" if label == "Cylinder" else "",
-                placeholder="예: 300002",
+        with button_column:
+            search_submitted = st.form_submit_button(
+                "노드 검색",
+                width="stretch",
             )
-        with depth_column:
-            depth = st.slider("탐색 깊이", 1, 3, 2)
-        submitted = st.form_submit_button(
-            "관계 탐색",
-            type="primary",
-            width="stretch",
-        )
+    if search_submitted:
+        if not search_term.strip():
+            st.warning("검색어를 입력하세요.")
+        else:
+            try:
+                with st.spinner("일치하는 그래프 노드를 찾고 있습니다."):
+                    st.session_state["explorer_search_result"] = (
+                        services.graph.search_nodes(
+                            label=label,
+                            query=search_term.strip(),
+                            limit=15,
+                        )
+                    )
+            except Exception as error:
+                st.error(f"노드 검색에 실패했습니다: {error}")
+
+    search_result = st.session_state.get("explorer_search_result")
+    if search_result and search_result.get("label") == label:
+        nodes = search_result.get("nodes", [])
+        if nodes:
+            identity_property = search_result["identity_property"]
+
+            def search_option_label(index: int) -> str:
+                node = nodes[index]
+                properties = node.get("properties", {})
+                identity_value = properties.get(identity_property, node["id"])
+                secondary = (
+                    properties.get("display_name")
+                    or properties.get("name")
+                    or properties.get("part_type")
+                    or properties.get("feature")
+                )
+                return " · ".join(
+                    value
+                    for value in (str(identity_value), str(secondary or ""))
+                    if value
+                )
+
+            selection_column, depth_column, action_column = st.columns(
+                [2, 1, 1]
+            )
+            with selection_column:
+                selected_index = st.selectbox(
+                    f"검색 결과 {len(nodes)}개",
+                    options=range(len(nodes)),
+                    format_func=search_option_label,
+                    key="graph-search-selection",
+                )
+            with depth_column:
+                search_depth = st.select_slider(
+                    "탐색 깊이",
+                    options=(1, 2, 3),
+                    value=2,
+                    key="graph-search-depth",
+                )
+            with action_column:
+                st.write("")
+                explore_selected = st.button(
+                    "선택 노드 탐색",
+                    type="primary",
+                    width="stretch",
+                )
+            if explore_selected:
+                selected_node = nodes[selected_index]
+                selected_identity = str(
+                    selected_node.get("properties", {}).get(
+                        identity_property, ""
+                    )
+                )
+                try:
+                    with st.spinner("선택한 노드의 관계를 조회하고 있습니다."):
+                        payload = services.graph.subgraph(
+                            label=label,
+                            identity=selected_identity,
+                            depth=search_depth,
+                            limit=70,
+                        )
+                    st.session_state["explorer_result"] = {
+                        "label": label,
+                        "identity": selected_identity,
+                        "depth": search_depth,
+                        "payload": payload,
+                    }
+                except Exception as error:
+                    st.error(f"관계 탐색에 실패했습니다: {error}")
+        else:
+            st.info("일치하는 노드가 없습니다. 다른 검색어를 입력해보세요.")
+
+    with st.expander("정확한 ID로 바로 탐색"):
+        with st.form("graph-explorer-form"):
+            identity_column, depth_column = st.columns([1.5, 1])
+            with identity_column:
+                identity = st.text_input(
+                    f"식별값 · {NODE_IDENTITIES[label]}",
+                    value="300002" if label == "Cylinder" else "",
+                    placeholder="예: 300002",
+                )
+            with depth_column:
+                depth = st.slider("탐색 깊이", 1, 3, 2)
+            submitted = st.form_submit_button(
+                "관계 탐색",
+                type="primary",
+                width="stretch",
+            )
 
     if submitted:
         if not identity.strip():
