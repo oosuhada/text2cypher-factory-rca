@@ -20,34 +20,21 @@ import zipfile
 
 from neo4j import GraphDatabase
 
+from backend.app.etl.adapters import CipDmdAdapter, EtlAdapter
+from backend.app.etl.pipeline import EtlPipeline
 from backend.app.etl.cli import (
     password_from_keychain,
     write_quarantine,
     write_report,
 )
-from backend.app.etl.extract import (
-    QUALITY_CSV_SPECS,
-    SOURCE_SPECS,
-    audit_quality_csvs,
-    extract_records,
-)
-from backend.app.etl.load import graph_counts, load_payload
-from backend.app.etl.transform import transform_records
-from backend.app.etl.validate import EXPECTED_COUNTS, validate_payload
 
 
 MAX_ARCHIVE_BYTES = 25 * 1024 * 1024
 MAX_UNCOMPRESSED_BYTES = 100 * 1024 * 1024
 MAX_ARCHIVE_MEMBERS = 100
 APPROVAL_TTL_SECONDS = 30 * 60
-REQUIRED_SOURCE_PATHS = tuple(
-    dict.fromkeys(
-        [
-            *(spec[0] for spec in SOURCE_SPECS),
-            *QUALITY_CSV_SPECS.keys(),
-        ]
-    )
-)
+DEFAULT_ADAPTER = CipDmdAdapter()
+REQUIRED_SOURCE_PATHS = DEFAULT_ADAPTER.required_paths()
 
 ModeSwitcher = Callable[[str], None]
 
@@ -124,6 +111,7 @@ class DataIntakeService:
         processed_root: Path | None = None,
         intake_root: Path | None = None,
         mode_switcher: ModeSwitcher | None = None,
+        adapter: EtlAdapter | None = None,
     ):
         self.project_root = project_root.resolve()
         self.processed_root = (
@@ -134,6 +122,8 @@ class DataIntakeService:
         ).resolve()
         self.mode_switcher = mode_switcher or self._switch_homebrew_mode
         self.schema_path = self.project_root / "infra" / "schema.cypher"
+        self.adapter = adapter or CipDmdAdapter()
+        self.pipeline = EtlPipeline(self.adapter, self.schema_path)
 
     def _run_root(self, run_id: str) -> Path:
         if not run_id or any(character not in "0123456789abcdef-" for character in run_id):
@@ -336,10 +326,10 @@ class DataIntakeService:
 
         raw_root = self._run_root(run_id) / "raw"
         try:
-            extracted = extract_records(raw_root)
-            quality_csv_audit = audit_quality_csvs(raw_root)
-            payload = transform_records(extracted)
-            validation = validate_payload(payload)
+            prepared = self.pipeline.dry_run(raw_root)
+            payload = prepared.payload
+            validation = prepared.validation
+            quality_csv_audit = prepared.source_audit["quality_csvs"]
             approval_token = secrets.token_urlsafe(24)
             expires_at = _utc_now().timestamp() + APPROVAL_TTL_SECONDS
             record.update(
@@ -485,10 +475,10 @@ class DataIntakeService:
             raise RuntimeError("검증 기준 원본과 다른 번들은 적재할 수 없습니다.")
 
         raw_root = self._run_root(run_id) / "raw"
-        extracted = extract_records(raw_root)
-        quality_csv_audit = audit_quality_csvs(raw_root)
-        payload = transform_records(extracted)
-        validation = validate_payload(payload)
+        prepared = self.pipeline.dry_run(raw_root)
+        payload = prepared.payload
+        validation = prepared.validation
+        quality_csv_audit = prepared.source_audit["quality_csvs"]
 
         with self._exclusive_load(run_id):
             record["approval_token_sha256"] = None
@@ -501,10 +491,16 @@ class DataIntakeService:
             try:
                 preflight_driver, database = self._wait_for_driver()
                 try:
-                    before = graph_counts(preflight_driver, database)
+                    before = self.pipeline.graph_counts(
+                        preflight_driver, database
+                    )
                 finally:
                     preflight_driver.close()
-                if before not in ({name: 0 for name in EXPECTED_COUNTS}, EXPECTED_COUNTS):
+                expected_counts = dict(self.adapter.expected_counts)
+                if before not in (
+                    {name: 0 for name in expected_counts},
+                    expected_counts,
+                ):
                     raise RuntimeError(
                         "현재 Neo4j가 빈 CiP-DMD 그래프 또는 검증된 기준 "
                         "상태가 아니므로 UI 적재를 중단합니다."
@@ -514,14 +510,13 @@ class DataIntakeService:
                 self.mode_switcher("loader")
                 driver, database = self._wait_for_driver()
                 try:
-                    counters = load_payload(
+                    counters = self.pipeline.load(
                         driver,
                         database,
-                        payload,
-                        self.schema_path,
+                        prepared,
                         batch_size=batch_size,
                     )
-                    after = graph_counts(driver, database)
+                    after = self.pipeline.graph_counts(driver, database)
                 finally:
                     driver.close()
                 if after != validation["counts"]:

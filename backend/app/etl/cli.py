@@ -12,10 +12,8 @@ from typing import Any
 
 from neo4j import GraphDatabase
 
-from .extract import audit_quality_csvs, extract_records
-from .load import graph_counts, load_payload
-from .transform import transform_records
-from .validate import validate_payload
+from .adapters import CipDmdAdapter
+from .pipeline import EtlPipeline
 
 
 def password_from_keychain(username: str) -> str | None:
@@ -88,10 +86,12 @@ def main() -> None:
     processed_root = project_root / "data" / "processed"
     schema_path = project_root / "infra" / "schema.cypher"
 
-    extracted = extract_records(raw_root)
-    quality_csv_audit = audit_quality_csvs(raw_root)
-    payload = transform_records(extracted)
-    validation = validate_payload(payload)
+    adapter = CipDmdAdapter()
+    pipeline = EtlPipeline(adapter, schema_path)
+    prepared = pipeline.dry_run(raw_root)
+    payload = prepared.payload
+    validation = prepared.validation
+    quality_csv_audit = prepared.source_audit["quality_csvs"]
     quarantine_path = write_quarantine(
         processed_root, payload.quarantined
     )
@@ -124,15 +124,14 @@ def main() -> None:
 
     with GraphDatabase.driver(uri, auth=(username, password)) as driver:
         driver.verify_connectivity()
-        before = graph_counts(driver, database)
-        first_counters = load_payload(
+        before = pipeline.graph_counts(driver, database)
+        first_counters = pipeline.load(
             driver,
             database,
-            payload,
-            schema_path,
+            prepared,
             batch_size=args.batch_size,
         )
-        after_first = graph_counts(driver, database)
+        after_first = pipeline.graph_counts(driver, database)
         if after_first != validation["counts"]:
             raise RuntimeError(
                 "Loaded graph counts do not match the validated payload: "
@@ -148,14 +147,13 @@ def main() -> None:
         }
 
         if args.verify_idempotency:
-            second_counters = load_payload(
+            second_counters = pipeline.load(
                 driver,
                 database,
-                payload,
-                schema_path,
+                prepared,
                 batch_size=args.batch_size,
             )
-            after_second = graph_counts(driver, database)
+            after_second = pipeline.graph_counts(driver, database)
             idempotent = after_second == after_first
             report["database"]["after_second"] = after_second
             report["database"]["second_load_counters"] = second_counters
