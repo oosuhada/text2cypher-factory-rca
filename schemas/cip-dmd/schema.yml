@@ -1,6 +1,7 @@
 project_id: cip-dmd
 version: "1.1"
 source_version: "CiP-DMD public release"
+isolation_mode: database
 title: CiP-DMD Manufacturing Genealogy
 nodes:
   - label: Part

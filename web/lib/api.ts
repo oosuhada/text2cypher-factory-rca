@@ -71,6 +71,38 @@ export function getProjectReadiness(projectId: string) {
   );
 }
 
+export function promoteProject(projectId: string) {
+  return request<ProjectReadiness>(
+    `/api/v1/projects/${projectId}/readiness/promote`,
+    { method: "POST" },
+  );
+}
+
+export function validateNeo4jConnector(
+  projectId: string,
+  payload: {
+    uri: string;
+    database: string;
+    username: string;
+    password_env: string;
+  },
+) {
+  return request<Record<string, unknown>>(
+    `/api/v1/projects/${projectId}/connectors/neo4j/validate`,
+    { method: "POST", body: JSON.stringify(payload) },
+  );
+}
+
+export function approveNeo4jConnector(
+  projectId: string,
+  connectorId: string,
+) {
+  return request<Record<string, unknown>>(
+    `/api/v1/projects/${projectId}/connectors/neo4j/${connectorId}/approve`,
+    { method: "POST" },
+  );
+}
+
 export function profileDataset(
   projectId: string,
   files: { filename: string; content_base64: string }[],

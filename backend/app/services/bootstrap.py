@@ -72,9 +72,17 @@ def build_service_bundle(
     model_name: str | None = None,
     project_id: str = "cip-dmd",
     schema_context: str | None = None,
+    neo4j_connection: dict[str, str] | None = None,
 ) -> ServiceBundle:
-    username = os.getenv("NEO4J_USERNAME", "neo4j")
-    password = os.getenv("NEO4J_PASSWORD") or password_from_keychain(username)
+    connection = neo4j_connection or {}
+    username = connection.get("username") or os.getenv(
+        "NEO4J_USERNAME", "neo4j"
+    )
+    password = (
+        connection.get("password")
+        or os.getenv("NEO4J_PASSWORD")
+        or password_from_keychain(username)
+    )
     if not password:
         raise RuntimeError(
             "Neo4j 비밀번호가 없습니다. NEO4J_PASSWORD 또는 macOS Keychain을 설정하세요."
@@ -98,7 +106,8 @@ def build_service_bundle(
         )
 
     driver = GraphDatabase.driver(
-        os.getenv("NEO4J_URI", "neo4j://localhost:7687"),
+        connection.get("uri")
+        or os.getenv("NEO4J_URI", "neo4j://localhost:7687"),
         auth=(username, password),
     )
     driver.verify_connectivity()
@@ -152,7 +161,9 @@ def build_service_bundle(
         resolved_model_name = "gold-lookup"
         model = GoldCypherModel(examples)
 
-    database = os.getenv("NEO4J_DATABASE", "neo4j")
+    database = connection.get("database") or os.getenv(
+        "NEO4J_DATABASE", "neo4j"
+    )
     primary_graph = Neo4jReadGraph(driver, database=database)
     if prompt_contract:
         schema_manifest = SchemaRegistry(project_root / "schemas").load(

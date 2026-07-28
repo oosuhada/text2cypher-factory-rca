@@ -207,10 +207,10 @@ class ApiContractTest(unittest.TestCase):
                 "name": "Equipment History",
                 "domain_type": "maintenance",
                 "dataset_name": "Synthetic Maintenance",
-                "status": "ready",
             },
         )
         self.assertEqual(created.status_code, 201)
+        self.assertEqual(created.json()["status"], "draft")
         project_query = self.client.post(
             "/api/v1/query",
             json={
@@ -218,10 +218,7 @@ class ApiContractTest(unittest.TestCase):
                 "question": "장비를 보여줘.",
             },
         )
-        self.assertEqual(project_query.status_code, 200)
-        self.assertEqual(
-            project_query.json()["project_id"], "equipment-history"
-        )
+        self.assertEqual(project_query.status_code, 409)
         activated = self.client.post(
             "/api/v1/projects/equipment-history/activate"
         )
@@ -233,14 +230,21 @@ class ApiContractTest(unittest.TestCase):
                 "question": "장비를 보여줘.",
             },
         )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["project_id"], "equipment-history")
+        self.assertEqual(response.status_code, 409)
         readiness = self.client.get(
             "/api/v1/projects/equipment-history/readiness"
         )
         self.assertEqual(readiness.status_code, 200)
-        self.assertTrue(readiness.json()["can_query"])
-        self.assertEqual(readiness.json()["next_action"], "query")
+        self.assertFalse(readiness.json()["can_query"])
+        self.assertEqual(readiness.json()["next_action"], "upload")
+        self.assertEqual(
+            readiness.json()["checks"]["source"]["status"], "FAIL"
+        )
+        bypass = self.client.patch(
+            "/api/v1/projects/equipment-history",
+            json={"status": "ready"},
+        )
+        self.assertEqual(bypass.status_code, 422)
 
     def test_empty_custom_project_is_blocked_before_llm_query(self):
         created = self.client.post(
@@ -261,7 +265,7 @@ class ApiContractTest(unittest.TestCase):
             },
         )
         self.assertEqual(response.status_code, 409)
-        self.assertIn("적재된 그래프 데이터", response.json()["detail"])
+        self.assertIn("readiness gate", response.json()["detail"])
 
     def test_graph_load_is_disabled_without_explicit_server_opt_in(self):
         response = self.client.post(
@@ -274,7 +278,7 @@ class ApiContractTest(unittest.TestCase):
         self.assertEqual(response.status_code, 403)
         self.assertIn("비활성화", response.json()["detail"])
 
-    def test_successful_graph_load_promotes_project_to_ready(self):
+    def test_successful_graph_load_requires_evaluation_before_ready(self):
         self.client.post(
             "/api/v1/projects",
             json={
@@ -284,8 +288,11 @@ class ApiContractTest(unittest.TestCase):
                 "dataset_name": "Load data",
             },
         )
-        self.projects.update(
-            "load-project", status="mapping_ready"
+        self.projects.transition(
+            "load-project", "profiling", reason="test"
+        )
+        self.projects.transition(
+            "load-project", "mapping_review", reason="test"
         )
         with patch.dict(
             "os.environ",
@@ -300,8 +307,17 @@ class ApiContractTest(unittest.TestCase):
             )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
-            self.projects.require("load-project")["status"], "ready"
+            self.projects.require("load-project")["status"],
+            "evaluation_required",
         )
+        blocked = self.client.post(
+            "/api/v1/query",
+            json={
+                "project_id": "load-project",
+                "question": "장비를 보여줘.",
+            },
+        )
+        self.assertEqual(blocked.status_code, 409)
 
     def test_query_contract_exposes_cypher_rows_and_evidence(self):
         response = self.client.post(

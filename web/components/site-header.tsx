@@ -40,6 +40,10 @@ export function SiteHeader() {
   } = useProject();
   const statusLabel = readiness?.can_query
     ? `${readiness.node_count.toLocaleString()} nodes`
+    : readiness?.next_action === "evaluate"
+      ? "Evaluation required"
+      : readiness?.next_action === "connect"
+        ? "Connection required"
     : readiness?.next_action === "load"
       ? "Load required"
       : readiness?.next_action === "map"

@@ -512,6 +512,7 @@ class MappingWorkspace:
         manifest = {
             "project_id": project_id,
             "version": schema_version,
+            "isolation_mode": "property",
             "source_version": mapping.get(
                 "source_version", upload_id
             ),

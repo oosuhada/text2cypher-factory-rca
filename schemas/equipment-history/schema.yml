@@ -1,6 +1,7 @@
 project_id: equipment-history
 version: '1.0'
 source_version: 'synthetic-equipment-history-v1'
+isolation_mode: property
 title: Equipment Maintenance History
 nodes:
 - label: Equipment

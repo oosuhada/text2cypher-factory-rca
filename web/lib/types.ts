@@ -79,11 +79,24 @@ export type Project = {
   schema_version: string | null;
   status:
     | "draft"
-    | "mapping_ready"
+    | "profiling"
+    | "mapping_review"
     | "loading"
-    | "load_failed"
+    | "validating"
+    | "evaluation_required"
     | "ready"
+    | "failed"
     | "archived";
+  description: string;
+  industry: string;
+  owner: string;
+  security_classification: string;
+  source_type: "file" | "neo4j";
+  source_version: string | null;
+  connector_id: string | null;
+  prompt_version: string | null;
+  gold_version: string | null;
+  evaluation_version: string | null;
   created_at: string;
   updated_at: string;
   is_active: boolean;
@@ -92,6 +105,7 @@ export type Project = {
 export type ProjectReadiness = {
   project_id: string;
   lifecycle_status: Project["status"];
+  source_type: "file" | "neo4j";
   upload_count: number;
   mapping_approved: boolean;
   schema_available: boolean;
@@ -99,7 +113,28 @@ export type ProjectReadiness = {
   relationship_count: number;
   can_query: boolean;
   can_load: boolean;
-  next_action: "upload" | "map" | "load" | "query";
+  eligible_for_ready: boolean;
+  next_action:
+    | "upload"
+    | "connect"
+    | "map"
+    | "load"
+    | "validate"
+    | "evaluate"
+    | "activate"
+    | "query";
+  checks: Record<
+    string,
+    { status: "PASS" | "FAIL"; detail: string; version: string | null }
+  >;
+  versions: Record<string, string | null>;
+  artifacts: Record<string, Record<string, unknown>>;
+  transitions: {
+    from_status: string | null;
+    to_status: string;
+    reason: string;
+    created_at: string;
+  }[];
 };
 
 export type DatasetProfile = {

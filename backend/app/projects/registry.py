@@ -1,12 +1,13 @@
-"""SQLite-backed project metadata and active workspace selection."""
+"""SQLite-backed project lifecycle, lineage, and active workspace registry."""
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from contextlib import contextmanager
+from datetime import datetime, timezone
+import json
+from pathlib import Path
 import re
 import sqlite3
-from pathlib import Path
 from threading import RLock
 from typing import Any, Iterator
 
@@ -14,11 +15,37 @@ from typing import Any, Iterator
 PROJECT_ID_PATTERN = re.compile(r"^[a-z][a-z0-9-]{2,62}$")
 PROJECT_STATUSES = {
     "draft",
-    "mapping_ready",
+    "profiling",
+    "mapping_review",
     "loading",
-    "load_failed",
+    "validating",
+    "evaluation_required",
     "ready",
+    "failed",
     "archived",
+}
+STATUS_MIGRATIONS = {
+    "mapping_ready": "mapping_review",
+    "load_failed": "failed",
+}
+ALLOWED_TRANSITIONS = {
+    "draft": {"profiling", "archived"},
+    "profiling": {"mapping_review", "failed", "archived"},
+    "mapping_review": {"loading", "profiling", "failed", "archived"},
+    "loading": {"validating", "failed", "archived"},
+    "validating": {"evaluation_required", "failed", "archived"},
+    "evaluation_required": {"ready", "profiling", "failed", "archived"},
+    "ready": {"profiling", "evaluation_required", "archived"},
+    "failed": {
+        "draft",
+        "profiling",
+        "mapping_review",
+        "loading",
+        "validating",
+        "evaluation_required",
+        "archived",
+    },
+    "archived": set(),
 }
 
 
@@ -27,6 +54,8 @@ def _now() -> str:
 
 
 class ProjectRegistry:
+    """Persist project metadata without allowing readiness bypasses."""
+
     def __init__(self, path: Path):
         self.path = path.resolve()
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -47,6 +76,22 @@ class ProjectRegistry:
         finally:
             connection.close()
 
+    @staticmethod
+    def _add_column(
+        connection: sqlite3.Connection,
+        table: str,
+        name: str,
+        declaration: str,
+    ) -> None:
+        columns = {
+            row["name"]
+            for row in connection.execute(f"PRAGMA table_info({table})")
+        }
+        if name not in columns:
+            connection.execute(
+                f"ALTER TABLE {table} ADD COLUMN {name} {declaration}"
+            )
+
     def _initialize(self) -> None:
         with self._connect() as connection:
             connection.executescript(
@@ -65,8 +110,49 @@ class ProjectRegistry:
                     key TEXT PRIMARY KEY,
                     value TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS project_transitions (
+                    transition_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    project_id TEXT NOT NULL,
+                    from_status TEXT,
+                    to_status TEXT NOT NULL,
+                    reason TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    FOREIGN KEY(project_id) REFERENCES projects(project_id)
+                );
+                CREATE TABLE IF NOT EXISTS project_artifacts (
+                    project_id TEXT NOT NULL,
+                    artifact_type TEXT NOT NULL,
+                    version TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    fingerprint TEXT,
+                    metadata_json TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    PRIMARY KEY(project_id, artifact_type),
+                    FOREIGN KEY(project_id) REFERENCES projects(project_id)
+                );
                 """
             )
+            for name, declaration in (
+                ("description", "TEXT NOT NULL DEFAULT ''"),
+                ("industry", "TEXT NOT NULL DEFAULT 'manufacturing'"),
+                ("owner", "TEXT NOT NULL DEFAULT ''"),
+                (
+                    "security_classification",
+                    "TEXT NOT NULL DEFAULT 'internal'",
+                ),
+                ("source_type", "TEXT NOT NULL DEFAULT 'file'"),
+                ("source_version", "TEXT"),
+                ("connector_id", "TEXT"),
+                ("prompt_version", "TEXT"),
+                ("gold_version", "TEXT"),
+                ("evaluation_version", "TEXT"),
+            ):
+                self._add_column(connection, "projects", name, declaration)
+            for old, new in STATUS_MIGRATIONS.items():
+                connection.execute(
+                    "UPDATE projects SET status = ? WHERE status = ?",
+                    (new, old),
+                )
 
     @staticmethod
     def _validate_project_id(project_id: str) -> str:
@@ -79,12 +165,18 @@ class ProjectRegistry:
         return normalized
 
     @staticmethod
-    def _validate_text(value: str, field: str) -> str:
+    def _validate_text(
+        value: str,
+        field: str,
+        *,
+        maximum: int = 200,
+        allow_empty: bool = False,
+    ) -> str:
         normalized = value.strip()
-        if not normalized:
+        if not allow_empty and not normalized:
             raise ValueError(f"{field}은 비어 있을 수 없습니다.")
-        if len(normalized) > 200:
-            raise ValueError(f"{field}은 200자를 초과할 수 없습니다.")
+        if len(normalized) > maximum:
+            raise ValueError(f"{field}은 {maximum}자를 초과할 수 없습니다.")
         return normalized
 
     @staticmethod
@@ -100,7 +192,20 @@ class ProjectRegistry:
                 domain_type="manufacturing-process",
                 dataset_name="CiP-DMD",
                 schema_version="1.1",
+                source_type="file",
+                source_version="CiP-DMD public release",
                 status="ready",
+                _bootstrap=True,
+            )
+        elif (
+            existing.get("source_version") != "CiP-DMD public release"
+            or existing.get("schema_version") != "1.1"
+        ):
+            existing = self.update(
+                "cip-dmd",
+                schema_version="1.1",
+                source_type="file",
+                source_version="CiP-DMD public release",
             )
         if self.active_project_id() is None:
             self.activate(existing["project_id"])
@@ -115,13 +220,37 @@ class ProjectRegistry:
         dataset_name: str,
         schema_version: str | None = None,
         status: str = "draft",
+        description: str = "",
+        industry: str = "manufacturing",
+        owner: str = "",
+        security_classification: str = "internal",
+        source_type: str = "file",
+        source_version: str | None = None,
+        connector_id: str | None = None,
+        _bootstrap: bool = False,
     ) -> dict[str, Any]:
         project_id = self._validate_project_id(project_id)
         name = self._validate_text(name, "name")
         domain_type = self._validate_text(domain_type, "domain_type")
         dataset_name = self._validate_text(dataset_name, "dataset_name")
+        description = self._validate_text(
+            description, "description", maximum=2000, allow_empty=True
+        )
+        industry = self._validate_text(industry, "industry")
+        owner = self._validate_text(
+            owner, "owner", maximum=200, allow_empty=True
+        )
+        security_classification = self._validate_text(
+            security_classification, "security_classification"
+        )
+        if source_type not in {"file", "neo4j"}:
+            raise ValueError("source_type은 file 또는 neo4j여야 합니다.")
         if status not in PROJECT_STATUSES:
             raise ValueError(f"지원하지 않는 프로젝트 상태입니다: {status}")
+        if status != "draft" and not _bootstrap:
+            raise ValueError(
+                "새 프로젝트는 draft 상태로만 생성할 수 있습니다."
+            )
         timestamp = _now()
         with self._lock, self._connect() as connection:
             try:
@@ -129,8 +258,11 @@ class ProjectRegistry:
                     """
                     INSERT INTO projects (
                         project_id, name, domain_type, dataset_name,
-                        schema_version, status, created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        schema_version, status, created_at, updated_at,
+                        description, industry, owner,
+                        security_classification, source_type,
+                        source_version, connector_id
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         project_id,
@@ -140,6 +272,26 @@ class ProjectRegistry:
                         schema_version,
                         status,
                         timestamp,
+                        timestamp,
+                        description,
+                        industry,
+                        owner,
+                        security_classification,
+                        source_type,
+                        source_version,
+                        connector_id,
+                    ),
+                )
+                connection.execute(
+                    """
+                    INSERT INTO project_transitions (
+                        project_id, from_status, to_status, reason, created_at
+                    ) VALUES (?, NULL, ?, ?, ?)
+                    """,
+                    (
+                        project_id,
+                        status,
+                        "bootstrap" if _bootstrap else "project_created",
                         timestamp,
                     ),
                 )
@@ -189,9 +341,46 @@ class ProjectRegistry:
         domain_type: str | None = None,
         dataset_name: str | None = None,
         schema_version: str | None = None,
+        description: str | None = None,
+        industry: str | None = None,
+        owner: str | None = None,
+        security_classification: str | None = None,
+        source_type: str | None = None,
+        source_version: str | None = None,
+        connector_id: str | None = None,
+        prompt_version: str | None = None,
+        gold_version: str | None = None,
+        evaluation_version: str | None = None,
         status: str | None = None,
+        transition_reason: str = "metadata_update",
     ) -> dict[str, Any]:
         project = self.require(project_id)
+        metadata_changes = (
+            name,
+            domain_type,
+            dataset_name,
+            schema_version,
+            description,
+            industry,
+            owner,
+            security_classification,
+            source_type,
+            source_version,
+            connector_id,
+            prompt_version,
+            gold_version,
+            evaluation_version,
+        )
+        if status is not None and any(
+            value is not None for value in metadata_changes
+        ):
+            raise ValueError(
+                "상태 전이와 metadata 수정은 한 요청에서 함께 할 수 없습니다."
+            )
+        if status is not None and status != project["status"]:
+            return self.transition(
+                project_id, status, reason=transition_reason
+            )
         values = {
             "name": (
                 self._validate_text(name, "name")
@@ -213,36 +402,209 @@ class ProjectRegistry:
                 if schema_version is not None
                 else project["schema_version"]
             ),
-            "status": status or project["status"],
+            "description": (
+                self._validate_text(
+                    description,
+                    "description",
+                    maximum=2000,
+                    allow_empty=True,
+                )
+                if description is not None
+                else project["description"]
+            ),
+            "industry": (
+                self._validate_text(industry, "industry")
+                if industry is not None
+                else project["industry"]
+            ),
+            "owner": (
+                self._validate_text(owner, "owner", allow_empty=True)
+                if owner is not None
+                else project["owner"]
+            ),
+            "security_classification": (
+                self._validate_text(
+                    security_classification,
+                    "security_classification",
+                )
+                if security_classification is not None
+                else project["security_classification"]
+            ),
+            "source_type": (
+                source_type
+                if source_type is not None
+                else project["source_type"]
+            ),
+            "source_version": (
+                source_version
+                if source_version is not None
+                else project["source_version"]
+            ),
+            "connector_id": (
+                connector_id
+                if connector_id is not None
+                else project["connector_id"]
+            ),
+            "prompt_version": (
+                prompt_version
+                if prompt_version is not None
+                else project["prompt_version"]
+            ),
+            "gold_version": (
+                gold_version
+                if gold_version is not None
+                else project["gold_version"]
+            ),
+            "evaluation_version": (
+                evaluation_version
+                if evaluation_version is not None
+                else project["evaluation_version"]
+            ),
         }
-        if values["status"] not in PROJECT_STATUSES:
-            raise ValueError(
-                f"지원하지 않는 프로젝트 상태입니다: {values['status']}"
-            )
-        if (
-            values["status"] == "archived"
-            and self.active_project_id() == project_id
-        ):
-            raise ValueError("활성 프로젝트는 먼저 다른 프로젝트로 전환하세요.")
+        if values["source_type"] not in {"file", "neo4j"}:
+            raise ValueError("source_type은 file 또는 neo4j여야 합니다.")
         with self._lock, self._connect() as connection:
             connection.execute(
                 """
                 UPDATE projects SET
                     name = ?, domain_type = ?, dataset_name = ?,
-                    schema_version = ?, status = ?, updated_at = ?
+                    schema_version = ?, description = ?, industry = ?,
+                    owner = ?, security_classification = ?, source_type = ?,
+                    source_version = ?, connector_id = ?, prompt_version = ?,
+                    gold_version = ?, evaluation_version = ?, updated_at = ?
                 WHERE project_id = ?
                 """,
                 (
-                    values["name"],
-                    values["domain_type"],
-                    values["dataset_name"],
-                    values["schema_version"],
-                    values["status"],
+                    *values.values(),
                     _now(),
                     project_id,
                 ),
             )
         return self.require(project_id)
+
+    def transition(
+        self,
+        project_id: str,
+        target: str,
+        *,
+        reason: str,
+    ) -> dict[str, Any]:
+        project = self.require(project_id)
+        target = STATUS_MIGRATIONS.get(target, target)
+        if target not in PROJECT_STATUSES:
+            raise ValueError(f"지원하지 않는 프로젝트 상태입니다: {target}")
+        current = project["status"]
+        if current == target:
+            return project
+        if target not in ALLOWED_TRANSITIONS[current]:
+            raise ValueError(
+                f"허용되지 않는 상태 전이입니다: {current} → {target}"
+            )
+        if target == "archived" and self.active_project_id() == project_id:
+            raise ValueError("활성 프로젝트는 먼저 다른 프로젝트로 전환하세요.")
+        timestamp = _now()
+        with self._lock, self._connect() as connection:
+            cursor = connection.execute(
+                "UPDATE projects SET status = ?, updated_at = ? "
+                "WHERE project_id = ? AND status = ?",
+                (target, timestamp, project_id, current),
+            )
+            if cursor.rowcount != 1:
+                raise RuntimeError(
+                    "동시에 상태가 변경되었습니다. 최신 상태에서 다시 시도하세요."
+                )
+            connection.execute(
+                """
+                INSERT INTO project_transitions (
+                    project_id, from_status, to_status, reason, created_at
+                ) VALUES (?, ?, ?, ?, ?)
+                """,
+                (project_id, current, target, reason[:500], timestamp),
+            )
+        return self.require(project_id)
+
+    def transition_history(self, project_id: str) -> list[dict[str, Any]]:
+        self.require(project_id)
+        with self._connect() as connection:
+            return [
+                dict(row)
+                for row in connection.execute(
+                    """
+                    SELECT from_status, to_status, reason, created_at
+                    FROM project_transitions
+                    WHERE project_id = ?
+                    ORDER BY transition_id
+                    """,
+                    (project_id,),
+                )
+            ]
+
+    def record_artifact(
+        self,
+        project_id: str,
+        artifact_type: str,
+        *,
+        version: str,
+        status: str = "verified",
+        fingerprint: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        self.require(project_id)
+        artifact_type = self._validate_text(artifact_type, "artifact_type")
+        version = self._validate_text(version, "version")
+        timestamp = _now()
+        with self._lock, self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO project_artifacts (
+                    project_id, artifact_type, version, status,
+                    fingerprint, metadata_json, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(project_id, artifact_type) DO UPDATE SET
+                    version = excluded.version,
+                    status = excluded.status,
+                    fingerprint = excluded.fingerprint,
+                    metadata_json = excluded.metadata_json,
+                    updated_at = excluded.updated_at
+                """,
+                (
+                    project_id,
+                    artifact_type,
+                    version,
+                    status,
+                    fingerprint,
+                    json.dumps(metadata or {}, ensure_ascii=False, sort_keys=True),
+                    timestamp,
+                ),
+            )
+        return self.artifacts(project_id)[artifact_type]
+
+    def artifacts(self, project_id: str) -> dict[str, dict[str, Any]]:
+        self.require(project_id)
+        with self._connect() as connection:
+            rows = list(
+                connection.execute(
+                    """
+                    SELECT artifact_type, version, status, fingerprint,
+                           metadata_json, updated_at
+                    FROM project_artifacts
+                    WHERE project_id = ?
+                    ORDER BY artifact_type
+                    """,
+                    (project_id,),
+                )
+            )
+        return {
+            row["artifact_type"]: {
+                "artifact_type": row["artifact_type"],
+                "version": row["version"],
+                "status": row["status"],
+                "fingerprint": row["fingerprint"],
+                "metadata": json.loads(row["metadata_json"]),
+                "updated_at": row["updated_at"],
+            }
+            for row in rows
+        }
 
     def active_project_id(self) -> str | None:
         with self._connect() as connection:
