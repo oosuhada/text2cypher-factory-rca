@@ -168,8 +168,8 @@ NAVIGATION_ITEMS: Final[tuple[NavigationItem, ...]] = (
         "Governance",
         "라우팅·Tool·Cypher·승인·알림 추적",
         GOVERNANCE_ROLES,
-        "foundation",
-        "3-7",
+        "available",
+        "2-7",
     ),
     NavigationItem(
         "admin",

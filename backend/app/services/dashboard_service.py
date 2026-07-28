@@ -51,8 +51,12 @@ def filter_runtime_events(
             continue
         if status_set and str(event.get("status")) not in status_set:
             continue
-        if project_id and str(event.get("project_id")) != project_id:
-            continue
+        if project_id:
+            event_project_id = event.get("project_id")
+            if event_project_id is None and project_id == "cip-dmd":
+                event_project_id = "cip-dmd"
+            if str(event_project_id) != project_id:
+                continue
         if since:
             try:
                 timestamp = datetime.fromisoformat(
