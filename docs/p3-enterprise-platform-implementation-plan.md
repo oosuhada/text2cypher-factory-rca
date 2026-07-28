@@ -310,6 +310,12 @@
 
 ### 2-3. Data Sources·Pipeline UX
 
+상태: **구현·검증 완료 (2026-07-28)**
+
+검증 기록:
+
+- [`enterprise-stage2-3-data-pipeline.md`](./enterprise-stage2-3-data-pipeline.md)
+
 목표:
 
 - 데이터 등록부터 적재·검증까지 진행 과정을 시각적으로 제공한다.

@@ -17,6 +17,7 @@ PPT 대조 후 수정 근거는 [방향 수정 기록](./docs/direction-correcti
 - [엔터프라이즈 트랙 1-8 Release Gate·문서화](./docs/enterprise-stage1-8-validation.md)
 - [엔터프라이즈 트랙 2-1 정보구조·디자인 시스템](./docs/enterprise-stage2-1-information-architecture.md)
 - [엔터프라이즈 트랙 2-2 Home·Projects Workspace](./docs/enterprise-stage2-2-home-projects.md)
+- [엔터프라이즈 트랙 2-3 Data Sources·Pipeline UX](./docs/enterprise-stage2-3-data-pipeline.md)
 - 플랫폼 공통 API·Registry·스키마·ETL·다중 도메인:
   [`platform-stage1~11`](./docs/platform-stage1-shared-api.md)
 - 제품 리팩터링·Data Intake·Graph Explorer·HITL·배포:
@@ -62,6 +63,7 @@ Text-to-Cypher 질의까지 같은 파이프라인으로 실행할 수 있다. �
 | 엔터프라이즈 1-8 — 백엔드 Release Gate | **구현 완료** | 구조화 오류 계약·tracked secret 0건·P3 추적률 100%·fresh Compose E2E·lineage/runbook |
 | 엔터프라이즈 2-1 — 정보구조·디자인 시스템 | **구현 완료** | 11개 workspace·5개 역할 최소권한 메뉴·4개 화면 상태·공통 토큰·Streamlit/React 경계 |
 | 엔터프라이즈 2-2 — Home·Projects Workspace | **구현 완료** | Registry 기반 최근 프로젝트·검색·즐겨찾기·readiness·생성 Wizard·프로젝트별 UI 컨텍스트 격리 |
+| 엔터프라이즈 2-3 — Data Sources·Pipeline UX | **구현 완료** | 멀티포맷 업로드·Neo4j 연결 검증·프로파일·mapping dry-run/승인·영속 Job·무결성/readiness |
 
 ## 확정 데이터
 

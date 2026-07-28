@@ -20,6 +20,8 @@ PROJECT_CONTEXT_KEYS = (
     "explorer_search_result",
     "latest_project_upload",
     "project_load_result",
+    "mapping_preview",
+    "validated_connector",
     "query_filters",
     "evaluation_filters",
 )
@@ -35,6 +37,8 @@ def empty_project_context() -> dict[str, Any]:
         "explorer_search_result": None,
         "latest_project_upload": None,
         "project_load_result": None,
+        "mapping_preview": None,
+        "validated_connector": None,
         "query_filters": {},
         "evaluation_filters": {},
     }
@@ -61,4 +65,3 @@ def restore_project_context(
                 resolved[key] = deepcopy(context[key])
     for key, value in resolved.items():
         state[key] = value
-
