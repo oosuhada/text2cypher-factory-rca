@@ -1,19 +1,18 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
-import { OperationsPanel } from "@/components/operations-panel";
-import { PageHeading } from "@/components/page-heading";
+import { internalConsoleUrl } from "@/lib/product-surface";
 
-export const metadata: Metadata = { title: "Operations" };
+export const metadata: Metadata = { title: "Internal Operations Console" };
 
-export default function OperationsPage() {
-  return (
-    <div className="shell product-page">
-      <PageHeading
-        eyebrow="System observability"
-        title="Operations"
-        description="그래프 무결성, 모델 평가, 읽기 전용 준수와 런타임 사용량을 실제 서비스 데이터로 확인합니다."
-      />
-      <OperationsPanel />
-    </div>
-  );
+type PageProps = {
+  searchParams: Promise<{ project_id?: string | string[] }>;
+};
+
+export default async function OperationsPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const projectId = Array.isArray(params.project_id)
+    ? params.project_id[0]
+    : params.project_id;
+  redirect(internalConsoleUrl("dashboard", projectId));
 }

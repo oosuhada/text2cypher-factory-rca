@@ -103,12 +103,12 @@ SIDEBAR_SECTION_ORDER: Final = (
 
 SUPPORTED_LOCALES: Final = ("ko", "en")
 PAGE_DESCRIPTIONS_EN: Final = {
-    "Home": "Platform purpose, recent projects and system status",
-    "Projects": "Create, search, switch and inspect project readiness",
+    "Home": "Internal console responsibilities, project readiness and operations",
+    "Projects": "Inspect registry, readiness and internal project operations",
     "Data Sources": "File and graph connections, uploads and profiles",
     "Pipeline": "Mapping review, dry-run, load and integrity validation",
-    "Query Studio": "Natural-language questions, Cypher, results and evidence",
-    "Graph Explorer": "Search, filter, expand and trace graph paths",
+    "Query Studio": "Internal query diagnostics, Cypher and validation traces",
+    "Graph Explorer": "Internal graph diagnostics and path inspection",
     "Dashboard": "Quality, process, equipment and operational KPIs",
     "Evaluations": "Gold and Blind comparison with failure analysis",
     "Approval Queue": "Approve schemas, loads and high-risk recommendations",
@@ -118,16 +118,16 @@ PAGE_DESCRIPTIONS_EN: Final = {
 
 UI_COPY: Final = {
     "ko": {
-        "workspace": "Workspace",
+        "workspace": "Internal Console",
         "language": "언어 / Language",
-        "operational": "운영 화면",
+        "operational": "내부 운영",
         "preparing": "준비",
         "skip": "본문으로 건너뛰기",
     },
     "en": {
-        "workspace": "Workspace",
+        "workspace": "Internal Console",
         "language": "Language / 언어",
-        "operational": "Operational",
+        "operational": "Internal console",
         "preparing": "Planned",
         "skip": "Skip to main content",
     },
@@ -140,7 +140,7 @@ NAVIGATION_ITEMS: Final[tuple[NavigationItem, ...]] = (
         "Home",
         "⌂",
         "Overview",
-        "플랫폼 목적, 최근 프로젝트와 시스템 상태",
+        "내부 콘솔 역할, 프로젝트 준비 상태와 운영 진단",
         ALL_ROLES,
         "available",
         "2-1",
@@ -150,7 +150,7 @@ NAVIGATION_ITEMS: Final[tuple[NavigationItem, ...]] = (
         "Projects",
         "▦",
         "Overview",
-        "프로젝트 생성, 검색, 전환과 준비 상태",
+        "프로젝트 Registry, 전환과 readiness 진단",
         ALL_ROLES,
         "available",
         "2-2",
@@ -180,7 +180,7 @@ NAVIGATION_ITEMS: Final[tuple[NavigationItem, ...]] = (
         "Query Studio",
         "◈",
         "Investigation",
-        "자연어 질문, Cypher, 결과와 근거 경로",
+        "내부 질의 진단, Cypher와 검증 trace",
         INVESTIGATION_ROLES,
         "available",
         "2-4",
@@ -190,7 +190,7 @@ NAVIGATION_ITEMS: Final[tuple[NavigationItem, ...]] = (
         "Graph Explorer",
         "⌘",
         "Investigation",
-        "그래프 검색, 필터, 이웃과 경로 탐색",
+        "내부 그래프 진단, 검색과 관계 경로 점검",
         INVESTIGATION_ROLES,
         "available",
         "2-5",
@@ -317,16 +317,50 @@ DEFAULT_STATE_COPY: Final = {
 }
 
 
+PRODUCT_UI_NAVIGATION: Final = (
+    "Projects",
+    "Query Studio",
+    "Evidence / Graph",
+    "History",
+    "Expert Review",
+)
+
+INTERNAL_CONSOLE_NAVIGATION: Final = (
+    "Projects",
+    "Data Sources",
+    "Pipeline",
+    "Query Diagnostics",
+    "Graph Diagnostics",
+    "Dashboard",
+    "Evaluations",
+    "Audit Logs",
+    "Admin",
+)
+
+SURFACE_OWNERSHIP: Final = {
+    "project_selection": "react",
+    "rca_query": "react",
+    "evidence_graph": "react",
+    "conversation_history": "react",
+    "expert_review": "react",
+    "data_sources": "streamlit",
+    "pipeline": "streamlit",
+    "evaluations": "streamlit",
+    "audit_logs": "streamlit",
+    "model_diagnostics": "streamlit",
+    "platform_state": "backend",
+}
+
 REACT_STREAMLIT_BOUNDARY: Final = {
-    "streamlit": (
-        "인증 이후 사내 업무 화면의 기준 구현",
-        "프로젝트·데이터·질의·그래프·평가·승인·감사 상태의 단일 소유자",
-        "FastAPI를 통해 업무 상태를 읽고 변경",
-    ),
     "react": (
-        "외부 공개용 제품 소개와 포트폴리오 셸에 한해 선택 사용",
-        "업무 기능을 중복 구현하거나 Streamlit을 iframe으로 감싸지 않음",
-        "향후 교체 시 동일 FastAPI 계약을 사용하는 별도 클라이언트",
+        "최종 사용자와 발표 평가자의 단일 제품 진입점",
+        "프로젝트 선택·RCA 질문·답변·근거·기록·전문가 검토의 소유자",
+        "내부 운영 기능을 중복 구현하지 않고 필요 시 내부 콘솔로 연결",
+    ),
+    "streamlit": (
+        "개발자·Data Steward·Admin을 위한 내부 운영 콘솔",
+        "데이터 온보딩·ETL·평가·감사·모델 진단 기능의 소유자",
+        "React 제품 UI를 iframe으로 감싸거나 별도 제품처럼 경쟁하지 않음",
     ),
     "backend": (
         "프로젝트·작업·권한·평가 상태의 source of truth",

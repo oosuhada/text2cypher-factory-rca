@@ -11,6 +11,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 FRONTEND_ROOT = PROJECT_ROOT / "frontend"
 WEB_COMPONENTS = PROJECT_ROOT / "web" / "components"
+WEB_LIB = PROJECT_ROOT / "web" / "lib"
 
 REQUIRED_STREAMLIT_PAGES = {
     "audit.py",
@@ -156,6 +157,18 @@ def validate_react_architecture() -> dict[str, int]:
 
 def validate_critical_ux() -> dict[str, str]:
     site_header = _read(WEB_COMPONENTS / "site-header.tsx")
+    site_footer = _read(WEB_COMPONENTS / "site-footer.tsx")
+    product_surface = _read(WEB_LIB / "product-surface.ts")
+    streamlit_entrypoint = _read(FRONTEND_ROOT / "streamlit_app.py")
+    streamlit_home = _read(FRONTEND_ROOT / "pages" / "home.py")
+    streamlit_sidebar = _read(FRONTEND_ROOT / "sidebar.py")
+    data_redirect = _read(PROJECT_ROOT / "web" / "app" / "data" / "page.tsx")
+    schema_redirect = _read(
+        PROJECT_ROOT / "web" / "app" / "schema" / "page.tsx"
+    )
+    operations_redirect = _read(
+        PROJECT_ROOT / "web" / "app" / "operations" / "page.tsx"
+    )
     query_session = _read(
         WEB_COMPONENTS / "query" / "use-query-session.ts"
     )
@@ -173,12 +186,79 @@ def validate_critical_ux() -> dict[str, str]:
     _require(
         site_header,
         (
+            "PRODUCT_NAVIGATION",
             "menu-button",
             "nav-backdrop",
             'aria-controls="primary-navigation"',
             "mobile-project-control",
         ),
-        "React mobile navigation",
+        "React product navigation",
+    )
+    _require(
+        product_surface,
+        (
+            'href: "/projects"',
+            'href: "/query"',
+            'href: "/graph"',
+            'href: "/history"',
+            'label: "Evidence / Graph"',
+            "INTERNAL_CONSOLE_URL",
+            "internalConsoleUrl",
+            'rcaQuery: "react"',
+            'evaluations: "streamlit"',
+            'platformState: "backend"',
+        ),
+        "Product surface ownership",
+    )
+    forbidden_product_routes = ('href: "/data"', 'href: "/schema"', 'href: "/operations"')
+    leaked_routes = [
+        route for route in forbidden_product_routes if route in product_surface
+    ]
+    if leaked_routes:
+        raise RuntimeError(
+            f"내부 운영 route가 제품 navigation에 남아 있습니다: {leaked_routes}"
+        )
+    _require(
+        site_footer,
+        ("INTERNAL_CONSOLE_URL", "Internal Console", "Evidence / Graph"),
+        "React internal-console handoff",
+    )
+    _require(
+        streamlit_entrypoint,
+        ('APP_TITLE = "Factory Graph RCA — Internal Console"',),
+        "Streamlit internal-console title",
+    )
+    _require(
+        streamlit_home,
+        (
+            "Internal Operations Console",
+            "React 제품 UI 열기",
+            "최종 사용자 발표 여정은 React 제품 UI에서 완결합니다.",
+        ),
+        "Streamlit internal-console home",
+    )
+    _require(
+        streamlit_sidebar,
+        (
+            "Internal Console · 데이터·평가·운영 진단 전용",
+            'st.query_params.get("project_id")',
+        ),
+        "Streamlit internal-console sidebar",
+    )
+    _require(
+        data_redirect,
+        ("internalConsoleUrl", '"data_sources"', "projectId", "redirect("),
+        "React Data internal-console redirect",
+    )
+    _require(
+        schema_redirect,
+        ("internalConsoleUrl", '"pipeline"', "projectId", "redirect("),
+        "React Schema internal-console redirect",
+    )
+    _require(
+        operations_redirect,
+        ("internalConsoleUrl", '"dashboard"', "projectId", "redirect("),
+        "React Operations internal-console redirect",
     )
     _require(
         query_session,
@@ -218,6 +298,7 @@ def validate_critical_ux() -> dict[str, str]:
         "React history empty state",
     )
     return {
+        "product_surface_boundary": "PASS",
         "mobile_navigation": "PASS",
         "query_deduplication": "PASS",
         "evidence_default": "table",

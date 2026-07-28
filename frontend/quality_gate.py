@@ -9,9 +9,13 @@ from typing import Any
 
 from .design_system import (
     ACTION_ROLES,
+    INTERNAL_CONSOLE_NAVIGATION,
     NAVIGATION_ITEMS,
+    PRODUCT_UI_NAVIGATION,
+    REACT_STREAMLIT_BOUNDARY,
     SIDEBAR_SECTION_ORDER,
     SUPPORTED_LOCALES,
+    SURFACE_OWNERSHIP,
     Action,
     Role,
     build_global_css,
@@ -21,7 +25,7 @@ from .design_system import (
 
 
 VISUAL_LANDMARKS = {
-    "Home": ("Find the path.", "Workspace overview"),
+    "Home": ("Internal Console", "Workspace overview"),
     "Projects": ("Projects", "새 프로젝트"),
     "Data Sources": ("Data Sources", "데이터"),
     "Pipeline": ("Pipeline", "Graph mapping"),
@@ -36,7 +40,7 @@ VISUAL_LANDMARKS = {
 def current_visual_contract() -> dict[str, Any]:
     css = build_global_css()
     return {
-        "version": "enterprise-ui-2.10",
+        "version": "enterprise-ui-2.11-product-surface",
         "css_sha256": sha256(css.encode("utf-8")).hexdigest(),
         "locales": list(SUPPORTED_LOCALES),
         "responsive_breakpoints": [760],
@@ -64,6 +68,17 @@ def current_visual_contract() -> dict[str, Any]:
             }
             for item in NAVIGATION_ITEMS
         ],
+        "product_surface": {
+            "product_navigation": list(PRODUCT_UI_NAVIGATION),
+            "internal_console_navigation": list(
+                INTERNAL_CONSOLE_NAVIGATION
+            ),
+            "ownership": dict(SURFACE_OWNERSHIP),
+            "boundary": {
+                surface: list(statements)
+                for surface, statements in REACT_STREAMLIT_BOUNDARY.items()
+            },
+        },
     }
 
 
@@ -96,6 +111,13 @@ def run_ui_quality_gate(project_root: Path) -> dict[str, Any]:
         raise RuntimeError("Viewer가 데이터 변경 권한을 가집니다.")
     if not can_perform(Role.ADMIN, Action.MANAGE_PLATFORM):
         raise RuntimeError("Admin 운영 권한이 누락됐습니다.")
+
+    if SURFACE_OWNERSHIP["rca_query"] != "react":
+        raise RuntimeError("RCA 질의 제품 소유자가 React가 아닙니다.")
+    if SURFACE_OWNERSHIP["evaluations"] != "streamlit":
+        raise RuntimeError("평가 기능이 내부 콘솔로 격리되지 않았습니다.")
+    if SURFACE_OWNERSHIP["platform_state"] != "backend":
+        raise RuntimeError("플랫폼 상태 source of truth가 backend가 아닙니다.")
 
     required_schemas = (
         root / "schemas" / "cip-dmd" / "schema.yml",

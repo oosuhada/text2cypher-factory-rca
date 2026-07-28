@@ -216,9 +216,28 @@ def render_sidebar(
     )
     if active_project_id not in project_ids:
         active_project_id = project_ids[0]
+
+    requested_project_id = st.query_params.get("project_id")
+    if (
+        requested_project_id in project_ids
+        and requested_project_id != active_project_id
+    ):
+        switch_project(
+            requested_project_id,
+            project_root=project_root,
+            clear_services=clear_services,
+        )
+        active_project_id = requested_project_id
+    elif requested_project_id and requested_project_id not in project_ids:
+        st.sidebar.warning(
+            "요청한 프로젝트를 찾을 수 없어 현재 프로젝트를 유지합니다."
+        )
     role = Role(st.session_state.get("preview_role", Role.ADMIN.value))
 
-    st.sidebar.markdown("### Workspace")
+    st.sidebar.markdown("## Factory Graph RCA")
+    st.sidebar.caption(
+        "Internal Console · 데이터·평가·운영 진단 전용"
+    )
     selected_project_id = _render_sidebar_project(
         project_rows,
         active_project_id,

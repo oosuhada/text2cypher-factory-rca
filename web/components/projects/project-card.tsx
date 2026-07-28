@@ -2,6 +2,7 @@
 
 import { ArrowRight, FolderKanban } from "lucide-react";
 
+import { projectStatusLabel } from "@/lib/product-surface";
 import type { Project } from "@/lib/types";
 
 type ProjectCardProps = {
@@ -31,7 +32,9 @@ export function ProjectCard({
     >
       <div className={compact ? "project-summary-top" : undefined}>
         <FolderKanban size={compact ? 18 : 19} />
-        <span className="project-status">{project.status}</span>
+        <span className="project-status">
+          {projectStatusLabel(project.status)}
+        </span>
       </div>
       <h3>{project.name}</h3>
       <p>

@@ -85,7 +85,9 @@ class DeploymentContractTest(unittest.TestCase):
             PROJECT_ROOT / "web" / "app" / "projects" / "page.tsx"
         ).read_text(encoding="utf-8")
         self.assertIn("<ProjectOverview />", home)
-        self.assertIn("Gold Question 15/15", home)
+        self.assertIn("읽기 전용 검증", home)
+        self.assertIn("결과표·관계 근거", home)
+        self.assertNotIn("Gold Question", home)
         self.assertIn("최근 프로젝트", overview)
         self.assertIn('href="/projects"', overview)
         self.assertIn('href="/projects#new-project"', overview)
@@ -139,7 +141,8 @@ class DeploymentContractTest(unittest.TestCase):
             navigation_source,
         )
         self.assertIn("navigation_widget_revision", source)
-        self.assertIn("Gold Question 15/15", page_source)
+        self.assertIn("Internal Operations Console", page_source)
+        self.assertIn("React 제품 UI 열기", page_source)
         self.assertIn(
             'st.session_state.get("latest_project_upload") or {}',
             page_source,

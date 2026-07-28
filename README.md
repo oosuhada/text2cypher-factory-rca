@@ -23,7 +23,9 @@ PPT 대조 후 수정 근거는 [방향 수정 기록](./docs/direction-correcti
 - [엔터프라이즈 트랙 2-6 Dashboard·Evaluations](./docs/enterprise-stage2-6-dashboard-evaluations.md)
 - [엔터프라이즈 트랙 2-7 History·Audit·운영 상태](./docs/enterprise-stage2-7-history-audit-operations.md)
 - [엔터프라이즈 트랙 2-8 UI 품질 Gate](./docs/enterprise-stage2-8-ui-quality-gate.md)
-- [엔터프라이즈 2단계 완료 검증·릴리스 기록](./docs/enterprise-stage2-release.md)
+- [엔터프라이즈 2단계 기능 기준선 검증·릴리스 기록](./docs/enterprise-stage2-release.md)
+- [2.9 제품화 단계 기능명세·작업계획](./docs/p3-enterprise-platform-implementation-plan.md#29단계--p3-사용자-서비스-제품화완성)
+- [2.9-1 단일 제품 UI·Surface 경계 검증](./docs/enterprise-stage2-9-1-surface-boundary.md)
 - [UX 내비게이션 재검증·수정](./docs/ux-navigation-correction-2026-07-28.md)
 - [Streamlit 리팩토링 1단계 · 공통 기반 분리](./docs/refactor-stage-common-foundation.md)
 - [Streamlit 리팩토링 2단계 · 페이지 모듈 분리](./docs/refactor-stage-page-modules.md)
@@ -47,9 +49,10 @@ P4에서 차용할 LangGraph Router·Tool Registry·RAG·권고·HITL·알림·�
 Text-to-Cypher 질의까지 같은 파이프라인으로 실행할 수 있다. 설비 정비
 이력 예제가 두 번째 도메인 재적용 기준으로 포함되어 있다.
 
-- Streamlit: `http://localhost:8501`
-- React: `http://localhost:3000`
-- FastAPI/OpenAPI: `http://localhost:8000/docs`
+- 최종 사용자 제품 UI · React: `http://localhost:3000`
+- 내부 운영 콘솔 · Streamlit: `http://localhost:8501`
+- API 개발 문서 · FastAPI/OpenAPI: `http://localhost:8000/docs`
+- DB 개발 도구 · Neo4j Browser: `http://localhost:7474`
 
 ## 현재 진행 상태
 
@@ -81,7 +84,8 @@ Text-to-Cypher 질의까지 같은 파이프라인으로 실행할 수 있다. �
 | 엔터프라이즈 2-5 — Interactive Graph Explorer | **구현 완료** | NVL 양방향 선택·검색·1~3 hop 누적 확장·필터·경로 강조·상세 패널·프로젝트 격리·1천/1만 노드 경계 |
 | 엔터프라이즈 2-6 — Dashboard·Evaluations | **구현 완료** | 프로젝트 공통 필터·그래프/ETL/Agent KPI·모델/프롬프트 비교·F1/혼동행렬·latency/token/cost/error·평가 증적 |
 | 엔터프라이즈 2-7 — History·Audit·운영 상태 | **구현 완료** | 프로젝트 대화 검색/재열기/재실행·질의/ETL/평가 Timeline·run_id 증적·CSV/JSON 다운로드·서비스 진단·민감정보 차단 |
-| 엔터프라이즈 2-8 — UI 품질 Gate | **구현 완료** | 반응형·접근성·한영 핵심 문구·역할별 메뉴/행동·상태/복구·visual contract·두 도메인·전 UI release gate |
+| 엔터프라이즈 2-8 — UI 기능 기준선 | **기능 기준선 완료·제품화 Gate 재개방** | 반응형·접근성·역할별 메뉴/행동·상태/복구·두 도메인 기능 계약 |
+| 제품화 2.9-1 — 단일 제품 UI·Surface 경계 | **구현·검증 완료** | React 제품 진입점·Streamlit Internal Console·운영 경로 리디렉션·프로젝트 컨텍스트 전달 |
 
 ## 확정 데이터
 
@@ -154,60 +158,58 @@ Text-to-Cypher 엔진을 사용할 수 있도록 FastAPI 경계를 추가했다.
 [제품 리팩터링 1~2단계 검증](./docs/refactor-stage1-2-validation.md)에
 정리했다.
 
-## 선택적 확장 — Next.js 제품 UI
+## 공식 제품 UI — React / Next.js
 
-AskOosu와 CodeMap에서 참고한 랜딩·내비게이션·대화 기록 패턴을
-FactoryGraph RCA의 실제 업무 흐름에 맞게 다시 설계했다. 다만 회사
-가이드에 명시된 공식 사내 프로토타입은 Streamlit이며, Next.js는
-같은 FastAPI를 사용하는 상용화·포트폴리오 확장 화면으로 분리한다.
+React는 최종 사용자와 발표 평가자의 단일 제품 진입점이다. 프로젝트 선택,
+RCA 질문, 답변·결과표·관계 근거, History와 전문가 검토 흐름을 React에서
+완결한다.
 
 ```bash
 ./scripts/run_product.sh
 ```
 
-- 제품 랜딩: `http://127.0.0.1:3000`
+- 제품 홈: `http://127.0.0.1:3000`
+- Projects: `http://127.0.0.1:3000/projects`
 - Query Studio: `http://127.0.0.1:3000/query`
-- 최근 대화: `http://127.0.0.1:3000/history`
-- 그래프 탐색: `http://127.0.0.1:3000/graph`
-- 데이터 운영: `http://127.0.0.1:3000/data`
-- 시스템 상태: `http://127.0.0.1:3000/operations`
+- Evidence / Graph: `http://127.0.0.1:3000/graph`
+- History: `http://127.0.0.1:3000/history`
 
-Query Studio는 한 화면에서 자연어 답변, 결과표, 인터랙티브 근거
-그래프, 생성 Cypher, 검증·자기수정 이력을 확인한다. 최근 대화 20개는
-브라우저에 프로젝트별로 로컬 저장한다. Data와 Schema 화면에서는
-새 프로젝트 생성 → CSV/JSON 업로드·프로파일 → 노드/관계 매핑 검토·승인
-→ 프로젝트 격리 적재까지 수행한다. 적재는 명시적으로 허용된 서버에서만
-loader 권한으로 실행되며 완료·실패와 관계없이 reader 모드로 복귀한다.
-CiP-DMD와 별개인 설비 정비 이력 예제가 같은 파이프라인의 재사용 기준이다.
+Data·Schema·Operations는 최종 사용자 기본 내비게이션에서 제외한다.
+데이터 온보딩, 적재, 평가, 감사와 모델 진단은 Streamlit Internal Console이
+소유한다. React는 필요한 운영 상태를 읽기 전용으로 요약하거나 내부 콘솔로
+연결하며 같은 기능을 별도 UX로 중복 구현하지 않는다.
 
-구현 범위와 검증 결과는
+Query Studio는 한 화면에서 자연어 답변, 결과표, 인터랙티브 근거 그래프,
+생성 Cypher와 검증 이력을 확인한다. 최근 대화는 프로젝트별로 저장한다.
+CiP-DMD와 별개인 설비 정비 이력 예제가 같은 질의 계약의 재사용 기준이다.
+
+구현 범위와 기존 검증 결과는
 [제품 리팩터링 3~4단계 검증](./docs/refactor-stage3-4-validation.md)에
 정리했다.
 
-## 공식 프로토타입 — Streamlit 제품형 UX
+## 내부 운영 콘솔 — Streamlit
 
 ```bash
-./scripts/run_demo.sh
+./scripts/run_streamlit.sh
 ```
 
-Streamlit 안에서 다음 사용자 흐름을 완결한다.
+Streamlit은 개발자, Data Steward, 평가 담당자와 Admin을 위한 내부 콘솔이다.
+최종 사용자용 제품 랜딩이나 발표 RCA 여정을 별도로 소유하지 않는다.
 
-- 제품 가치·RCA 예시·검증 지표를 보여주는 Home 랜딩
-- Home → Query·Graph·Operations·Data로 이어지는 sidebar navigation
-- 자연어 질문과 세션 내 최근 대화 다시 열기
-- 답변 직하에서 결과표·관계 경로·Cypher·검증 이력 확인
-- 답변에 대한 도메인 전문가 판정과 의견 기록
-- 노드 속성 검색 또는 정확한 ID를 기준으로 최대 3-hop 지식그래프 탐색
-- CiP-DMD ZIP staging·고정 매핑·해시 검증·ETL dry-run
-- 명시적 승인 후 적재·reader 복귀·감사로그
-- 실제 ETL·그래프 무결성·Agent 평가 지표 확인
+- 프로젝트 Registry와 readiness 진단
+- 파일·Neo4j 데이터 소스와 업로드 프로파일
+- 그래프 매핑, dry-run, 적재와 무결성 확인
+- Gold·Blind 평가와 실패 유형 분석
+- 질의·ETL·평가 감사로그와 운영 진단
+- 개발 환경의 모델·provider·권한 시뮬레이션
 
-구현 경계와 검증 결과는
+제품 질의·Evidence·History는 React에서 수행한다. Streamlit의 기존 Query와
+Graph 화면은 내부 진단 기능으로만 취급하며, 배포 프로필별 격리는 2.9-3에서
+완결한다.
+
+기존 구현 경계와 검증 결과는
 [Streamlit 제품형 UX 이전](./docs/streamlit-product-ux-migration.md)에
-정리했다.
-랜딩 분리와 구버전 서비스 캐시 오류의 원인·수정은
-[Streamlit 랜딩·캐시 수정](./docs/streamlit-landing-and-cache-fix-2026-07-28.md)에
-정리했다.
+기록되어 있으며, 2.9 제품화 단계가 현재 역할 경계를 다시 정의한다.
 
 제품 리팩터링 5단계 Data Intake의 안전 경계는
 [Data Intake 검증](./docs/refactor-stage5-data-intake.md)에 정리했다.
@@ -228,10 +230,10 @@ cp .env.example .env
 ./scripts/run_product_stack.sh
 ```
 
-- Next.js 제품 UI: `http://127.0.0.1:3000`
-- FastAPI 문서: `http://127.0.0.1:8000/docs`
-- Streamlit 사내 프로토타입: `http://127.0.0.1:8501`
-- Neo4j Browser: `http://127.0.0.1:7474`
+- React 최종 사용자 제품 UI: `http://127.0.0.1:3000`
+- Streamlit 내부 운영 콘솔: `http://127.0.0.1:8501`
+- FastAPI 개발 문서: `http://127.0.0.1:8000/docs`
+- Neo4j DB 개발 도구: `http://127.0.0.1:7474`
 
 전체 회귀·빌드·패키지 계약은 `./scripts/release_check.sh`로 확인한다.
 컨테이너 구성과 E2E 범위, Neo4j Community 권한 한계는
@@ -249,9 +251,17 @@ cp .env.example .env
 
 ## 발표용 실행
 
+발표 사용자 여정은 React 하나로 진행한다. Neo4j가 준비된 상태에서 별도
+터미널 두 개로 API와 제품 UI를 실행한다.
+
 ```bash
-./scripts/run_demo.sh
+# Terminal 1
+./scripts/run_api.sh
+
+# Terminal 2
+./scripts/run_product.sh
 ```
 
-Neo4j reader 모드, 환경 프리플라이트, 고정 데모 4개를 검증한 뒤
-Streamlit을 실행한다.
+발표 시작 주소는 `http://localhost:3000`이다. 기본 동선은
+`Home → Projects → Query Studio → Evidence / Graph → History`이며,
+Streamlit은 데이터·평가·운영 증적을 추가로 설명할 때만 연다.

@@ -77,13 +77,13 @@ export default function HomePage() {
             </div>
             <div className="hero-proof">
               <span>
-                <CheckCircle2 size={15} /> Gold Question 15/15
+                <CheckCircle2 size={15} /> 읽기 전용 검증
               </span>
               <span>
-                <CheckCircle2 size={15} /> READ-only 100%
+                <CheckCircle2 size={15} /> 결과표·관계 근거
               </span>
               <span>
-                <CheckCircle2 size={15} /> Blind 26
+                <CheckCircle2 size={15} /> 프로젝트별 History
               </span>
             </div>
           </div>
@@ -192,11 +192,11 @@ export default function HomePage() {
             <span className="eyebrow">Agent workflow</span>
             <h2 className="section-title">실행 전에 의심하고, 실행 후에 증명합니다.</h2>
             <p className="lede">
-              Gemini가 만든 쿼리를 바로 실행하지 않습니다. 쓰기 위험과
-              스키마 오류를 검사하고, 실패하면 수정한 뒤 다시 검증합니다.
+              생성된 쿼리를 바로 실행하지 않습니다. 쓰기 위험과 스키마
+              오류를 검사하고, 실패하면 수정한 뒤 다시 검증합니다.
             </p>
-            <Link href="/operations" className="secondary-button">
-              검증 지표 확인 <ArrowRight size={16} />
+            <Link href="/query" className="secondary-button">
+              RCA 질문 흐름 보기 <ArrowRight size={16} />
             </Link>
           </div>
           <div className="pipeline-list">

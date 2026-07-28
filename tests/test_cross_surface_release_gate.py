@@ -23,6 +23,7 @@ class CrossSurfaceReleaseGateTest(unittest.TestCase):
 
     def test_critical_ux_contract(self):
         result = validate_critical_ux()
+        self.assertEqual(result["product_surface_boundary"], "PASS")
         self.assertEqual(result["evidence_default"], "table")
         self.assertEqual(result["expert_review"], "collapsed")
 

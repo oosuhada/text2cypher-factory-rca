@@ -1,19 +1,18 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
-import { PageHeading } from "@/components/page-heading";
-import { SchemaStudio } from "@/components/schema-studio";
+import { internalConsoleUrl } from "@/lib/product-surface";
 
-export const metadata: Metadata = { title: "Schema Studio" };
+export const metadata: Metadata = { title: "Internal Pipeline Console" };
 
-export default function SchemaPage() {
-  return (
-    <div className="shell product-page">
-      <PageHeading
-        eyebrow="Dataset to graph"
-        title="Schema Studio"
-        description="원본 컬럼을 노드·속성·관계로 매핑하고 예상 규모를 검토한 뒤 프로젝트 그래프에 적재합니다."
-      />
-      <SchemaStudio />
-    </div>
-  );
+type PageProps = {
+  searchParams: Promise<{ project_id?: string | string[] }>;
+};
+
+export default async function SchemaPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const projectId = Array.isArray(params.project_id)
+    ? params.project_id[0]
+    : params.project_id;
+  redirect(internalConsoleUrl("pipeline", projectId));
 }

@@ -36,7 +36,7 @@ from frontend.session_state import initialize_session
 from frontend.sidebar import render_sidebar as render_sidebar_shell
 
 
-APP_TITLE = "Factory Graph RCA"
+APP_TITLE = "Factory Graph RCA — Internal Console"
 
 
 render_app_shell(APP_TITLE)
