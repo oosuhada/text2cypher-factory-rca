@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowRight, FolderKanban, Plus } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 import Link from "next/link";
 
 import { useProject } from "@/components/project-context";
+import { ProjectCard } from "@/components/projects/project-card";
 import { useProjectNavigation } from "@/components/use-project-navigation";
 
 function relativeProjectTime(value: string) {
@@ -55,13 +56,13 @@ export function ProjectOverview() {
 
       {error ? <p className="inline-error">{error}</p> : null}
       <div className="recent-project-grid" aria-busy={loading}>
-        {loading ? (
+        {loading && (
           <article className="project-summary-card subtle-card">
             <span className="project-status">불러오는 중</span>
             <h3>프로젝트 목록을 확인하고 있습니다.</h3>
           </article>
-        ) : null}
-        {!loading && recentProjects.length === 0 ? (
+        )}
+        {!loading && recentProjects.length === 0 && (
           <article className="project-summary-card subtle-card">
             <span className="project-status">Empty</span>
             <h3>아직 등록된 프로젝트가 없습니다.</h3>
@@ -69,58 +70,23 @@ export function ProjectOverview() {
               첫 프로젝트 만들기
             </Link>
           </article>
-        ) : null}
-        {recentProjects.map((project) => {
-          const active =
-            activeProject?.project_id === project.project_id;
-          return (
-            <article
-              className={`project-summary-card subtle-card ${
-                active ? "active" : ""
-              }`}
-              key={project.project_id}
-            >
-              <div className="project-summary-top">
-                <FolderKanban size={18} />
-                <span className="project-status">{project.status}</span>
-              </div>
-              <h3>{project.name}</h3>
-              <p>
-                {project.domain_type} · {project.dataset_name}
-              </p>
-              <small>
-                {project.project_id} ·{" "}
-                {relativeProjectTime(project.updated_at)}
-              </small>
-              <div className="project-card-actions">
-                <button
-                  type="button"
-                  className={active ? "ghost-button" : "secondary-button"}
-                  disabled={switching || Boolean(openingProjectId)}
-                  onClick={() =>
-                    void openProject(project.project_id, "recommended")
-                  }
-                >
-                  {openingProjectId === project.project_id
-                    ? "여는 중…"
-                    : "작업 열기"}
-                </button>
-                <button
-                  type="button"
-                  className="ghost-button"
-                  disabled={switching || Boolean(openingProjectId)}
-                  onClick={() =>
-                    void openProject(project.project_id, "query")
-                  }
-                >
-                  {openingProjectId === project.project_id
-                    ? "여는 중…"
-                    : "Query 열기"}
-                </button>
-              </div>
-            </article>
-          );
-        })}
+        )}
+        {recentProjects.map((project) => (
+          <ProjectCard
+            compact
+            key={project.project_id}
+            project={project}
+            active={activeProject?.project_id === project.project_id}
+            busy={switching || openingProjectId === project.project_id}
+            updatedLabel={relativeProjectTime(project.updated_at)}
+            onOpenRecommended={() =>
+              void openProject(project.project_id, "recommended")
+            }
+            onOpenQuery={() =>
+              void openProject(project.project_id, "query")
+            }
+          />
+        ))}
       </div>
     </section>
   );
