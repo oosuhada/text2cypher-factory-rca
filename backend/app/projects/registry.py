@@ -146,6 +146,7 @@ class ProjectRegistry:
                 ("prompt_version", "TEXT"),
                 ("gold_version", "TEXT"),
                 ("evaluation_version", "TEXT"),
+                ("favorite", "INTEGER NOT NULL DEFAULT 0"),
             ):
                 self._add_column(connection, "projects", name, declaration)
             for old, new in STATUS_MIGRATIONS.items():
@@ -227,6 +228,7 @@ class ProjectRegistry:
         source_type: str = "file",
         source_version: str | None = None,
         connector_id: str | None = None,
+        favorite: bool = False,
         _bootstrap: bool = False,
     ) -> dict[str, Any]:
         project_id = self._validate_project_id(project_id)
@@ -261,8 +263,8 @@ class ProjectRegistry:
                         schema_version, status, created_at, updated_at,
                         description, industry, owner,
                         security_classification, source_type,
-                        source_version, connector_id
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        source_version, connector_id, favorite
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         project_id,
@@ -280,6 +282,7 @@ class ProjectRegistry:
                         source_type,
                         source_version,
                         connector_id,
+                        int(favorite),
                     ),
                 )
                 connection.execute(
@@ -351,6 +354,7 @@ class ProjectRegistry:
         prompt_version: str | None = None,
         gold_version: str | None = None,
         evaluation_version: str | None = None,
+        favorite: bool | None = None,
         status: str | None = None,
         transition_reason: str = "metadata_update",
     ) -> dict[str, Any]:
@@ -370,6 +374,7 @@ class ProjectRegistry:
             prompt_version,
             gold_version,
             evaluation_version,
+            favorite,
         )
         if status is not None and any(
             value is not None for value in metadata_changes
@@ -460,6 +465,11 @@ class ProjectRegistry:
                 if evaluation_version is not None
                 else project["evaluation_version"]
             ),
+            "favorite": (
+                int(favorite)
+                if favorite is not None
+                else int(project.get("favorite", 0))
+            ),
         }
         if values["source_type"] not in {"file", "neo4j"}:
             raise ValueError("source_type은 file 또는 neo4j여야 합니다.")
@@ -471,7 +481,8 @@ class ProjectRegistry:
                     schema_version = ?, description = ?, industry = ?,
                     owner = ?, security_classification = ?, source_type = ?,
                     source_version = ?, connector_id = ?, prompt_version = ?,
-                    gold_version = ?, evaluation_version = ?, updated_at = ?
+                    gold_version = ?, evaluation_version = ?, favorite = ?,
+                    updated_at = ?
                 WHERE project_id = ?
                 """,
                 (

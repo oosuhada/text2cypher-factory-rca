@@ -99,9 +99,103 @@ class FactoryGraphApiClient:
         )
 
     def projects(self) -> list[dict[str, Any]]:
-        response = self.client.get("/api/v1/projects")
-        response.raise_for_status()
-        return response.json()
+        try:
+            response = self.client.get("/api/v1/projects")
+            response.raise_for_status()
+        except httpx.HTTPError as error:
+            raise ApiRequestError(f"프로젝트 목록 조회 실패: {error}") from error
+        payload = response.json()
+        if not isinstance(payload, list):
+            raise ApiRequestError("프로젝트 목록 응답이 배열이 아닙니다.")
+        return payload
+
+    def create_project(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return self._request("POST", "/api/v1/projects", json=payload)
+
+    def project(self, project_id: str) -> dict[str, Any]:
+        return self._request("GET", f"/api/v1/projects/{project_id}")
+
+    def update_project(
+        self, project_id: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        return self._request(
+            "PATCH", f"/api/v1/projects/{project_id}", json=payload
+        )
+
+    def project_readiness(self, project_id: str) -> dict[str, Any]:
+        return self._request(
+            "GET", f"/api/v1/projects/{project_id}/readiness"
+        )
+
+    def project_uploads(self, project_id: str) -> dict[str, Any]:
+        return self._request(
+            "GET", f"/api/v1/projects/{project_id}/uploads"
+        )
+
+    def profile_project_files(
+        self, project_id: str, files: list[dict[str, str]]
+    ) -> dict[str, Any]:
+        return self._request(
+            "POST",
+            f"/api/v1/projects/{project_id}/uploads/profile",
+            json={"files": files},
+        )
+
+    def preview_mapping(
+        self,
+        project_id: str,
+        *,
+        upload_id: str,
+        schema_version: str,
+        mapping: dict[str, Any],
+    ) -> dict[str, Any]:
+        return self._request(
+            "POST",
+            f"/api/v1/projects/{project_id}/mappings/preview",
+            json={
+                "upload_id": upload_id,
+                "schema_version": schema_version,
+                "mapping": mapping,
+            },
+        )
+
+    def approve_mapping(
+        self,
+        project_id: str,
+        *,
+        upload_id: str,
+        schema_version: str,
+        mapping: dict[str, Any],
+    ) -> dict[str, Any]:
+        return self._request(
+            "POST",
+            f"/api/v1/projects/{project_id}/mappings/approve",
+            json={
+                "upload_id": upload_id,
+                "schema_version": schema_version,
+                "mapping": mapping,
+            },
+        )
+
+    def validate_neo4j_connector(
+        self, project_id: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        return self._request(
+            "POST",
+            f"/api/v1/projects/{project_id}/connectors/neo4j/validate",
+            json=payload,
+        )
+
+    def approve_neo4j_connector(
+        self, project_id: str, connector_id: str
+    ) -> dict[str, Any]:
+        return self._request(
+            "POST",
+            (
+                f"/api/v1/projects/{project_id}/connectors/neo4j/"
+                f"{connector_id}/approve"
+            ),
+        )
 
     def activate_project(self, project_id: str) -> dict[str, Any]:
         return self._request(

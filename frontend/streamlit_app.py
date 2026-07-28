@@ -49,6 +49,16 @@ from frontend.presentation import (
     normalize_catalog_evidence,
     rows_to_csv,
 )
+from frontend.project_context import (
+    restore_project_context,
+    snapshot_project_context,
+)
+from frontend.project_workspace import (
+    filter_projects,
+    next_action_presentation,
+    relative_updated_at,
+    status_presentation,
+)
 
 
 APP_TITLE = "Factory Graph RCA"
@@ -332,6 +342,8 @@ def initialize_session() -> None:
     st.session_state.setdefault("intake_approval_token", None)
     st.session_state.setdefault("active_project_id", "cip-dmd")
     st.session_state.setdefault("project_conversations", {})
+    st.session_state.setdefault("query_filters", {})
+    st.session_state.setdefault("evaluation_filters", {})
 
 
 def navigate_to_page(page: str) -> None:
@@ -877,6 +889,323 @@ def render_streamlit_landing() -> None:
         "도메인 전문가 판정을 같은 앱에서 확인합니다.",
         icon="🔷",
     )
+    render_home_project_overview()
+
+
+def _fallback_next_action(project: dict[str, Any]) -> str:
+    status = str(project.get("status", "draft"))
+    if status in {"draft", "profiling", "failed"}:
+        return "connect" if project.get("source_type") == "neo4j" else "upload"
+    if status == "mapping_review":
+        return "map"
+    if status in {"loading", "validating"}:
+        return "validate"
+    if status == "evaluation_required":
+        return "evaluate"
+    return "query" if status == "ready" else "upload"
+
+
+def _project_readiness_summary(
+    project: dict[str, Any],
+    api: FactoryGraphApiClient | None,
+) -> dict[str, Any]:
+    if api is not None:
+        try:
+            report = api.project_readiness(project["project_id"])
+            return {
+                "next_action": report["next_action"],
+                "can_query": report["can_query"],
+                "checks_passed": sum(
+                    check.get("status") == "PASS"
+                    for check in report.get("checks", {}).values()
+                ),
+                "checks_total": len(report.get("checks", {})),
+                "versions": report.get("versions", {}),
+            }
+        except Exception:
+            pass
+    return {
+        "next_action": _fallback_next_action(project),
+        "can_query": project.get("status") == "ready",
+        "checks_passed": None,
+        "checks_total": None,
+        "versions": {
+            "source": project.get("source_version"),
+            "schema": project.get("schema_version"),
+            "evaluation": project.get("evaluation_version"),
+        },
+    }
+
+
+def render_home_project_overview() -> None:
+    registry = ProjectRegistry(
+        PROJECT_ROOT / "data" / "processed" / "projects.sqlite3"
+    )
+    registry.ensure_default()
+    projects = registry.list()
+    active = next(
+        (project for project in projects if project.get("is_active")),
+        projects[0],
+    )
+    ready_count = sum(project["status"] == "ready" for project in projects)
+    favorite_count = sum(bool(project.get("favorite")) for project in projects)
+
+    st.markdown("### Workspace overview")
+    overview = st.columns([1.5, 1, 1, 1])
+    overview[0].metric("활성 프로젝트", active["name"])
+    overview[1].metric("전체 프로젝트", len(projects))
+    overview[2].metric("질의 가능", ready_count)
+    overview[3].metric("즐겨찾기", favorite_count)
+
+    st.markdown("#### 최근 프로젝트")
+    for project in projects[:3]:
+        presentation = status_presentation(project["status"])
+        with st.container(border=True):
+            title, status_column, action_column = st.columns([4, 1, 1])
+            title.markdown(
+                f"**{'★ ' if project.get('favorite') else ''}"
+                f"{project['name']}**"
+            )
+            title.caption(
+                f"{project['domain_type']} · {project['dataset_name']} · "
+                f"{relative_updated_at(project['updated_at'])}"
+            )
+            status_column.markdown(f"`{presentation['label']}`")
+            if action_column.button(
+                "열기",
+                key=f"home-open-{project['project_id']}",
+                disabled=bool(project.get("is_active")),
+                width="stretch",
+            ):
+                _switch_project(project["project_id"])
+                navigate_to_page("Projects")
+                st.rerun()
+
+    if st.button(
+        "모든 프로젝트 보기 →",
+        key="home-all-projects",
+        on_click=navigate_to_page,
+        args=("Projects",),
+    ):
+        st.rerun()
+
+
+def render_projects_workspace() -> None:
+    render_page_header("Projects")
+    registry = ProjectRegistry(
+        PROJECT_ROOT / "data" / "processed" / "projects.sqlite3"
+    )
+    registry.ensure_default()
+    role = Role(st.session_state.get("preview_role", Role.ADMIN.value))
+
+    search_column, status_column, favorite_column = st.columns([3, 2, 1])
+    search = search_column.text_input(
+        "프로젝트 검색",
+        placeholder="이름, ID, 도메인, 담당자",
+        key="project-search",
+    )
+    all_statuses = list(status_presentation(status)["status"] for status in (
+        "draft",
+        "profiling",
+        "mapping_review",
+        "loading",
+        "validating",
+        "evaluation_required",
+        "ready",
+        "failed",
+    ))
+    selected_statuses = status_column.multiselect(
+        "상태",
+        all_statuses,
+        format_func=lambda value: status_presentation(value)["label"],
+        key="project-status-filter",
+    )
+    favorites_only = favorite_column.toggle(
+        "즐겨찾기만",
+        key="project-favorites-only",
+    )
+
+    projects = filter_projects(
+        registry.list(),
+        search=search,
+        statuses=set(selected_statuses),
+        favorites_only=favorites_only,
+    )
+    if not projects:
+        render_view_state(
+            ViewState.EMPTY,
+            page="Projects",
+            detail="현재 검색·상태 조건에 일치하는 프로젝트가 없습니다.",
+        )
+    else:
+        api = FactoryGraphApiClient()
+        api_available = api.live()
+        try:
+            for project in projects:
+                presentation = status_presentation(project["status"])
+                readiness = _project_readiness_summary(
+                    project, api if api_available else None
+                )
+                next_action = next_action_presentation(
+                    readiness["next_action"]
+                )
+                with st.container(border=True):
+                    head, status_area = st.columns([4, 1])
+                    head.markdown(
+                        f"### {'★ ' if project.get('favorite') else ''}"
+                        f"{project['name']}"
+                    )
+                    head.caption(
+                        f"`{project['project_id']}` · "
+                        f"{project['industry']} / {project['domain_type']} · "
+                        f"담당 {project.get('owner') or '미지정'}"
+                    )
+                    status_area.markdown(f"**{presentation['label']}**")
+                    status_area.progress(presentation["progress"])
+                    if project.get("description"):
+                        st.write(project["description"])
+
+                    metadata = st.columns(4)
+                    metadata[0].caption(
+                        f"데이터 · {project['dataset_name']}"
+                    )
+                    metadata[1].caption(
+                        f"소스 · {project['source_type']}"
+                    )
+                    metadata[2].caption(
+                        f"스키마 · {project.get('schema_version') or '미정'}"
+                    )
+                    metadata[3].caption(
+                        relative_updated_at(project["updated_at"])
+                    )
+                    if readiness["checks_total"]:
+                        st.caption(
+                            f"Readiness · {readiness['checks_passed']}/"
+                            f"{readiness['checks_total']} gate 통과"
+                        )
+
+                    favorite_action, open_action, next_action_column = (
+                        st.columns([1, 1, 2])
+                    )
+                    if favorite_action.button(
+                        "★ 해제" if project.get("favorite") else "☆ 저장",
+                        key=f"favorite-{project['project_id']}",
+                        width="stretch",
+                    ):
+                        registry.update(
+                            project["project_id"],
+                            favorite=not bool(project.get("favorite")),
+                        )
+                        st.rerun()
+                    if open_action.button(
+                        "현재 프로젝트"
+                        if project.get("is_active")
+                        else "전환",
+                        key=f"open-project-{project['project_id']}",
+                        disabled=bool(project.get("is_active")),
+                        width="stretch",
+                    ):
+                        _switch_project(project["project_id"])
+                        st.rerun()
+                    if next_action_column.button(
+                        f"다음 · {next_action['label']} →",
+                        key=f"next-project-{project['project_id']}",
+                        type="primary",
+                        width="stretch",
+                    ):
+                        _switch_project(project["project_id"])
+                        navigate_to_page(next_action["page"])
+                        st.rerun()
+        finally:
+            api.close()
+
+    if role not in {Role.DATA_STEWARD, Role.ADMIN}:
+        st.info(
+            "새 프로젝트 생성은 Data Steward 또는 Admin 권한이 필요합니다."
+        )
+        return
+
+    st.divider()
+    st.markdown("### 새 프로젝트 만들기")
+    st.caption(
+        "기본정보와 데이터 소스 유형을 등록하면 해당 프로젝트의 "
+        "Data Sources 화면으로 바로 이동합니다."
+    )
+    st.markdown(
+        """
+        <div class="p3-trust-strip">
+          <span>1 · 기본정보</span><span>2 · 소스 선택</span>
+          <span>3 · 보안·담당자</span><span>4 · Data Sources</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    with st.form("enterprise-create-project"):
+        identity, ownership = st.columns(2)
+        with identity:
+            project_id = st.text_input(
+                "프로젝트 ID *",
+                placeholder="semiconductor-yield",
+                help="영문 소문자로 시작하는 3~63자 ID",
+            )
+            name = st.text_input(
+                "프로젝트 이름 *", placeholder="반도체 수율 RCA"
+            )
+            description = st.text_area(
+                "설명",
+                placeholder="이 프로젝트가 해결할 업무 문제를 적습니다.",
+            )
+            industry = st.text_input("산업 *", value="manufacturing")
+            domain_type = st.text_input(
+                "도메인 *", placeholder="semiconductor-process"
+            )
+        with ownership:
+            source_type = st.radio(
+                "첫 데이터 소스 *",
+                options=("file", "neo4j"),
+                format_func=lambda value: {
+                    "file": "파일 업로드 · CSV/JSON/XLSX/ZIP",
+                    "neo4j": "기존 Neo4j 연결",
+                }[value],
+            )
+            dataset_name = st.text_input(
+                "데이터셋/연결 이름 *",
+                placeholder="Fab process history",
+            )
+            owner = st.text_input("담당자", placeholder="data-steward")
+            security = st.selectbox(
+                "보안 등급",
+                options=("internal", "confidential", "restricted"),
+                format_func=lambda value: {
+                    "internal": "Internal",
+                    "confidential": "Confidential",
+                    "restricted": "Restricted",
+                }[value],
+            )
+        submitted = st.form_submit_button(
+            "프로젝트 생성 후 데이터 등록",
+            type="primary",
+            width="stretch",
+        )
+    if submitted:
+        try:
+            created = registry.create(
+                project_id=project_id,
+                name=name,
+                description=description,
+                industry=industry,
+                domain_type=domain_type,
+                dataset_name=dataset_name,
+                owner=owner,
+                security_classification=security,
+                source_type=source_type,
+            )
+            _switch_project(created["project_id"])
+            navigate_to_page("Data Sources")
+            st.session_state["project_created_notice"] = created["name"]
+            st.rerun()
+        except ValueError as error:
+            st.error(str(error))
 
 
 def render_graph_explorer(services: ServiceBundle) -> None:
@@ -2069,22 +2398,12 @@ def _switch_project(project_id: str) -> None:
     if previous == project_id:
         return
     sync_active_conversation()
-    st.session_state["project_conversations"][previous] = {
-        "conversations": deepcopy(st.session_state["conversations"]),
-        "messages": deepcopy(st.session_state["messages"]),
-        "last_result": deepcopy(st.session_state.get("last_result")),
-        "active_conversation_id": st.session_state[
-            "active_conversation_id"
-        ],
-    }
-    restored = st.session_state["project_conversations"].get(project_id, {})
-    st.session_state["conversations"] = deepcopy(
-        restored.get("conversations", [])
-    )
-    st.session_state["messages"] = deepcopy(restored.get("messages", []))
-    st.session_state["last_result"] = deepcopy(restored.get("last_result"))
-    st.session_state["active_conversation_id"] = restored.get(
-        "active_conversation_id", str(uuid4())
+    st.session_state["project_conversations"][
+        previous
+    ] = snapshot_project_context(st.session_state)
+    restore_project_context(
+        st.session_state,
+        st.session_state["project_conversations"].get(project_id),
     )
     st.session_state["active_project_id"] = project_id
     ProjectRegistry(
@@ -2162,31 +2481,13 @@ def render_sidebar() -> tuple[str, str, str, str]:
     )
     _switch_project(selected_project_id)
     if role in {Role.DATA_STEWARD, Role.ADMIN}:
-        with st.sidebar.expander("새 프로젝트 만들기"):
-            with st.form("create-project-form"):
-                new_id = st.text_input(
-                    "프로젝트 ID", placeholder="factory-demo"
-                )
-                new_name = st.text_input("이름", placeholder="Factory Demo")
-                new_domain = st.text_input(
-                    "도메인", placeholder="manufacturing"
-                )
-                new_dataset = st.text_input(
-                    "데이터셋", placeholder="CSV upload"
-                )
-                submitted = st.form_submit_button("프로젝트 생성")
-            if submitted:
-                try:
-                    registry.create(
-                        project_id=new_id,
-                        name=new_name,
-                        domain_type=new_domain,
-                        dataset_name=new_dataset,
-                    )
-                    st.success("프로젝트를 생성했습니다.")
-                    st.rerun()
-                except ValueError as error:
-                    st.error(str(error))
+        if st.sidebar.button(
+            "＋ 프로젝트 만들기",
+            key="sidebar-create-project",
+            width="stretch",
+        ):
+            navigate_to_page("Projects")
+            st.rerun()
     st.sidebar.divider()
     st.sidebar.markdown("### 대화")
     if st.sidebar.button(
@@ -2434,8 +2735,10 @@ def main() -> None:
     if page == "Home":
         render_streamlit_landing()
         return
+    if page == "Projects":
+        render_projects_workspace()
+        return
     if page in {
-        "Projects",
         "Evaluations",
         "Approval Queue",
         "Audit Logs",
