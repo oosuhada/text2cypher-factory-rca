@@ -73,3 +73,78 @@ questions:
              m.component AS component, t.technician_id AS technician_id,
              t.name AS technician_name, m.cost_usd AS cost_usd
       ORDER BY cost_usd DESC
+  - id: EH8
+    category: maximum_cost
+    question: "비용이 가장 큰 정비 이벤트를 보여줘."
+    gold_cypher: |
+      MATCH (e:Equipment {project_id: 'equipment-history'})
+            -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})
+      RETURN e.equipment_id AS equipment_id, m.event_id AS event_id,
+             m.component AS component, m.cost_usd AS cost_usd
+      ORDER BY cost_usd DESC
+      LIMIT 1
+  - id: EH9
+    category: equipment_cost
+    question: "설비별 총 정비 비용을 보여줘."
+    gold_cypher: |
+      MATCH (e:Equipment {project_id: 'equipment-history'})
+            -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})
+      RETURN e.equipment_id AS equipment_id,
+             sum(m.cost_usd) AS total_cost_usd
+      ORDER BY total_cost_usd DESC
+  - id: EH10
+    category: date_filter
+    question: "2026년 4월 이후 발생한 정비 이력을 보여줘."
+    gold_cypher: |
+      MATCH (e:Equipment {project_id: 'equipment-history'})
+            -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})
+      WHERE m.event_date >= '2026-04-01'
+      RETURN e.equipment_id AS equipment_id, m.event_id AS event_id,
+             m.event_date AS event_date, m.event_type AS event_type
+      ORDER BY event_date
+  - id: EH11
+    category: technician_history
+    question: "기술자 T-04가 수행한 정비 이력을 보여줘."
+    gold_cypher: |
+      MATCH (t:Technician {project_id: 'equipment-history', technician_id: 'T-04'})
+            -[:PERFORMED]->(m:MaintenanceEvent {project_id: 'equipment-history'})
+      MATCH (e:Equipment {project_id: 'equipment-history'})
+            -[:HAS_MAINTENANCE]->(m)
+      RETURN t.technician_id AS technician_id,
+             e.equipment_id AS equipment_id, m.event_id AS event_id,
+             m.event_type AS event_type, m.component AS component
+      ORDER BY event_id
+  - id: EH12
+    category: recurring_component
+    question: "두 번 이상 정비된 부품과 발생 횟수를 보여줘."
+    gold_cypher: |
+      MATCH (m:MaintenanceEvent {project_id: 'equipment-history'})
+      WITH m.component AS component, count(m) AS event_count
+      WHERE event_count >= 2
+      RETURN component, event_count
+      ORDER BY event_count DESC, component
+  - id: EH13
+    category: resolution_status
+    question: "해결 여부별 정비 이벤트 수를 보여줘."
+    gold_cypher: |
+      MATCH (m:MaintenanceEvent {project_id: 'equipment-history'})
+      RETURN m.resolved AS resolved, count(m) AS event_count
+      ORDER BY resolved
+  - id: EH14
+    category: frequent_equipment
+    question: "정비 이력이 3건 이상인 설비를 보여줘."
+    gold_cypher: |
+      MATCH (e:Equipment {project_id: 'equipment-history'})
+            -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})
+      WITH e, count(m) AS event_count
+      WHERE event_count >= 3
+      RETURN e.equipment_id AS equipment_id, event_count
+      ORDER BY event_count DESC, equipment_id
+  - id: EH15
+    category: event_type_downtime
+    question: "정비 유형별 평균 중단 시간을 보여줘."
+    gold_cypher: |
+      MATCH (m:MaintenanceEvent {project_id: 'equipment-history'})
+      RETURN m.event_type AS event_type,
+             avg(m.downtime_hours) AS average_downtime_hours
+      ORDER BY event_type

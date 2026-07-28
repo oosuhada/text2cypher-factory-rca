@@ -1,0 +1,55 @@
+{
+  "question_id": "EB19",
+  "category": "event_type_distribution",
+  "question": "각 설비의 정비 유형별 건수를 보여줘.",
+  "expected_status": "success",
+  "row_count": 9,
+  "rows_sha256": "9aca5299f106a67eb42b4e2c27a7149ef3f2779500d7468a04baf295967296f9",
+  "normalized_rows": [
+    {
+      "equipment_id": "EQ-CNC-02",
+      "event_count": 1,
+      "event_type": "inspection"
+    },
+    {
+      "equipment_id": "EQ-CNC-02",
+      "event_count": 2,
+      "event_type": "repair"
+    },
+    {
+      "equipment_id": "EQ-CONV-01",
+      "event_count": 1,
+      "event_type": "inspection"
+    },
+    {
+      "equipment_id": "EQ-CONV-01",
+      "event_count": 1,
+      "event_type": "replacement"
+    },
+    {
+      "equipment_id": "EQ-PRESS-01",
+      "event_count": 1,
+      "event_type": "repair"
+    },
+    {
+      "equipment_id": "EQ-PRESS-01",
+      "event_count": 1,
+      "event_type": "replacement"
+    },
+    {
+      "equipment_id": "EQ-PRESS-01",
+      "event_count": 2,
+      "event_type": "inspection"
+    },
+    {
+      "equipment_id": "EQ-WELD-03",
+      "event_count": 1,
+      "event_type": "inspection"
+    },
+    {
+      "equipment_id": "EQ-WELD-03",
+      "event_count": 2,
+      "event_type": "repair"
+    }
+  ]
+}

@@ -65,9 +65,13 @@ class ProjectGraphLoadService:
             # must use a direct connection rather than cluster discovery.
             uri = f"bolt://{uri.removeprefix('neo4j://')}"
         database = os.getenv("NEO4J_DATABASE", "neo4j")
-        username = os.getenv("NEO4J_USERNAME", "neo4j")
+        username = os.getenv(
+            "NEO4J_LOADER_USERNAME",
+            os.getenv("NEO4J_USERNAME", "neo4j"),
+        )
         password = (
-            os.getenv("NEO4J_PASSWORD")
+            os.getenv("NEO4J_LOADER_PASSWORD")
+            or os.getenv("NEO4J_PASSWORD")
             or password_from_keychain(username)
         )
         if not password:

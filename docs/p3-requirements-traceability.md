@@ -26,16 +26,16 @@ P3 필수 요구사항을 코드·테스트·검증 문서에 연결한다. 기�
 | FR-1.5 | 스키마·source version 연결 | 완료 | `SchemaRegistry`, `schema.yml.version`, `source_version` | 변경 이력 설명은 Git으로 유지 |
 | FR-2.1 | 결측·타입·중복·비정상 ID 정제 | 완료 | 범용 mapping dry-run과 격리 사유 | 도메인별 추가 정제 규칙은 adapter로 확장 |
 | FR-2.2 | 노드·관계 레코드 변환 | 완료 | `backend/app/etl/transform.py`, `generic_loader.py`, 관계 속성 mapping | 대용량 streaming은 후속 |
-| FR-2.3 | Neo4j 배치·벌크 적재 | 완료 | `backend/app/etl/load.py`, `generic_loader.py` | 대용량 성능 실측 |
-| FR-2.4 | 적재 무결성 검증 | 완료 | `validate.py`, `test_graph_integrity.py`, `test_generic_graph_loader.py` | 원본→변환→적재 reconciliation 일반화 |
-| FR-2.5 | 멱등성 | 완료 | `MERGE` 기반 적재, `test_graph_integrity.py` | 두 번째 도메인 실제 DB 재적재 검증 |
+| FR-2.3 | Neo4j 배치·벌크 적재 | 완료 | `backend/app/etl/load.py`, transactional `generic_loader.py` | 운영 데이터 크기별 성능 실측은 배포 단계 |
+| FR-2.4 | 적재 무결성 검증 | 완료 | 트랜잭션 내부 원본 projection→노드·관계 reconciliation, 교차 프로젝트 관계 검사 | 신규 도메인마다 동일 Gate 적용 |
+| FR-2.5 | 멱등성 | 완료 | 실제 Neo4j 두 번째 도메인 2회 적재 시 신규 노드·관계 0건 | 장기 운영 시 stale record 정책 추가 |
 | FR-2.6 | 파일 hash·lineage·격리 기록 | 완료 | 원본·정규화 SHA-256, archive/sheet lineage, dry-run isolation | 영속 Job audit는 후속 |
 | FR-2.7 | dry-run과 실제 적재 분리 | 완료 | mapping preview의 범용 `dry_run` 보고서와 승인 적재 분리 | UI 시각화는 2단계 |
 | FR-3.1 | 대표 질문 15~20개 | 완료 | `evaluation/gold_questions.yml` 15문항 | 새 도메인은 별도 기준셋 필요 |
 | FR-3.2 | 정답 Cypher·결과 snapshot | 완료 | `evaluation/gold_results/`, `gold_validation.py` | schema version 연결 보강 |
 | FR-3.3 | 예외·안전 질문 | 완료 | Gold·Blind·correction cases | 도메인 라우팅 예외는 3단계 |
 | FR-3.4 | Gold 기준선 평가 | 완료 | `evaluation/evaluator.py` | 모델 변경 시 정기 회귀 |
-| FR-3.5 | schema·Gold version 연결 | 부분 완료 | 파일 단위 분리 | manifest metadata로 명시적 연결 |
+| FR-3.5 | schema·Gold version 연결 | 완료 | `evaluation/projects/*/manifest.yml`, evaluation fingerprint | 변경 시 version과 snapshot 동시 갱신 |
 | FR-3.6 | Blind 분리 | 완료 | `blind_questions.yml`, `blind_results/` | 표본 확대 |
 | FR-4.1 | 프로젝트 schema context 주입 | 완료 | `bootstrap.py`, `workflow.py`, `SchemaRegistry.context()` | query-scenario context 선택 최적화 |
 | FR-4.2 | 자연어→Cypher | 완료 | Gemini/OpenAI/Gold adapter | provider별 회귀 |

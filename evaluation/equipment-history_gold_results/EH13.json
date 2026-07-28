@@ -1,0 +1,18 @@
+{
+  "question_id": "EH13",
+  "category": "resolution_status",
+  "question": "해결 여부별 정비 이벤트 수를 보여줘.",
+  "expected_status": "success",
+  "row_count": 2,
+  "rows_sha256": "0486e54fcc5eaf359df06b775ca2734095c354511a691031287fe422f5e0cee6",
+  "normalized_rows": [
+    {
+      "event_count": 1,
+      "resolved": false
+    },
+    {
+      "event_count": 11,
+      "resolved": true
+    }
+  ]
+}

@@ -65,10 +65,10 @@ class CipDmdAdapter:
             prepared.payload,
             schema_path,
             batch_size=batch_size,
+            project_id=self.project_id,
         )
 
     def graph_counts(
         self, driver: Driver, database: str
     ) -> dict[str, int]:
-        return graph_counts(driver, database)
-
+        return graph_counts(driver, database, self.project_id)

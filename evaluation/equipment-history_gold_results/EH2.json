@@ -1,0 +1,26 @@
+{
+  "question_id": "EH2",
+  "category": "downtime_ranking",
+  "question": "누적 중단 시간이 가장 긴 장비를 보여줘.",
+  "expected_status": "success",
+  "row_count": 4,
+  "rows_sha256": "ec855edfb57beb1ef1e2c63b0701fce6352a5f504f00b8c0f83ed938556008ab",
+  "normalized_rows": [
+    {
+      "equipment_id": "EQ-CNC-02",
+      "total_downtime_hours": 15.5
+    },
+    {
+      "equipment_id": "EQ-CONV-01",
+      "total_downtime_hours": 5.0
+    },
+    {
+      "equipment_id": "EQ-PRESS-01",
+      "total_downtime_hours": 15.0
+    },
+    {
+      "equipment_id": "EQ-WELD-03",
+      "total_downtime_hours": 16.0
+    }
+  ]
+}

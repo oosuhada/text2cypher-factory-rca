@@ -1,0 +1,3399 @@
+{
+  "project_id": "equipment-history",
+  "dataset": "Equipment Maintenance History example",
+  "evaluation_version": "1.0",
+  "schema_version": "1.0",
+  "source_version": "synthetic-equipment-history-v1",
+  "prompt_version": "text2cypher-v1",
+  "evaluation_fingerprint": "2812f3e1c20dffabedd90cab385302c069d584ecd913dbb5eb5f5cd6f3b16415",
+  "provider": "gemini",
+  "model": "gemini-2.5-flash",
+  "evaluated_at": "2026-07-28T01:15:33.028304+00:00",
+  "question_count": 20,
+  "pricing_basis": {
+    "currency": "USD",
+    "input_usd_per_million_tokens": 0.15,
+    "output_usd_per_million_tokens": 0.6,
+    "thinking_budget": 0,
+    "seed": 42,
+    "source": "https://cloud.google.com/vertex-ai/generative-ai/pricing",
+    "checked_at": "2026-07-27"
+  },
+  "comparison": [
+    {
+      "variant": "baseline",
+      "question_count": 20,
+      "execution_success_rate": 0.0,
+      "result_accuracy": 0.05,
+      "strict_result_accuracy": 0.05,
+      "contract_variance_rate": 0.0,
+      "schema_compliance_rate": 0.0,
+      "read_only_compliance_rate": 1.0,
+      "empty_result_handling_rate": 0.0,
+      "correction_success_rate": null,
+      "evidence_display_rate": 0.0,
+      "average_elapsed_ms": 802.3,
+      "failure_counts": {
+        "semantic_validation_error": 19
+      },
+      "difference_counts": {
+        "exact": 1,
+        "column_alias_or_extra_field": 0,
+        "wrong_value_or_rowset": 19
+      },
+      "status_classification": {
+        "labels": [
+          "success",
+          "empty",
+          "blocked",
+          "needs_clarification",
+          "failed"
+        ],
+        "confusion_matrix": {
+          "success": {
+            "success": 0,
+            "empty": 0,
+            "blocked": 0,
+            "needs_clarification": 0,
+            "failed": 16
+          },
+          "empty": {
+            "success": 0,
+            "empty": 0,
+            "blocked": 0,
+            "needs_clarification": 0,
+            "failed": 2
+          },
+          "blocked": {
+            "success": 0,
+            "empty": 0,
+            "blocked": 1,
+            "needs_clarification": 0,
+            "failed": 0
+          },
+          "needs_clarification": {
+            "success": 0,
+            "empty": 0,
+            "blocked": 0,
+            "needs_clarification": 0,
+            "failed": 1
+          },
+          "failed": {
+            "success": 0,
+            "empty": 0,
+            "blocked": 0,
+            "needs_clarification": 0,
+            "failed": 0
+          }
+        },
+        "accuracy": 0.05,
+        "macro_precision": 0.25,
+        "macro_recall": 0.25,
+        "macro_f1": 0.25,
+        "per_class": {
+          "success": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 16
+          },
+          "empty": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 2
+          },
+          "blocked": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 1
+          },
+          "needs_clarification": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 1
+          },
+          "failed": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          }
+        }
+      },
+      "model_call_count": 19,
+      "input_tokens": 8514,
+      "output_tokens": 999,
+      "estimated_cost_usd": 0.0018765
+    },
+    {
+      "variant": "few_shot",
+      "question_count": 20,
+      "execution_success_rate": 1.0,
+      "result_accuracy": 0.8,
+      "strict_result_accuracy": 0.25,
+      "contract_variance_rate": 0.55,
+      "schema_compliance_rate": 1.0,
+      "read_only_compliance_rate": 1.0,
+      "empty_result_handling_rate": 1.0,
+      "correction_success_rate": null,
+      "evidence_display_rate": 1.0,
+      "average_elapsed_ms": 5838.8,
+      "failure_counts": {
+        "wrong_status": 2,
+        "wrong_value_or_rowset": 2
+      },
+      "difference_counts": {
+        "exact": 5,
+        "column_alias_or_extra_field": 11,
+        "wrong_value_or_rowset": 4
+      },
+      "status_classification": {
+        "labels": [
+          "success",
+          "empty",
+          "blocked",
+          "needs_clarification",
+          "failed"
+        ],
+        "confusion_matrix": {
+          "success": {
+            "success": 15,
+            "empty": 1,
+            "blocked": 0,
+            "needs_clarification": 0,
+            "failed": 0
+          },
+          "empty": {
+            "success": 0,
+            "empty": 2,
+            "blocked": 0,
+            "needs_clarification": 0,
+            "failed": 0
+          },
+          "blocked": {
+            "success": 0,
+            "empty": 0,
+            "blocked": 1,
+            "needs_clarification": 0,
+            "failed": 0
+          },
+          "needs_clarification": {
+            "success": 1,
+            "empty": 0,
+            "blocked": 0,
+            "needs_clarification": 0,
+            "failed": 0
+          },
+          "failed": {
+            "success": 0,
+            "empty": 0,
+            "blocked": 0,
+            "needs_clarification": 0,
+            "failed": 0
+          }
+        },
+        "accuracy": 0.9,
+        "macro_precision": 0.651042,
+        "macro_recall": 0.734375,
+        "macro_f1": 0.684375,
+        "per_class": {
+          "success": {
+            "precision": 0.9375,
+            "recall": 0.9375,
+            "f1": 0.9375,
+            "support": 16
+          },
+          "empty": {
+            "precision": 0.666667,
+            "recall": 1.0,
+            "f1": 0.8,
+            "support": 2
+          },
+          "blocked": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 1
+          },
+          "needs_clarification": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 1
+          },
+          "failed": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          }
+        }
+      },
+      "model_call_count": 19,
+      "input_tokens": 22016,
+      "output_tokens": 1805,
+      "estimated_cost_usd": 0.0043854
+    },
+    {
+      "variant": "self_correction",
+      "question_count": 20,
+      "execution_success_rate": 1.0,
+      "result_accuracy": 0.8,
+      "strict_result_accuracy": 0.25,
+      "contract_variance_rate": 0.55,
+      "schema_compliance_rate": 1.0,
+      "read_only_compliance_rate": 1.0,
+      "empty_result_handling_rate": 1.0,
+      "correction_success_rate": null,
+      "evidence_display_rate": 1.0,
+      "average_elapsed_ms": 1002.3,
+      "failure_counts": {
+        "wrong_status": 2,
+        "wrong_value_or_rowset": 2
+      },
+      "difference_counts": {
+        "exact": 5,
+        "column_alias_or_extra_field": 11,
+        "wrong_value_or_rowset": 4
+      },
+      "status_classification": {
+        "labels": [
+          "success",
+          "empty",
+          "blocked",
+          "needs_clarification",
+          "failed"
+        ],
+        "confusion_matrix": {
+          "success": {
+            "success": 15,
+            "empty": 1,
+            "blocked": 0,
+            "needs_clarification": 0,
+            "failed": 0
+          },
+          "empty": {
+            "success": 0,
+            "empty": 2,
+            "blocked": 0,
+            "needs_clarification": 0,
+            "failed": 0
+          },
+          "blocked": {
+            "success": 0,
+            "empty": 0,
+            "blocked": 1,
+            "needs_clarification": 0,
+            "failed": 0
+          },
+          "needs_clarification": {
+            "success": 1,
+            "empty": 0,
+            "blocked": 0,
+            "needs_clarification": 0,
+            "failed": 0
+          },
+          "failed": {
+            "success": 0,
+            "empty": 0,
+            "blocked": 0,
+            "needs_clarification": 0,
+            "failed": 0
+          }
+        },
+        "accuracy": 0.9,
+        "macro_precision": 0.651042,
+        "macro_recall": 0.734375,
+        "macro_f1": 0.684375,
+        "per_class": {
+          "success": {
+            "precision": 0.9375,
+            "recall": 0.9375,
+            "f1": 0.9375,
+            "support": 16
+          },
+          "empty": {
+            "precision": 0.666667,
+            "recall": 1.0,
+            "f1": 0.8,
+            "support": 2
+          },
+          "blocked": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 1
+          },
+          "needs_clarification": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 1
+          },
+          "failed": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          }
+        }
+      },
+      "model_call_count": 19,
+      "input_tokens": 22016,
+      "output_tokens": 1805,
+      "estimated_cost_usd": 0.0043854
+    }
+  ],
+  "total_usage": {
+    "call_count": 57,
+    "input_tokens": 52546,
+    "output_tokens": 4609,
+    "estimated_cost_usd": 0.0106473
+  },
+  "variants": {
+    "baseline": {
+      "metrics": {
+        "question_count": 20,
+        "execution_success_rate": 0.0,
+        "result_accuracy": 0.05,
+        "strict_result_accuracy": 0.05,
+        "contract_variance_rate": 0.0,
+        "schema_compliance_rate": 0.0,
+        "read_only_compliance_rate": 1.0,
+        "empty_result_handling_rate": 0.0,
+        "correction_success_rate": null,
+        "evidence_display_rate": 0.0,
+        "average_elapsed_ms": 802.3,
+        "failure_counts": {
+          "semantic_validation_error": 19
+        },
+        "difference_counts": {
+          "exact": 1,
+          "column_alias_or_extra_field": 0,
+          "wrong_value_or_rowset": 19
+        },
+        "status_classification": {
+          "labels": [
+            "success",
+            "empty",
+            "blocked",
+            "needs_clarification",
+            "failed"
+          ],
+          "confusion_matrix": {
+            "success": {
+              "success": 0,
+              "empty": 0,
+              "blocked": 0,
+              "needs_clarification": 0,
+              "failed": 16
+            },
+            "empty": {
+              "success": 0,
+              "empty": 0,
+              "blocked": 0,
+              "needs_clarification": 0,
+              "failed": 2
+            },
+            "blocked": {
+              "success": 0,
+              "empty": 0,
+              "blocked": 1,
+              "needs_clarification": 0,
+              "failed": 0
+            },
+            "needs_clarification": {
+              "success": 0,
+              "empty": 0,
+              "blocked": 0,
+              "needs_clarification": 0,
+              "failed": 1
+            },
+            "failed": {
+              "success": 0,
+              "empty": 0,
+              "blocked": 0,
+              "needs_clarification": 0,
+              "failed": 0
+            }
+          },
+          "accuracy": 0.05,
+          "macro_precision": 0.25,
+          "macro_recall": 0.25,
+          "macro_f1": 0.25,
+          "per_class": {
+            "success": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 16
+            },
+            "empty": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 2
+            },
+            "blocked": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 1
+            },
+            "needs_clarification": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 1
+            },
+            "failed": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 0
+            }
+          }
+        }
+      },
+      "usage": {
+        "call_count": 19,
+        "input_tokens": 8514,
+        "output_tokens": 999,
+        "total_tokens": 9513,
+        "model_elapsed_ms": 16041,
+        "estimated_cost_usd": 0.0018765,
+        "pricing_basis": {
+          "currency": "USD",
+          "input_usd_per_million_tokens": 0.15,
+          "output_usd_per_million_tokens": 0.6,
+          "thinking_budget": 0,
+          "seed": 42,
+          "source": "https://cloud.google.com/vertex-ai/generative-ai/pricing"
+        }
+      },
+      "questions": [
+        {
+          "question_id": "EB01",
+          "category": "filtered_aggregate",
+          "difficulty": "easy",
+          "question": "프레스 유형 설비의 정비 건수를 알려줘.",
+          "expected_status": "success",
+          "actual_status": "failed",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 1,
+          "actual_row_count": 0,
+          "execution_success": false,
+          "schema_compliant": false,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": false,
+          "attempts": 1,
+          "elapsed_ms": 1562,
+          "cypher": "MATCH (e:Equipment {equipment_type: '프레스'})-[:HAS_MAINTENANCE]->(m:MaintenanceEvent)\nRETURN e.name AS EquipmentName, COUNT(m) AS MaintenanceCount",
+          "errors": [
+            "PROJECT_SCOPE: Query must restrict graph access to project_id 'equipment-history'."
+          ],
+          "failure_type": "semantic_validation_error",
+          "missing_rows": [
+            {
+              "equipment_id": "EQ-PRESS-01",
+              "maintenance_count": 4
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB02",
+          "category": "event_type_count",
+          "difficulty": "easy",
+          "question": "repair 유형의 전체 발생 횟수는 몇 건이야?",
+          "expected_status": "success",
+          "actual_status": "failed",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 1,
+          "actual_row_count": 0,
+          "execution_success": false,
+          "schema_compliant": false,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": false,
+          "attempts": 1,
+          "elapsed_ms": 651,
+          "cypher": "MATCH (m:MaintenanceEvent) WHERE m.event_type = 'repair' RETURN count(m) AS repair_event_count",
+          "errors": [
+            "PROJECT_SCOPE: Query must restrict graph access to project_id 'equipment-history'."
+          ],
+          "failure_type": "semantic_validation_error",
+          "missing_rows": [
+            {
+              "repair_count": 5
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB03",
+          "category": "replacement_cost",
+          "difficulty": "medium",
+          "question": "replacement 작업의 총비용과 작업 수를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "failed",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 1,
+          "actual_row_count": 0,
+          "execution_success": false,
+          "schema_compliant": false,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": false,
+          "attempts": 1,
+          "elapsed_ms": 929,
+          "cypher": "MATCH (m:MaintenanceEvent) WHERE m.event_type = 'replacement' RETURN SUM(m.cost_usd) AS total_cost, COUNT(m) AS number_of_replacements",
+          "errors": [
+            "PROJECT_SCOPE: Query must restrict graph access to project_id 'equipment-history'."
+          ],
+          "failure_type": "semantic_validation_error",
+          "missing_rows": [
+            {
+              "replacement_count": 2,
+              "total_replacement_cost_usd": 5180
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB04",
+          "category": "unresolved_technician",
+          "difficulty": "medium",
+          "question": "미해결 이벤트의 설비와 담당 기술자를 찾아줘.",
+          "expected_status": "success",
+          "actual_status": "failed",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 1,
+          "actual_row_count": 0,
+          "execution_success": false,
+          "schema_compliant": false,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": false,
+          "attempts": 1,
+          "elapsed_ms": 811,
+          "cypher": "MATCH (e:Equipment)-[:HAS_MAINTENANCE]->(me:MaintenanceEvent)<-[:PERFORMED]-(t:Technician) WHERE me.resolved = false RETURN e.equipment_id, e.name, me.event_id, me.event_date, me.event_type, t.technician_id, t.name",
+          "errors": [
+            "PROJECT_SCOPE: Query must restrict graph access to project_id 'equipment-history'."
+          ],
+          "failure_type": "semantic_validation_error",
+          "missing_rows": [
+            {
+              "equipment_id": "EQ-WELD-03",
+              "event_id": "ME-012",
+              "technician_id": "T-04",
+              "technician_name": "Choi"
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB05",
+          "category": "cost_filter",
+          "difficulty": "easy",
+          "question": "비용이 300달러 이하인 정비 이력을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "failed",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 3,
+          "actual_row_count": 0,
+          "execution_success": false,
+          "schema_compliant": false,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": false,
+          "attempts": 1,
+          "elapsed_ms": 699,
+          "cypher": "MATCH (m:MaintenanceEvent) WHERE m.cost_usd <= 300 RETURN m.event_id, m.event_date, m.event_type, m.cost_usd",
+          "errors": [
+            "PROJECT_SCOPE: Query must restrict graph access to project_id 'equipment-history'."
+          ],
+          "failure_type": "semantic_validation_error",
+          "missing_rows": [
+            {
+              "component": "hydraulic_pump",
+              "cost_usd": 220,
+              "event_id": "ME-001"
+            },
+            {
+              "component": "motor",
+              "cost_usd": 180,
+              "event_id": "ME-007"
+            },
+            {
+              "component": "safety_sensor",
+              "cost_usd": 260,
+              "event_id": "ME-010"
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB06",
+          "category": "month_filter",
+          "difficulty": "medium",
+          "question": "2026년 2월에 발생한 정비 이벤트를 알려줘.",
+          "expected_status": "success",
+          "actual_status": "failed",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 3,
+          "actual_row_count": 0,
+          "execution_success": false,
+          "schema_compliant": false,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": false,
+          "attempts": 1,
+          "elapsed_ms": 949,
+          "cypher": "MATCH (event:MaintenanceEvent)\nWHERE event.event_date STARTS WITH '2026-02'\nRETURN event.event_id, event.event_date, event.event_type, event.component, event.downtime_hours, event.cost_usd, event.resolved",
+          "errors": [
+            "PROJECT_SCOPE: Query must restrict graph access to project_id 'equipment-history'."
+          ],
+          "failure_type": "semantic_validation_error",
+          "missing_rows": [
+            {
+              "component": "coolant_pump",
+              "event_date": "2026-02-15",
+              "event_id": "ME-005",
+              "event_type": "inspection"
+            },
+            {
+              "component": "seal",
+              "event_date": "2026-02-02",
+              "event_id": "ME-004",
+              "event_type": "repair"
+            },
+            {
+              "component": "torch",
+              "event_date": "2026-02-21",
+              "event_id": "ME-006",
+              "event_type": "repair"
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB07",
+          "category": "inspection_downtime",
+          "difficulty": "medium",
+          "question": "설비별 inspection 작업의 총 중단 시간을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "failed",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 4,
+          "actual_row_count": 0,
+          "execution_success": false,
+          "schema_compliant": false,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": false,
+          "attempts": 1,
+          "elapsed_ms": 820,
+          "cypher": "MATCH (e:Equipment)-[:HAS_MAINTENANCE]->(me:MaintenanceEvent)\nWHERE me.event_type = 'inspection'\nRETURN e.name AS Equipment, SUM(me.downtime_hours) AS TotalDowntimeHours",
+          "errors": [
+            "PROJECT_SCOPE: Query must restrict graph access to project_id 'equipment-history'."
+          ],
+          "failure_type": "semantic_validation_error",
+          "missing_rows": [
+            {
+              "equipment_id": "EQ-CNC-02",
+              "inspection_downtime_hours": 2.0
+            },
+            {
+              "equipment_id": "EQ-CONV-01",
+              "inspection_downtime_hours": 1.0
+            },
+            {
+              "equipment_id": "EQ-PRESS-01",
+              "inspection_downtime_hours": 3.5
+            },
+            {
+              "equipment_id": "EQ-WELD-03",
+              "inspection_downtime_hours": 1.5
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB08",
+          "category": "maximum_cost",
+          "difficulty": "easy",
+          "question": "가장 비싼 정비 작업의 이벤트 ID와 비용을 알려줘.",
+          "expected_status": "success",
+          "actual_status": "failed",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 1,
+          "actual_row_count": 0,
+          "execution_success": false,
+          "schema_compliant": false,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": false,
+          "attempts": 1,
+          "elapsed_ms": 743,
+          "cypher": "MATCH (m:MaintenanceEvent)\nRETURN m.event_id, m.cost_usd\nORDER BY m.cost_usd DESC\nLIMIT 1",
+          "errors": [
+            "PROJECT_SCOPE: Query must restrict graph access to project_id 'equipment-history'."
+          ],
+          "failure_type": "semantic_validation_error",
+          "missing_rows": [
+            {
+              "cost_usd": 5100,
+              "event_id": "ME-012"
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB09",
+          "category": "equipment_components",
+          "difficulty": "medium",
+          "question": "EQ-PRESS-01에서 정비한 부품 목록을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "failed",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 4,
+          "actual_row_count": 0,
+          "execution_success": false,
+          "schema_compliant": false,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": false,
+          "attempts": 1,
+          "elapsed_ms": 994,
+          "cypher": "MATCH (e:Equipment {equipment_id: 'EQ-PRESS-01'})-[:HAS_MAINTENANCE]->(m:MaintenanceEvent) RETURN m.component AS component, m.event_date AS event_date, m.event_type AS event_type",
+          "errors": [
+            "PROJECT_SCOPE: Query must restrict graph access to project_id 'equipment-history'."
+          ],
+          "failure_type": "semantic_validation_error",
+          "missing_rows": [
+            {
+              "component": "hydraulic_pump",
+              "event_id": "ME-001"
+            },
+            {
+              "component": "hydraulic_pump",
+              "event_id": "ME-008"
+            },
+            {
+              "component": "pressure_sensor",
+              "event_id": "ME-011"
+            },
+            {
+              "component": "seal",
+              "event_id": "ME-004"
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB10",
+          "category": "technician_diversity",
+          "difficulty": "hard",
+          "question": "설비별 참여 기술자 수를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "failed",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 4,
+          "actual_row_count": 0,
+          "execution_success": false,
+          "schema_compliant": false,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": false,
+          "attempts": 1,
+          "elapsed_ms": 759,
+          "cypher": "MATCH (e:Equipment)-[:HAS_MAINTENANCE]->(me:MaintenanceEvent)<-[:PERFORMED]-(t:Technician)\nRETURN e.name AS Equipment, COUNT(DISTINCT t.technician_id) AS NumberOfTechnicians",
+          "errors": [
+            "PROJECT_SCOPE: Query must restrict graph access to project_id 'equipment-history'."
+          ],
+          "failure_type": "semantic_validation_error",
+          "missing_rows": [
+            {
+              "equipment_id": "EQ-CNC-02",
+              "technician_count": 1
+            },
+            {
+              "equipment_id": "EQ-CONV-01",
+              "technician_count": 1
+            },
+            {
+              "equipment_id": "EQ-PRESS-01",
+              "technician_count": 2
+            },
+            {
+              "equipment_id": "EQ-WELD-03",
+              "technician_count": 1
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB11",
+          "category": "overall_summary",
+          "difficulty": "easy",
+          "question": "전체 정비 건수와 총 중단 시간을 알려줘.",
+          "expected_status": "success",
+          "actual_status": "failed",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 1,
+          "actual_row_count": 0,
+          "execution_success": false,
+          "schema_compliant": false,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": false,
+          "attempts": 1,
+          "elapsed_ms": 777,
+          "cypher": "MATCH (m:MaintenanceEvent)\nRETURN count(m) AS total_maintenance_events, sum(m.downtime_hours) AS total_downtime_hours",
+          "errors": [
+            "PROJECT_SCOPE: Query must restrict graph access to project_id 'equipment-history'."
+          ],
+          "failure_type": "semantic_validation_error",
+          "missing_rows": [
+            {
+              "event_count": 12,
+              "total_downtime_hours": 51.5
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB12",
+          "category": "technician_cost",
+          "difficulty": "hard",
+          "question": "기술자별 평균 정비 비용을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "failed",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 4,
+          "actual_row_count": 0,
+          "execution_success": false,
+          "schema_compliant": false,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": false,
+          "attempts": 1,
+          "elapsed_ms": 723,
+          "cypher": "MATCH (t:Technician)-[:PERFORMED]->(m:MaintenanceEvent)\nRETURN t.name AS Technician, avg(m.cost_usd) AS AverageMaintenanceCost",
+          "errors": [
+            "PROJECT_SCOPE: Query must restrict graph access to project_id 'equipment-history'."
+          ],
+          "failure_type": "semantic_validation_error",
+          "missing_rows": [
+            {
+              "average_cost_usd": 1726.66666667,
+              "technician_id": "T-01"
+            },
+            {
+              "average_cost_usd": 2220.0,
+              "technician_id": "T-02"
+            },
+            {
+              "average_cost_usd": 2336.66666667,
+              "technician_id": "T-04"
+            },
+            {
+              "average_cost_usd": 536.66666667,
+              "technician_id": "T-03"
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB13",
+          "category": "nonexistent_entity",
+          "difficulty": "easy",
+          "question": "EQ-UNKNOWN 설비의 정비 이력을 보여줘.",
+          "expected_status": "empty",
+          "actual_status": "failed",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": false,
+          "schema_compliant": false,
+          "read_only_compliant": true,
+          "empty_handled": false,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": false,
+          "attempts": 1,
+          "elapsed_ms": 813,
+          "cypher": "MATCH (e:Equipment {equipment_id: 'EQ-UNKNOWN'})-[:HAS_MAINTENANCE]->(me:MaintenanceEvent) RETURN me.event_id, me.event_date, me.event_type, me.component, me.downtime_hours, me.cost_usd, me.resolved ORDER BY me.event_date ASC",
+          "errors": [
+            "PROJECT_SCOPE: Query must restrict graph access to project_id 'equipment-history'."
+          ],
+          "failure_type": "semantic_validation_error",
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB14",
+          "category": "nonexistent_component",
+          "difficulty": "easy",
+          "question": "bearing 부품 정비 이력을 보여줘.",
+          "expected_status": "empty",
+          "actual_status": "failed",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": false,
+          "schema_compliant": false,
+          "read_only_compliant": true,
+          "empty_handled": false,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": false,
+          "attempts": 1,
+          "elapsed_ms": 816,
+          "cypher": "MATCH (e:Equipment)-[r:HAS_MAINTENANCE]->(m:MaintenanceEvent) WHERE m.component = 'bearing' RETURN e.name, m.event_date, m.event_type, m.component, m.downtime_hours, m.cost_usd, m.resolved ORDER BY m.event_date DESC",
+          "errors": [
+            "PROJECT_SCOPE: Query must restrict graph access to project_id 'equipment-history'."
+          ],
+          "failure_type": "semantic_validation_error",
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB15",
+          "category": "unsafe_write",
+          "difficulty": "easy",
+          "question": "ME-001 정비 이벤트를 삭제해줘.",
+          "expected_status": "blocked",
+          "actual_status": "blocked",
+          "result_match": true,
+          "strict_result_match": true,
+          "contract_variance": false,
+          "difference_type": "exact",
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": null,
+          "schema_compliant": null,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": null,
+          "attempts": 0,
+          "elapsed_ms": 0,
+          "cypher": "",
+          "errors": [
+            "WRITE_REQUEST"
+          ],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB16",
+          "category": "ambiguous_reference",
+          "difficulty": "easy",
+          "question": "그 설비 이력 보여줘.",
+          "expected_status": "needs_clarification",
+          "actual_status": "failed",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": null,
+          "schema_compliant": false,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": null,
+          "attempts": 1,
+          "elapsed_ms": 978,
+          "cypher": "MATCH (e:Equipment)-[:HAS_MAINTENANCE]->(me:MaintenanceEvent) RETURN e.equipment_id, e.name, me.event_id, me.event_date, me.event_type, me.component, me.downtime_hours, me.cost_usd, me.resolved ORDER BY me.event_date DESC",
+          "errors": [
+            "PROJECT_SCOPE: Query must restrict graph access to project_id 'equipment-history'."
+          ],
+          "failure_type": "semantic_validation_error",
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB17",
+          "category": "technician_history",
+          "difficulty": "medium",
+          "question": "Park 기술자가 담당한 이벤트를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "failed",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 3,
+          "actual_row_count": 0,
+          "execution_success": false,
+          "schema_compliant": false,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": false,
+          "attempts": 1,
+          "elapsed_ms": 825,
+          "cypher": "MATCH (t:Technician)-[:PERFORMED]->(m:MaintenanceEvent) WHERE t.name = 'Park' RETURN m.event_id, m.event_date, m.event_type, m.component, m.downtime_hours, m.cost_usd, m.resolved",
+          "errors": [
+            "PROJECT_SCOPE: Query must restrict graph access to project_id 'equipment-history'."
+          ],
+          "failure_type": "semantic_validation_error",
+          "missing_rows": [
+            {
+              "component": "belt",
+              "event_id": "ME-003",
+              "event_type": "replacement"
+            },
+            {
+              "component": "motor",
+              "event_id": "ME-007",
+              "event_type": "inspection"
+            },
+            {
+              "component": "pressure_sensor",
+              "event_id": "ME-011",
+              "event_type": "inspection"
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB18",
+          "category": "maximum_downtime",
+          "difficulty": "hard",
+          "question": "설비별 가장 긴 단일 중단 시간을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "failed",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 4,
+          "actual_row_count": 0,
+          "execution_success": false,
+          "schema_compliant": false,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": false,
+          "attempts": 1,
+          "elapsed_ms": 639,
+          "cypher": "MATCH (e:Equipment)-[:HAS_MAINTENANCE]->(m:MaintenanceEvent)\nRETURN e.name AS Equipment, MAX(m.downtime_hours) AS MaxDowntimeHours",
+          "errors": [
+            "PROJECT_SCOPE: Query must restrict graph access to project_id 'equipment-history'."
+          ],
+          "failure_type": "semantic_validation_error",
+          "missing_rows": [
+            {
+              "equipment_id": "EQ-CNC-02",
+              "maximum_downtime_hours": 7.0
+            },
+            {
+              "equipment_id": "EQ-CONV-01",
+              "maximum_downtime_hours": 4.0
+            },
+            {
+              "equipment_id": "EQ-PRESS-01",
+              "maximum_downtime_hours": 8.0
+            },
+            {
+              "equipment_id": "EQ-WELD-03",
+              "maximum_downtime_hours": 9.0
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB19",
+          "category": "event_type_distribution",
+          "difficulty": "medium",
+          "question": "각 설비의 정비 유형별 건수를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "failed",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 9,
+          "actual_row_count": 0,
+          "execution_success": false,
+          "schema_compliant": false,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": false,
+          "attempts": 1,
+          "elapsed_ms": 830,
+          "cypher": "MATCH (e:Equipment)-[:HAS_MAINTENANCE]->(m:MaintenanceEvent)\nRETURN e.name AS Equipment, m.event_type AS EventType, COUNT(m) AS EventCount",
+          "errors": [
+            "PROJECT_SCOPE: Query must restrict graph access to project_id 'equipment-history'."
+          ],
+          "failure_type": "semantic_validation_error",
+          "missing_rows": [
+            {
+              "equipment_id": "EQ-CNC-02",
+              "event_count": 1,
+              "event_type": "inspection"
+            },
+            {
+              "equipment_id": "EQ-CNC-02",
+              "event_count": 2,
+              "event_type": "repair"
+            },
+            {
+              "equipment_id": "EQ-CONV-01",
+              "event_count": 1,
+              "event_type": "inspection"
+            },
+            {
+              "equipment_id": "EQ-CONV-01",
+              "event_count": 1,
+              "event_type": "replacement"
+            },
+            {
+              "equipment_id": "EQ-PRESS-01",
+              "event_count": 1,
+              "event_type": "repair"
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB20",
+          "category": "repair_component_distribution",
+          "difficulty": "medium",
+          "question": "repair 작업에서 부품별 발생 건수를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "failed",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 4,
+          "actual_row_count": 0,
+          "execution_success": false,
+          "schema_compliant": false,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": false,
+          "attempts": 1,
+          "elapsed_ms": 728,
+          "cypher": "MATCH (e:Equipment)-[:HAS_MAINTENANCE]->(m:MaintenanceEvent)\nWHERE m.event_type = 'repair'\nRETURN m.component AS Component, COUNT(m) AS RepairCount",
+          "errors": [
+            "PROJECT_SCOPE: Query must restrict graph access to project_id 'equipment-history'."
+          ],
+          "failure_type": "semantic_validation_error",
+          "missing_rows": [
+            {
+              "component": "controller",
+              "repair_count": 1
+            },
+            {
+              "component": "seal",
+              "repair_count": 1
+            },
+            {
+              "component": "spindle",
+              "repair_count": 2
+            },
+            {
+              "component": "torch",
+              "repair_count": 1
+            }
+          ],
+          "unexpected_rows": []
+        }
+      ]
+    },
+    "few_shot": {
+      "metrics": {
+        "question_count": 20,
+        "execution_success_rate": 1.0,
+        "result_accuracy": 0.8,
+        "strict_result_accuracy": 0.25,
+        "contract_variance_rate": 0.55,
+        "schema_compliance_rate": 1.0,
+        "read_only_compliance_rate": 1.0,
+        "empty_result_handling_rate": 1.0,
+        "correction_success_rate": null,
+        "evidence_display_rate": 1.0,
+        "average_elapsed_ms": 5838.8,
+        "failure_counts": {
+          "wrong_status": 2,
+          "wrong_value_or_rowset": 2
+        },
+        "difference_counts": {
+          "exact": 5,
+          "column_alias_or_extra_field": 11,
+          "wrong_value_or_rowset": 4
+        },
+        "status_classification": {
+          "labels": [
+            "success",
+            "empty",
+            "blocked",
+            "needs_clarification",
+            "failed"
+          ],
+          "confusion_matrix": {
+            "success": {
+              "success": 15,
+              "empty": 1,
+              "blocked": 0,
+              "needs_clarification": 0,
+              "failed": 0
+            },
+            "empty": {
+              "success": 0,
+              "empty": 2,
+              "blocked": 0,
+              "needs_clarification": 0,
+              "failed": 0
+            },
+            "blocked": {
+              "success": 0,
+              "empty": 0,
+              "blocked": 1,
+              "needs_clarification": 0,
+              "failed": 0
+            },
+            "needs_clarification": {
+              "success": 1,
+              "empty": 0,
+              "blocked": 0,
+              "needs_clarification": 0,
+              "failed": 0
+            },
+            "failed": {
+              "success": 0,
+              "empty": 0,
+              "blocked": 0,
+              "needs_clarification": 0,
+              "failed": 0
+            }
+          },
+          "accuracy": 0.9,
+          "macro_precision": 0.651042,
+          "macro_recall": 0.734375,
+          "macro_f1": 0.684375,
+          "per_class": {
+            "success": {
+              "precision": 0.9375,
+              "recall": 0.9375,
+              "f1": 0.9375,
+              "support": 16
+            },
+            "empty": {
+              "precision": 0.666667,
+              "recall": 1.0,
+              "f1": 0.8,
+              "support": 2
+            },
+            "blocked": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 1
+            },
+            "needs_clarification": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 1
+            },
+            "failed": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 0
+            }
+          }
+        }
+      },
+      "usage": {
+        "call_count": 19,
+        "input_tokens": 22016,
+        "output_tokens": 1805,
+        "total_tokens": 23821,
+        "model_elapsed_ms": 115284,
+        "estimated_cost_usd": 0.0043854,
+        "pricing_basis": {
+          "currency": "USD",
+          "input_usd_per_million_tokens": 0.15,
+          "output_usd_per_million_tokens": 0.6,
+          "thinking_budget": 0,
+          "seed": 42,
+          "source": "https://cloud.google.com/vertex-ai/generative-ai/pricing"
+        }
+      },
+      "questions": [
+        {
+          "question_id": "EB01",
+          "category": "filtered_aggregate",
+          "difficulty": "easy",
+          "question": "프레스 유형 설비의 정비 건수를 알려줘.",
+          "expected_status": "success",
+          "actual_status": "empty",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 1,
+          "actual_row_count": 0,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 99218,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history'})\n      -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nWHERE e.equipment_type = '프레스'\nRETURN e.equipment_id AS equipment_id, count(m) AS maintenance_count\nORDER BY maintenance_count DESC",
+          "errors": [],
+          "failure_type": "wrong_status",
+          "missing_rows": [
+            {
+              "equipment_id": "EQ-PRESS-01",
+              "maintenance_count": 4
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB02",
+          "category": "event_type_count",
+          "difficulty": "easy",
+          "question": "repair 유형의 전체 발생 횟수는 몇 건이야?",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": false,
+          "contract_variance": true,
+          "difference_type": "column_alias_or_extra_field",
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 898,
+          "cypher": "MATCH (m:MaintenanceEvent {project_id: 'equipment-history'})\nWHERE m.event_type = 'repair'\nRETURN count(m) AS repair_event_count",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [
+            {
+              "repair_count": 5
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "repair_event_count": 5
+            }
+          ]
+        },
+        {
+          "question_id": "EB03",
+          "category": "replacement_cost",
+          "difficulty": "medium",
+          "question": "replacement 작업의 총비용과 작업 수를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": false,
+          "contract_variance": true,
+          "difference_type": "column_alias_or_extra_field",
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1016,
+          "cypher": "MATCH (m:MaintenanceEvent {project_id: 'equipment-history'})\nWHERE m.event_type = 'replacement'\nRETURN sum(m.cost_usd) AS total_cost_usd, count(m) AS event_count",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [
+            {
+              "replacement_count": 2,
+              "total_replacement_cost_usd": 5180
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "event_count": 2,
+              "total_cost_usd": 5180
+            }
+          ]
+        },
+        {
+          "question_id": "EB04",
+          "category": "unresolved_technician",
+          "difficulty": "medium",
+          "question": "미해결 이벤트의 설비와 담당 기술자를 찾아줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": false,
+          "contract_variance": true,
+          "difference_type": "column_alias_or_extra_field",
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1060,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history'})\n      -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nMATCH (t:Technician {project_id: 'equipment-history'})\n      -[:PERFORMED]->(m)\nWHERE m.resolved = FALSE\nRETURN e.equipment_id AS equipment_id, m.event_id AS event_id,\n       m.event_type AS event_type, m.component AS component,\n       t.technician_id AS technician_id, t.name AS technician_name,\n       m.event_date AS event_date\nORDER BY m.event_date DESC",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [
+            {
+              "equipment_id": "EQ-WELD-03",
+              "event_id": "ME-012",
+              "technician_id": "T-04",
+              "technician_name": "Choi"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "component": "controller",
+              "equipment_id": "EQ-WELD-03",
+              "event_date": "2026-05-20",
+              "event_id": "ME-012",
+              "event_type": "repair",
+              "technician_id": "T-04",
+              "technician_name": "Choi"
+            }
+          ]
+        },
+        {
+          "question_id": "EB05",
+          "category": "cost_filter",
+          "difficulty": "easy",
+          "question": "비용이 300달러 이하인 정비 이력을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": false,
+          "contract_variance": true,
+          "difference_type": "column_alias_or_extra_field",
+          "expected_row_count": 3,
+          "actual_row_count": 3,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1037,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history'})-[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'}) WHERE m.cost_usd <= 300 RETURN e.equipment_id AS equipment_id, m.event_id AS event_id, m.event_type AS event_type, m.component AS component, m.cost_usd AS cost_usd ORDER BY cost_usd DESC",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [
+            {
+              "component": "hydraulic_pump",
+              "cost_usd": 220,
+              "event_id": "ME-001"
+            },
+            {
+              "component": "motor",
+              "cost_usd": 180,
+              "event_id": "ME-007"
+            },
+            {
+              "component": "safety_sensor",
+              "cost_usd": 260,
+              "event_id": "ME-010"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "component": "hydraulic_pump",
+              "cost_usd": 220,
+              "equipment_id": "EQ-PRESS-01",
+              "event_id": "ME-001",
+              "event_type": "inspection"
+            },
+            {
+              "component": "motor",
+              "cost_usd": 180,
+              "equipment_id": "EQ-CONV-01",
+              "event_id": "ME-007",
+              "event_type": "inspection"
+            },
+            {
+              "component": "safety_sensor",
+              "cost_usd": 260,
+              "equipment_id": "EQ-WELD-03",
+              "event_id": "ME-010",
+              "event_type": "inspection"
+            }
+          ]
+        },
+        {
+          "question_id": "EB06",
+          "category": "month_filter",
+          "difficulty": "medium",
+          "question": "2026년 2월에 발생한 정비 이벤트를 알려줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 3,
+          "actual_row_count": 3,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1139,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history'})\n      -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nWHERE m.event_date >= '2026-02-01' AND m.event_date < '2026-03-01'\nRETURN e.equipment_id AS equipment_id, m.event_id AS event_id,\n       m.event_date AS event_date, m.event_type AS event_type\nORDER BY event_date",
+          "errors": [],
+          "failure_type": "wrong_value_or_rowset",
+          "missing_rows": [
+            {
+              "component": "coolant_pump",
+              "event_date": "2026-02-15",
+              "event_id": "ME-005",
+              "event_type": "inspection"
+            },
+            {
+              "component": "seal",
+              "event_date": "2026-02-02",
+              "event_id": "ME-004",
+              "event_type": "repair"
+            },
+            {
+              "component": "torch",
+              "event_date": "2026-02-21",
+              "event_id": "ME-006",
+              "event_type": "repair"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "equipment_id": "EQ-CNC-02",
+              "event_date": "2026-02-15",
+              "event_id": "ME-005",
+              "event_type": "inspection"
+            },
+            {
+              "equipment_id": "EQ-PRESS-01",
+              "event_date": "2026-02-02",
+              "event_id": "ME-004",
+              "event_type": "repair"
+            },
+            {
+              "equipment_id": "EQ-WELD-03",
+              "event_date": "2026-02-21",
+              "event_id": "ME-006",
+              "event_type": "repair"
+            }
+          ]
+        },
+        {
+          "question_id": "EB07",
+          "category": "inspection_downtime",
+          "difficulty": "medium",
+          "question": "설비별 inspection 작업의 총 중단 시간을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": false,
+          "contract_variance": true,
+          "difference_type": "column_alias_or_extra_field",
+          "expected_row_count": 4,
+          "actual_row_count": 4,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 790,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history'})-[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nWHERE m.event_type = 'inspection'\nRETURN e.equipment_id AS equipment_id, sum(m.downtime_hours) AS total_downtime_hours\nORDER BY total_downtime_hours DESC",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [
+            {
+              "equipment_id": "EQ-CNC-02",
+              "inspection_downtime_hours": 2.0
+            },
+            {
+              "equipment_id": "EQ-CONV-01",
+              "inspection_downtime_hours": 1.0
+            },
+            {
+              "equipment_id": "EQ-PRESS-01",
+              "inspection_downtime_hours": 3.5
+            },
+            {
+              "equipment_id": "EQ-WELD-03",
+              "inspection_downtime_hours": 1.5
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "equipment_id": "EQ-CNC-02",
+              "total_downtime_hours": 2.0
+            },
+            {
+              "equipment_id": "EQ-CONV-01",
+              "total_downtime_hours": 1.0
+            },
+            {
+              "equipment_id": "EQ-PRESS-01",
+              "total_downtime_hours": 3.5
+            },
+            {
+              "equipment_id": "EQ-WELD-03",
+              "total_downtime_hours": 1.5
+            }
+          ]
+        },
+        {
+          "question_id": "EB08",
+          "category": "maximum_cost",
+          "difficulty": "easy",
+          "question": "가장 비싼 정비 작업의 이벤트 ID와 비용을 알려줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": true,
+          "contract_variance": false,
+          "difference_type": "exact",
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 761,
+          "cypher": "MATCH (m:MaintenanceEvent {project_id: 'equipment-history'})\nRETURN m.event_id AS event_id, m.cost_usd AS cost_usd\nORDER BY m.cost_usd DESC\nLIMIT 1",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB09",
+          "category": "equipment_components",
+          "difficulty": "medium",
+          "question": "EQ-PRESS-01에서 정비한 부품 목록을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 4,
+          "actual_row_count": 3,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 947,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history', equipment_id: 'EQ-PRESS-01'})\n      -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nRETURN DISTINCT m.component AS component\nORDER BY component",
+          "errors": [],
+          "failure_type": "wrong_value_or_rowset",
+          "missing_rows": [
+            {
+              "component": "hydraulic_pump",
+              "event_id": "ME-001"
+            },
+            {
+              "component": "hydraulic_pump",
+              "event_id": "ME-008"
+            },
+            {
+              "component": "pressure_sensor",
+              "event_id": "ME-011"
+            },
+            {
+              "component": "seal",
+              "event_id": "ME-004"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "component": "hydraulic_pump"
+            },
+            {
+              "component": "pressure_sensor"
+            },
+            {
+              "component": "seal"
+            }
+          ]
+        },
+        {
+          "question_id": "EB10",
+          "category": "technician_diversity",
+          "difficulty": "hard",
+          "question": "설비별 참여 기술자 수를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": false,
+          "contract_variance": true,
+          "difference_type": "column_alias_or_extra_field",
+          "expected_row_count": 4,
+          "actual_row_count": 4,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1012,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history'})\n      -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nMATCH (t:Technician {project_id: 'equipment-history'})\n      -[:PERFORMED]->(m)\nRETURN e.equipment_id AS equipment_id,\n       count(DISTINCT t.technician_id) AS num_technicians\nORDER BY num_technicians DESC",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [
+            {
+              "equipment_id": "EQ-CNC-02",
+              "technician_count": 1
+            },
+            {
+              "equipment_id": "EQ-CONV-01",
+              "technician_count": 1
+            },
+            {
+              "equipment_id": "EQ-PRESS-01",
+              "technician_count": 2
+            },
+            {
+              "equipment_id": "EQ-WELD-03",
+              "technician_count": 1
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "equipment_id": "EQ-CNC-02",
+              "num_technicians": 1
+            },
+            {
+              "equipment_id": "EQ-CONV-01",
+              "num_technicians": 1
+            },
+            {
+              "equipment_id": "EQ-PRESS-01",
+              "num_technicians": 2
+            },
+            {
+              "equipment_id": "EQ-WELD-03",
+              "num_technicians": 1
+            }
+          ]
+        },
+        {
+          "question_id": "EB11",
+          "category": "overall_summary",
+          "difficulty": "easy",
+          "question": "전체 정비 건수와 총 중단 시간을 알려줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": false,
+          "contract_variance": true,
+          "difference_type": "column_alias_or_extra_field",
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 694,
+          "cypher": "MATCH (m:MaintenanceEvent {project_id: 'equipment-history'})\nRETURN count(m) AS total_maintenance_events,\n       sum(m.downtime_hours) AS total_downtime_hours",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [
+            {
+              "event_count": 12,
+              "total_downtime_hours": 51.5
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "total_downtime_hours": 51.5,
+              "total_maintenance_events": 12
+            }
+          ]
+        },
+        {
+          "question_id": "EB12",
+          "category": "technician_cost",
+          "difficulty": "hard",
+          "question": "기술자별 평균 정비 비용을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": false,
+          "contract_variance": true,
+          "difference_type": "column_alias_or_extra_field",
+          "expected_row_count": 4,
+          "actual_row_count": 4,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 949,
+          "cypher": "MATCH (t:Technician {project_id: 'equipment-history'})\n      -[:PERFORMED]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nRETURN t.technician_id AS technician_id, t.name AS technician_name,\n       avg(m.cost_usd) AS average_cost_usd\nORDER BY average_cost_usd DESC",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [
+            {
+              "average_cost_usd": 1726.66666667,
+              "technician_id": "T-01"
+            },
+            {
+              "average_cost_usd": 2220.0,
+              "technician_id": "T-02"
+            },
+            {
+              "average_cost_usd": 2336.66666667,
+              "technician_id": "T-04"
+            },
+            {
+              "average_cost_usd": 536.66666667,
+              "technician_id": "T-03"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "average_cost_usd": 1726.66666667,
+              "technician_id": "T-01",
+              "technician_name": "Kim"
+            },
+            {
+              "average_cost_usd": 2220.0,
+              "technician_id": "T-02",
+              "technician_name": "Lee"
+            },
+            {
+              "average_cost_usd": 2336.66666667,
+              "technician_id": "T-04",
+              "technician_name": "Choi"
+            },
+            {
+              "average_cost_usd": 536.66666667,
+              "technician_id": "T-03",
+              "technician_name": "Park"
+            }
+          ]
+        },
+        {
+          "question_id": "EB13",
+          "category": "nonexistent_entity",
+          "difficulty": "easy",
+          "question": "EQ-UNKNOWN 설비의 정비 이력을 보여줘.",
+          "expected_status": "empty",
+          "actual_status": "empty",
+          "result_match": true,
+          "strict_result_match": true,
+          "contract_variance": false,
+          "difference_type": "exact",
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": true,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1192,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history', equipment_id: 'EQ-UNKNOWN'})\n      -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nRETURN e.equipment_id AS equipment_id,\n       m.event_id AS event_id, m.event_date AS event_date,\n       m.event_type AS event_type, m.component AS component,\n       m.downtime_hours AS downtime_hours\nORDER BY event_date",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB14",
+          "category": "nonexistent_component",
+          "difficulty": "easy",
+          "question": "bearing 부품 정비 이력을 보여줘.",
+          "expected_status": "empty",
+          "actual_status": "empty",
+          "result_match": true,
+          "strict_result_match": true,
+          "contract_variance": false,
+          "difference_type": "exact",
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": true,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 960,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history'})\n      -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nWHERE m.component = 'bearing'\nRETURN e.equipment_id AS equipment_id, m.event_id AS event_id,\n       m.event_date AS event_date, m.event_type AS event_type,\n       m.component AS component, m.downtime_hours AS downtime_hours,\n       m.cost_usd AS cost_usd\nORDER BY event_date",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB15",
+          "category": "unsafe_write",
+          "difficulty": "easy",
+          "question": "ME-001 정비 이벤트를 삭제해줘.",
+          "expected_status": "blocked",
+          "actual_status": "blocked",
+          "result_match": true,
+          "strict_result_match": true,
+          "contract_variance": false,
+          "difference_type": "exact",
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": null,
+          "schema_compliant": null,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": null,
+          "attempts": 0,
+          "elapsed_ms": 0,
+          "cypher": "",
+          "errors": [
+            "WRITE_REQUEST"
+          ],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB16",
+          "category": "ambiguous_reference",
+          "difficulty": "easy",
+          "question": "그 설비 이력 보여줘.",
+          "expected_status": "needs_clarification",
+          "actual_status": "success",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 0,
+          "actual_row_count": 12,
+          "execution_success": null,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": null,
+          "attempts": 1,
+          "elapsed_ms": 1501,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history'})\n      -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nOPTIONAL MATCH (t:Technician {project_id: 'equipment-history'})\n               -[:PERFORMED]->(m)\nRETURN e.equipment_id AS equipment_id, e.name AS equipment_name,\n       e.equipment_type AS equipment_type, m.event_id AS event_id,\n       m.event_date AS event_date, m.event_type AS event_type,\n       m.component AS component, m.downtime_hours AS downtime_hours,\n       m.cost_usd AS cost_usd, m.resolved AS resolved,\n       t.technician_id AS technician_id, t.name AS technician_name\nORDER BY e.equipment_id, m.event_date DESC",
+          "errors": [],
+          "failure_type": "wrong_status",
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB17",
+          "category": "technician_history",
+          "difficulty": "medium",
+          "question": "Park 기술자가 담당한 이벤트를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": false,
+          "contract_variance": true,
+          "difference_type": "column_alias_or_extra_field",
+          "expected_row_count": 3,
+          "actual_row_count": 3,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1284,
+          "cypher": "MATCH (t:Technician {name: 'Park', project_id: 'equipment-history'})\n      -[:PERFORMED]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nMATCH (e:Equipment {project_id: 'equipment-history'})\n      -[:HAS_MAINTENANCE]->(m)\nRETURN t.name AS technician_name, e.equipment_id AS equipment_id,\n       m.event_id AS event_id, m.event_type AS event_type,\n       m.component AS component, m.event_date AS event_date",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [
+            {
+              "component": "belt",
+              "event_id": "ME-003",
+              "event_type": "replacement"
+            },
+            {
+              "component": "motor",
+              "event_id": "ME-007",
+              "event_type": "inspection"
+            },
+            {
+              "component": "pressure_sensor",
+              "event_id": "ME-011",
+              "event_type": "inspection"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "component": "belt",
+              "equipment_id": "EQ-CONV-01",
+              "event_date": "2026-01-19",
+              "event_id": "ME-003",
+              "event_type": "replacement",
+              "technician_name": "Park"
+            },
+            {
+              "component": "motor",
+              "equipment_id": "EQ-CONV-01",
+              "event_date": "2026-03-05",
+              "event_id": "ME-007",
+              "event_type": "inspection",
+              "technician_name": "Park"
+            },
+            {
+              "component": "pressure_sensor",
+              "equipment_id": "EQ-PRESS-01",
+              "event_date": "2026-05-01",
+              "event_id": "ME-011",
+              "event_type": "inspection",
+              "technician_name": "Park"
+            }
+          ]
+        },
+        {
+          "question_id": "EB18",
+          "category": "maximum_downtime",
+          "difficulty": "hard",
+          "question": "설비별 가장 긴 단일 중단 시간을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": false,
+          "contract_variance": true,
+          "difference_type": "column_alias_or_extra_field",
+          "expected_row_count": 4,
+          "actual_row_count": 4,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 831,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history'})\n      -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nRETURN e.equipment_id AS equipment_id,\n       max(m.downtime_hours) AS max_downtime_hours\nORDER BY max_downtime_hours DESC",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [
+            {
+              "equipment_id": "EQ-CNC-02",
+              "maximum_downtime_hours": 7.0
+            },
+            {
+              "equipment_id": "EQ-CONV-01",
+              "maximum_downtime_hours": 4.0
+            },
+            {
+              "equipment_id": "EQ-PRESS-01",
+              "maximum_downtime_hours": 8.0
+            },
+            {
+              "equipment_id": "EQ-WELD-03",
+              "maximum_downtime_hours": 9.0
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "equipment_id": "EQ-CNC-02",
+              "max_downtime_hours": 7.0
+            },
+            {
+              "equipment_id": "EQ-CONV-01",
+              "max_downtime_hours": 4.0
+            },
+            {
+              "equipment_id": "EQ-PRESS-01",
+              "max_downtime_hours": 8.0
+            },
+            {
+              "equipment_id": "EQ-WELD-03",
+              "max_downtime_hours": 9.0
+            }
+          ]
+        },
+        {
+          "question_id": "EB19",
+          "category": "event_type_distribution",
+          "difficulty": "medium",
+          "question": "각 설비의 정비 유형별 건수를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": true,
+          "contract_variance": false,
+          "difference_type": "exact",
+          "expected_row_count": 9,
+          "actual_row_count": 9,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 832,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history'})\n      -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nRETURN e.equipment_id AS equipment_id, m.event_type AS event_type,\n       count(m) AS event_count\nORDER BY equipment_id, event_type",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB20",
+          "category": "repair_component_distribution",
+          "difficulty": "medium",
+          "question": "repair 작업에서 부품별 발생 건수를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": false,
+          "contract_variance": true,
+          "difference_type": "column_alias_or_extra_field",
+          "expected_row_count": 4,
+          "actual_row_count": 4,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 654,
+          "cypher": "MATCH (m:MaintenanceEvent {project_id: 'equipment-history'})\nWHERE m.event_type = 'repair'\nRETURN m.component AS component, count(m) AS event_count\nORDER BY event_count DESC, component",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [
+            {
+              "component": "controller",
+              "repair_count": 1
+            },
+            {
+              "component": "seal",
+              "repair_count": 1
+            },
+            {
+              "component": "spindle",
+              "repair_count": 2
+            },
+            {
+              "component": "torch",
+              "repair_count": 1
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "component": "controller",
+              "event_count": 1
+            },
+            {
+              "component": "seal",
+              "event_count": 1
+            },
+            {
+              "component": "spindle",
+              "event_count": 2
+            },
+            {
+              "component": "torch",
+              "event_count": 1
+            }
+          ]
+        }
+      ]
+    },
+    "self_correction": {
+      "metrics": {
+        "question_count": 20,
+        "execution_success_rate": 1.0,
+        "result_accuracy": 0.8,
+        "strict_result_accuracy": 0.25,
+        "contract_variance_rate": 0.55,
+        "schema_compliance_rate": 1.0,
+        "read_only_compliance_rate": 1.0,
+        "empty_result_handling_rate": 1.0,
+        "correction_success_rate": null,
+        "evidence_display_rate": 1.0,
+        "average_elapsed_ms": 1002.3,
+        "failure_counts": {
+          "wrong_status": 2,
+          "wrong_value_or_rowset": 2
+        },
+        "difference_counts": {
+          "exact": 5,
+          "column_alias_or_extra_field": 11,
+          "wrong_value_or_rowset": 4
+        },
+        "status_classification": {
+          "labels": [
+            "success",
+            "empty",
+            "blocked",
+            "needs_clarification",
+            "failed"
+          ],
+          "confusion_matrix": {
+            "success": {
+              "success": 15,
+              "empty": 1,
+              "blocked": 0,
+              "needs_clarification": 0,
+              "failed": 0
+            },
+            "empty": {
+              "success": 0,
+              "empty": 2,
+              "blocked": 0,
+              "needs_clarification": 0,
+              "failed": 0
+            },
+            "blocked": {
+              "success": 0,
+              "empty": 0,
+              "blocked": 1,
+              "needs_clarification": 0,
+              "failed": 0
+            },
+            "needs_clarification": {
+              "success": 1,
+              "empty": 0,
+              "blocked": 0,
+              "needs_clarification": 0,
+              "failed": 0
+            },
+            "failed": {
+              "success": 0,
+              "empty": 0,
+              "blocked": 0,
+              "needs_clarification": 0,
+              "failed": 0
+            }
+          },
+          "accuracy": 0.9,
+          "macro_precision": 0.651042,
+          "macro_recall": 0.734375,
+          "macro_f1": 0.684375,
+          "per_class": {
+            "success": {
+              "precision": 0.9375,
+              "recall": 0.9375,
+              "f1": 0.9375,
+              "support": 16
+            },
+            "empty": {
+              "precision": 0.666667,
+              "recall": 1.0,
+              "f1": 0.8,
+              "support": 2
+            },
+            "blocked": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 1
+            },
+            "needs_clarification": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 1
+            },
+            "failed": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 0
+            }
+          }
+        }
+      },
+      "usage": {
+        "call_count": 19,
+        "input_tokens": 22016,
+        "output_tokens": 1805,
+        "total_tokens": 23821,
+        "model_elapsed_ms": 19533,
+        "estimated_cost_usd": 0.0043854,
+        "pricing_basis": {
+          "currency": "USD",
+          "input_usd_per_million_tokens": 0.15,
+          "output_usd_per_million_tokens": 0.6,
+          "thinking_budget": 0,
+          "seed": 42,
+          "source": "https://cloud.google.com/vertex-ai/generative-ai/pricing"
+        }
+      },
+      "questions": [
+        {
+          "question_id": "EB01",
+          "category": "filtered_aggregate",
+          "difficulty": "easy",
+          "question": "프레스 유형 설비의 정비 건수를 알려줘.",
+          "expected_status": "success",
+          "actual_status": "empty",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 1,
+          "actual_row_count": 0,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1809,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history'})\n      -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nWHERE e.equipment_type = '프레스'\nRETURN e.equipment_id AS equipment_id, count(m) AS maintenance_count\nORDER BY maintenance_count DESC",
+          "errors": [],
+          "failure_type": "wrong_status",
+          "missing_rows": [
+            {
+              "equipment_id": "EQ-PRESS-01",
+              "maintenance_count": 4
+            }
+          ],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB02",
+          "category": "event_type_count",
+          "difficulty": "easy",
+          "question": "repair 유형의 전체 발생 횟수는 몇 건이야?",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": false,
+          "contract_variance": true,
+          "difference_type": "column_alias_or_extra_field",
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 751,
+          "cypher": "MATCH (m:MaintenanceEvent {project_id: 'equipment-history'})\nWHERE m.event_type = 'repair'\nRETURN count(m) AS repair_event_count",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [
+            {
+              "repair_count": 5
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "repair_event_count": 5
+            }
+          ]
+        },
+        {
+          "question_id": "EB03",
+          "category": "replacement_cost",
+          "difficulty": "medium",
+          "question": "replacement 작업의 총비용과 작업 수를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": false,
+          "contract_variance": true,
+          "difference_type": "column_alias_or_extra_field",
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 668,
+          "cypher": "MATCH (m:MaintenanceEvent {project_id: 'equipment-history'})\nWHERE m.event_type = 'replacement'\nRETURN sum(m.cost_usd) AS total_cost_usd, count(m) AS event_count",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [
+            {
+              "replacement_count": 2,
+              "total_replacement_cost_usd": 5180
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "event_count": 2,
+              "total_cost_usd": 5180
+            }
+          ]
+        },
+        {
+          "question_id": "EB04",
+          "category": "unresolved_technician",
+          "difficulty": "medium",
+          "question": "미해결 이벤트의 설비와 담당 기술자를 찾아줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": false,
+          "contract_variance": true,
+          "difference_type": "column_alias_or_extra_field",
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1343,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history'})\n      -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nMATCH (t:Technician {project_id: 'equipment-history'})\n      -[:PERFORMED]->(m)\nWHERE m.resolved = FALSE\nRETURN e.equipment_id AS equipment_id, m.event_id AS event_id,\n       m.event_type AS event_type, m.component AS component,\n       t.technician_id AS technician_id, t.name AS technician_name,\n       m.event_date AS event_date\nORDER BY m.event_date DESC",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [
+            {
+              "equipment_id": "EQ-WELD-03",
+              "event_id": "ME-012",
+              "technician_id": "T-04",
+              "technician_name": "Choi"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "component": "controller",
+              "equipment_id": "EQ-WELD-03",
+              "event_date": "2026-05-20",
+              "event_id": "ME-012",
+              "event_type": "repair",
+              "technician_id": "T-04",
+              "technician_name": "Choi"
+            }
+          ]
+        },
+        {
+          "question_id": "EB05",
+          "category": "cost_filter",
+          "difficulty": "easy",
+          "question": "비용이 300달러 이하인 정비 이력을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": false,
+          "contract_variance": true,
+          "difference_type": "column_alias_or_extra_field",
+          "expected_row_count": 3,
+          "actual_row_count": 3,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 768,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history'})-[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'}) WHERE m.cost_usd <= 300 RETURN e.equipment_id AS equipment_id, m.event_id AS event_id, m.event_type AS event_type, m.component AS component, m.cost_usd AS cost_usd ORDER BY cost_usd DESC",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [
+            {
+              "component": "hydraulic_pump",
+              "cost_usd": 220,
+              "event_id": "ME-001"
+            },
+            {
+              "component": "motor",
+              "cost_usd": 180,
+              "event_id": "ME-007"
+            },
+            {
+              "component": "safety_sensor",
+              "cost_usd": 260,
+              "event_id": "ME-010"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "component": "hydraulic_pump",
+              "cost_usd": 220,
+              "equipment_id": "EQ-PRESS-01",
+              "event_id": "ME-001",
+              "event_type": "inspection"
+            },
+            {
+              "component": "motor",
+              "cost_usd": 180,
+              "equipment_id": "EQ-CONV-01",
+              "event_id": "ME-007",
+              "event_type": "inspection"
+            },
+            {
+              "component": "safety_sensor",
+              "cost_usd": 260,
+              "equipment_id": "EQ-WELD-03",
+              "event_id": "ME-010",
+              "event_type": "inspection"
+            }
+          ]
+        },
+        {
+          "question_id": "EB06",
+          "category": "month_filter",
+          "difficulty": "medium",
+          "question": "2026년 2월에 발생한 정비 이벤트를 알려줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 3,
+          "actual_row_count": 3,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 871,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history'})\n      -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nWHERE m.event_date >= '2026-02-01' AND m.event_date < '2026-03-01'\nRETURN e.equipment_id AS equipment_id, m.event_id AS event_id,\n       m.event_date AS event_date, m.event_type AS event_type\nORDER BY event_date",
+          "errors": [],
+          "failure_type": "wrong_value_or_rowset",
+          "missing_rows": [
+            {
+              "component": "coolant_pump",
+              "event_date": "2026-02-15",
+              "event_id": "ME-005",
+              "event_type": "inspection"
+            },
+            {
+              "component": "seal",
+              "event_date": "2026-02-02",
+              "event_id": "ME-004",
+              "event_type": "repair"
+            },
+            {
+              "component": "torch",
+              "event_date": "2026-02-21",
+              "event_id": "ME-006",
+              "event_type": "repair"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "equipment_id": "EQ-CNC-02",
+              "event_date": "2026-02-15",
+              "event_id": "ME-005",
+              "event_type": "inspection"
+            },
+            {
+              "equipment_id": "EQ-PRESS-01",
+              "event_date": "2026-02-02",
+              "event_id": "ME-004",
+              "event_type": "repair"
+            },
+            {
+              "equipment_id": "EQ-WELD-03",
+              "event_date": "2026-02-21",
+              "event_id": "ME-006",
+              "event_type": "repair"
+            }
+          ]
+        },
+        {
+          "question_id": "EB07",
+          "category": "inspection_downtime",
+          "difficulty": "medium",
+          "question": "설비별 inspection 작업의 총 중단 시간을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": false,
+          "contract_variance": true,
+          "difference_type": "column_alias_or_extra_field",
+          "expected_row_count": 4,
+          "actual_row_count": 4,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 815,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history'})-[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nWHERE m.event_type = 'inspection'\nRETURN e.equipment_id AS equipment_id, sum(m.downtime_hours) AS total_downtime_hours\nORDER BY total_downtime_hours DESC",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [
+            {
+              "equipment_id": "EQ-CNC-02",
+              "inspection_downtime_hours": 2.0
+            },
+            {
+              "equipment_id": "EQ-CONV-01",
+              "inspection_downtime_hours": 1.0
+            },
+            {
+              "equipment_id": "EQ-PRESS-01",
+              "inspection_downtime_hours": 3.5
+            },
+            {
+              "equipment_id": "EQ-WELD-03",
+              "inspection_downtime_hours": 1.5
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "equipment_id": "EQ-CNC-02",
+              "total_downtime_hours": 2.0
+            },
+            {
+              "equipment_id": "EQ-CONV-01",
+              "total_downtime_hours": 1.0
+            },
+            {
+              "equipment_id": "EQ-PRESS-01",
+              "total_downtime_hours": 3.5
+            },
+            {
+              "equipment_id": "EQ-WELD-03",
+              "total_downtime_hours": 1.5
+            }
+          ]
+        },
+        {
+          "question_id": "EB08",
+          "category": "maximum_cost",
+          "difficulty": "easy",
+          "question": "가장 비싼 정비 작업의 이벤트 ID와 비용을 알려줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": true,
+          "contract_variance": false,
+          "difference_type": "exact",
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 589,
+          "cypher": "MATCH (m:MaintenanceEvent {project_id: 'equipment-history'})\nRETURN m.event_id AS event_id, m.cost_usd AS cost_usd\nORDER BY m.cost_usd DESC\nLIMIT 1",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB09",
+          "category": "equipment_components",
+          "difficulty": "medium",
+          "question": "EQ-PRESS-01에서 정비한 부품 목록을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 4,
+          "actual_row_count": 3,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 2725,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history', equipment_id: 'EQ-PRESS-01'})\n      -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nRETURN DISTINCT m.component AS component\nORDER BY component",
+          "errors": [],
+          "failure_type": "wrong_value_or_rowset",
+          "missing_rows": [
+            {
+              "component": "hydraulic_pump",
+              "event_id": "ME-001"
+            },
+            {
+              "component": "hydraulic_pump",
+              "event_id": "ME-008"
+            },
+            {
+              "component": "pressure_sensor",
+              "event_id": "ME-011"
+            },
+            {
+              "component": "seal",
+              "event_id": "ME-004"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "component": "hydraulic_pump"
+            },
+            {
+              "component": "pressure_sensor"
+            },
+            {
+              "component": "seal"
+            }
+          ]
+        },
+        {
+          "question_id": "EB10",
+          "category": "technician_diversity",
+          "difficulty": "hard",
+          "question": "설비별 참여 기술자 수를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": false,
+          "contract_variance": true,
+          "difference_type": "column_alias_or_extra_field",
+          "expected_row_count": 4,
+          "actual_row_count": 4,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1086,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history'})\n      -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nMATCH (t:Technician {project_id: 'equipment-history'})\n      -[:PERFORMED]->(m)\nRETURN e.equipment_id AS equipment_id,\n       count(DISTINCT t.technician_id) AS num_technicians\nORDER BY num_technicians DESC",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [
+            {
+              "equipment_id": "EQ-CNC-02",
+              "technician_count": 1
+            },
+            {
+              "equipment_id": "EQ-CONV-01",
+              "technician_count": 1
+            },
+            {
+              "equipment_id": "EQ-PRESS-01",
+              "technician_count": 2
+            },
+            {
+              "equipment_id": "EQ-WELD-03",
+              "technician_count": 1
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "equipment_id": "EQ-CNC-02",
+              "num_technicians": 1
+            },
+            {
+              "equipment_id": "EQ-CONV-01",
+              "num_technicians": 1
+            },
+            {
+              "equipment_id": "EQ-PRESS-01",
+              "num_technicians": 2
+            },
+            {
+              "equipment_id": "EQ-WELD-03",
+              "num_technicians": 1
+            }
+          ]
+        },
+        {
+          "question_id": "EB11",
+          "category": "overall_summary",
+          "difficulty": "easy",
+          "question": "전체 정비 건수와 총 중단 시간을 알려줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": false,
+          "contract_variance": true,
+          "difference_type": "column_alias_or_extra_field",
+          "expected_row_count": 1,
+          "actual_row_count": 1,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 712,
+          "cypher": "MATCH (m:MaintenanceEvent {project_id: 'equipment-history'})\nRETURN count(m) AS total_maintenance_events,\n       sum(m.downtime_hours) AS total_downtime_hours",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [
+            {
+              "event_count": 12,
+              "total_downtime_hours": 51.5
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "total_downtime_hours": 51.5,
+              "total_maintenance_events": 12
+            }
+          ]
+        },
+        {
+          "question_id": "EB12",
+          "category": "technician_cost",
+          "difficulty": "hard",
+          "question": "기술자별 평균 정비 비용을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": false,
+          "contract_variance": true,
+          "difference_type": "column_alias_or_extra_field",
+          "expected_row_count": 4,
+          "actual_row_count": 4,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 915,
+          "cypher": "MATCH (t:Technician {project_id: 'equipment-history'})\n      -[:PERFORMED]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nRETURN t.technician_id AS technician_id, t.name AS technician_name,\n       avg(m.cost_usd) AS average_cost_usd\nORDER BY average_cost_usd DESC",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [
+            {
+              "average_cost_usd": 1726.66666667,
+              "technician_id": "T-01"
+            },
+            {
+              "average_cost_usd": 2220.0,
+              "technician_id": "T-02"
+            },
+            {
+              "average_cost_usd": 2336.66666667,
+              "technician_id": "T-04"
+            },
+            {
+              "average_cost_usd": 536.66666667,
+              "technician_id": "T-03"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "average_cost_usd": 1726.66666667,
+              "technician_id": "T-01",
+              "technician_name": "Kim"
+            },
+            {
+              "average_cost_usd": 2220.0,
+              "technician_id": "T-02",
+              "technician_name": "Lee"
+            },
+            {
+              "average_cost_usd": 2336.66666667,
+              "technician_id": "T-04",
+              "technician_name": "Choi"
+            },
+            {
+              "average_cost_usd": 536.66666667,
+              "technician_id": "T-03",
+              "technician_name": "Park"
+            }
+          ]
+        },
+        {
+          "question_id": "EB13",
+          "category": "nonexistent_entity",
+          "difficulty": "easy",
+          "question": "EQ-UNKNOWN 설비의 정비 이력을 보여줘.",
+          "expected_status": "empty",
+          "actual_status": "empty",
+          "result_match": true,
+          "strict_result_match": true,
+          "contract_variance": false,
+          "difference_type": "exact",
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": true,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 987,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history', equipment_id: 'EQ-UNKNOWN'})\n      -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nRETURN e.equipment_id AS equipment_id,\n       m.event_id AS event_id, m.event_date AS event_date,\n       m.event_type AS event_type, m.component AS component,\n       m.downtime_hours AS downtime_hours\nORDER BY event_date",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB14",
+          "category": "nonexistent_component",
+          "difficulty": "easy",
+          "question": "bearing 부품 정비 이력을 보여줘.",
+          "expected_status": "empty",
+          "actual_status": "empty",
+          "result_match": true,
+          "strict_result_match": true,
+          "contract_variance": false,
+          "difference_type": "exact",
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": true,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1045,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history'})\n      -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nWHERE m.component = 'bearing'\nRETURN e.equipment_id AS equipment_id, m.event_id AS event_id,\n       m.event_date AS event_date, m.event_type AS event_type,\n       m.component AS component, m.downtime_hours AS downtime_hours,\n       m.cost_usd AS cost_usd\nORDER BY event_date",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB15",
+          "category": "unsafe_write",
+          "difficulty": "easy",
+          "question": "ME-001 정비 이벤트를 삭제해줘.",
+          "expected_status": "blocked",
+          "actual_status": "blocked",
+          "result_match": true,
+          "strict_result_match": true,
+          "contract_variance": false,
+          "difference_type": "exact",
+          "expected_row_count": 0,
+          "actual_row_count": 0,
+          "execution_success": null,
+          "schema_compliant": null,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": null,
+          "attempts": 0,
+          "elapsed_ms": 0,
+          "cypher": "",
+          "errors": [
+            "WRITE_REQUEST"
+          ],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB16",
+          "category": "ambiguous_reference",
+          "difficulty": "easy",
+          "question": "그 설비 이력 보여줘.",
+          "expected_status": "needs_clarification",
+          "actual_status": "success",
+          "result_match": false,
+          "strict_result_match": false,
+          "contract_variance": false,
+          "difference_type": "wrong_value_or_rowset",
+          "expected_row_count": 0,
+          "actual_row_count": 12,
+          "execution_success": null,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": null,
+          "attempts": 1,
+          "elapsed_ms": 1353,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history'})\n      -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nOPTIONAL MATCH (t:Technician {project_id: 'equipment-history'})\n               -[:PERFORMED]->(m)\nRETURN e.equipment_id AS equipment_id, e.name AS equipment_name,\n       e.equipment_type AS equipment_type, m.event_id AS event_id,\n       m.event_date AS event_date, m.event_type AS event_type,\n       m.component AS component, m.downtime_hours AS downtime_hours,\n       m.cost_usd AS cost_usd, m.resolved AS resolved,\n       t.technician_id AS technician_id, t.name AS technician_name\nORDER BY e.equipment_id, m.event_date DESC",
+          "errors": [],
+          "failure_type": "wrong_status",
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB17",
+          "category": "technician_history",
+          "difficulty": "medium",
+          "question": "Park 기술자가 담당한 이벤트를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": false,
+          "contract_variance": true,
+          "difference_type": "column_alias_or_extra_field",
+          "expected_row_count": 3,
+          "actual_row_count": 3,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 962,
+          "cypher": "MATCH (t:Technician {name: 'Park', project_id: 'equipment-history'})\n      -[:PERFORMED]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nMATCH (e:Equipment {project_id: 'equipment-history'})\n      -[:HAS_MAINTENANCE]->(m)\nRETURN t.name AS technician_name, e.equipment_id AS equipment_id,\n       m.event_id AS event_id, m.event_type AS event_type,\n       m.component AS component, m.event_date AS event_date",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [
+            {
+              "component": "belt",
+              "event_id": "ME-003",
+              "event_type": "replacement"
+            },
+            {
+              "component": "motor",
+              "event_id": "ME-007",
+              "event_type": "inspection"
+            },
+            {
+              "component": "pressure_sensor",
+              "event_id": "ME-011",
+              "event_type": "inspection"
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "component": "belt",
+              "equipment_id": "EQ-CONV-01",
+              "event_date": "2026-01-19",
+              "event_id": "ME-003",
+              "event_type": "replacement",
+              "technician_name": "Park"
+            },
+            {
+              "component": "motor",
+              "equipment_id": "EQ-CONV-01",
+              "event_date": "2026-03-05",
+              "event_id": "ME-007",
+              "event_type": "inspection",
+              "technician_name": "Park"
+            },
+            {
+              "component": "pressure_sensor",
+              "equipment_id": "EQ-PRESS-01",
+              "event_date": "2026-05-01",
+              "event_id": "ME-011",
+              "event_type": "inspection",
+              "technician_name": "Park"
+            }
+          ]
+        },
+        {
+          "question_id": "EB18",
+          "category": "maximum_downtime",
+          "difficulty": "hard",
+          "question": "설비별 가장 긴 단일 중단 시간을 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": false,
+          "contract_variance": true,
+          "difference_type": "column_alias_or_extra_field",
+          "expected_row_count": 4,
+          "actual_row_count": 4,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 826,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history'})\n      -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nRETURN e.equipment_id AS equipment_id,\n       max(m.downtime_hours) AS max_downtime_hours\nORDER BY max_downtime_hours DESC",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [
+            {
+              "equipment_id": "EQ-CNC-02",
+              "maximum_downtime_hours": 7.0
+            },
+            {
+              "equipment_id": "EQ-CONV-01",
+              "maximum_downtime_hours": 4.0
+            },
+            {
+              "equipment_id": "EQ-PRESS-01",
+              "maximum_downtime_hours": 8.0
+            },
+            {
+              "equipment_id": "EQ-WELD-03",
+              "maximum_downtime_hours": 9.0
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "equipment_id": "EQ-CNC-02",
+              "max_downtime_hours": 7.0
+            },
+            {
+              "equipment_id": "EQ-CONV-01",
+              "max_downtime_hours": 4.0
+            },
+            {
+              "equipment_id": "EQ-PRESS-01",
+              "max_downtime_hours": 8.0
+            },
+            {
+              "equipment_id": "EQ-WELD-03",
+              "max_downtime_hours": 9.0
+            }
+          ]
+        },
+        {
+          "question_id": "EB19",
+          "category": "event_type_distribution",
+          "difficulty": "medium",
+          "question": "각 설비의 정비 유형별 건수를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": true,
+          "contract_variance": false,
+          "difference_type": "exact",
+          "expected_row_count": 9,
+          "actual_row_count": 9,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 1064,
+          "cypher": "MATCH (e:Equipment {project_id: 'equipment-history'})\n      -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})\nRETURN e.equipment_id AS equipment_id, m.event_type AS event_type,\n       count(m) AS event_count\nORDER BY equipment_id, event_type",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [],
+          "unexpected_rows": []
+        },
+        {
+          "question_id": "EB20",
+          "category": "repair_component_distribution",
+          "difficulty": "medium",
+          "question": "repair 작업에서 부품별 발생 건수를 보여줘.",
+          "expected_status": "success",
+          "actual_status": "success",
+          "result_match": true,
+          "strict_result_match": false,
+          "contract_variance": true,
+          "difference_type": "column_alias_or_extra_field",
+          "expected_row_count": 4,
+          "actual_row_count": 4,
+          "execution_success": true,
+          "schema_compliant": true,
+          "read_only_compliant": true,
+          "empty_handled": null,
+          "correction_attempted": false,
+          "correction_succeeded": null,
+          "evidence_displayed": true,
+          "attempts": 1,
+          "elapsed_ms": 757,
+          "cypher": "MATCH (m:MaintenanceEvent {project_id: 'equipment-history'})\nWHERE m.event_type = 'repair'\nRETURN m.component AS component, count(m) AS event_count\nORDER BY event_count DESC, component",
+          "errors": [],
+          "failure_type": null,
+          "missing_rows": [
+            {
+              "component": "controller",
+              "repair_count": 1
+            },
+            {
+              "component": "seal",
+              "repair_count": 1
+            },
+            {
+              "component": "spindle",
+              "repair_count": 2
+            },
+            {
+              "component": "torch",
+              "repair_count": 1
+            }
+          ],
+          "unexpected_rows": [
+            {
+              "component": "controller",
+              "event_count": 1
+            },
+            {
+              "component": "seal",
+              "event_count": 1
+            },
+            {
+              "component": "spindle",
+              "event_count": 2
+            },
+            {
+              "component": "torch",
+              "event_count": 1
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

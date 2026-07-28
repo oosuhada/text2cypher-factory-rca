@@ -1,0 +1,16 @@
+{
+  "question_id": "EH3",
+  "category": "unresolved",
+  "question": "아직 해결되지 않은 정비 이벤트를 보여줘.",
+  "expected_status": "success",
+  "row_count": 1,
+  "rows_sha256": "72023d6f7773af85b7c0640a36dceebff6a1eba4e9ef8da42fe4e5d46985f5d1",
+  "normalized_rows": [
+    {
+      "component": "controller",
+      "cost_usd": 5100,
+      "equipment_id": "EQ-WELD-03",
+      "event_id": "ME-012"
+    }
+  ]
+}

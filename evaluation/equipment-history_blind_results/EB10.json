@@ -1,0 +1,26 @@
+{
+  "question_id": "EB10",
+  "category": "technician_diversity",
+  "question": "설비별 참여 기술자 수를 보여줘.",
+  "expected_status": "success",
+  "row_count": 4,
+  "rows_sha256": "ab20df3fdaace1f359ac33f2973fe8bc62c59f4663f07390e7d22bc34042858f",
+  "normalized_rows": [
+    {
+      "equipment_id": "EQ-CNC-02",
+      "technician_count": 1
+    },
+    {
+      "equipment_id": "EQ-CONV-01",
+      "technician_count": 1
+    },
+    {
+      "equipment_id": "EQ-PRESS-01",
+      "technician_count": 2
+    },
+    {
+      "equipment_id": "EQ-WELD-03",
+      "technician_count": 1
+    }
+  ]
+}

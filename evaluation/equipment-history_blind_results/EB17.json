@@ -1,0 +1,25 @@
+{
+  "question_id": "EB17",
+  "category": "technician_history",
+  "question": "Park 기술자가 담당한 이벤트를 보여줘.",
+  "expected_status": "success",
+  "row_count": 3,
+  "rows_sha256": "ca0e48b3c5a0bc17fae677d6f772d17f85b7aeab392d7cb894b47518a79a3b2e",
+  "normalized_rows": [
+    {
+      "component": "belt",
+      "event_id": "ME-003",
+      "event_type": "replacement"
+    },
+    {
+      "component": "motor",
+      "event_id": "ME-007",
+      "event_type": "inspection"
+    },
+    {
+      "component": "pressure_sensor",
+      "event_id": "ME-011",
+      "event_type": "inspection"
+    }
+  ]
+}

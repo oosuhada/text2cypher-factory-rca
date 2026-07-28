@@ -1,0 +1,26 @@
+{
+  "question_id": "EB12",
+  "category": "technician_cost",
+  "question": "기술자별 평균 정비 비용을 보여줘.",
+  "expected_status": "success",
+  "row_count": 4,
+  "rows_sha256": "2b95161d19a0634977f1c89388d4722260d8ebb42dc24befbe41dd244806976d",
+  "normalized_rows": [
+    {
+      "average_cost_usd": 1726.66666667,
+      "technician_id": "T-01"
+    },
+    {
+      "average_cost_usd": 2220.0,
+      "technician_id": "T-02"
+    },
+    {
+      "average_cost_usd": 2336.66666667,
+      "technician_id": "T-04"
+    },
+    {
+      "average_cost_usd": 536.66666667,
+      "technician_id": "T-03"
+    }
+  ]
+}

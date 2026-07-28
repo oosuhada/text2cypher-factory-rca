@@ -1,0 +1,26 @@
+{
+  "question_id": "EB07",
+  "category": "inspection_downtime",
+  "question": "설비별 inspection 작업의 총 중단 시간을 보여줘.",
+  "expected_status": "success",
+  "row_count": 4,
+  "rows_sha256": "cbf407616a111011a0024172988873d6c3aeeb9230581dfeaaaf33fbb9ae5533",
+  "normalized_rows": [
+    {
+      "equipment_id": "EQ-CNC-02",
+      "inspection_downtime_hours": 2.0
+    },
+    {
+      "equipment_id": "EQ-CONV-01",
+      "inspection_downtime_hours": 1.0
+    },
+    {
+      "equipment_id": "EQ-PRESS-01",
+      "inspection_downtime_hours": 3.5
+    },
+    {
+      "equipment_id": "EQ-WELD-03",
+      "inspection_downtime_hours": 1.5
+    }
+  ]
+}

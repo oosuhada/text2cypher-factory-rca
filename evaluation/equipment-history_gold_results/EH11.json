@@ -1,0 +1,31 @@
+{
+  "question_id": "EH11",
+  "category": "technician_history",
+  "question": "기술자 T-04가 수행한 정비 이력을 보여줘.",
+  "expected_status": "success",
+  "row_count": 3,
+  "rows_sha256": "5a01fbfd1f4c94b3864bbf0f69b5538b1ca43a1847e7325cddc8707304d7fc2f",
+  "normalized_rows": [
+    {
+      "component": "controller",
+      "equipment_id": "EQ-WELD-03",
+      "event_id": "ME-012",
+      "event_type": "repair",
+      "technician_id": "T-04"
+    },
+    {
+      "component": "safety_sensor",
+      "equipment_id": "EQ-WELD-03",
+      "event_id": "ME-010",
+      "event_type": "inspection",
+      "technician_id": "T-04"
+    },
+    {
+      "component": "torch",
+      "equipment_id": "EQ-WELD-03",
+      "event_id": "ME-006",
+      "event_type": "repair",
+      "technician_id": "T-04"
+    }
+  ]
+}

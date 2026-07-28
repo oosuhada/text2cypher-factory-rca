@@ -1,0 +1,45 @@
+{
+  "question_id": "EH6",
+  "category": "high_cost",
+  "question": "비용이 1000달러 이상인 유지보수 이력을 보여줘.",
+  "expected_status": "success",
+  "row_count": 5,
+  "rows_sha256": "6ce85318455cfd1b4387429667623cd2fa85f37984944131160d57c491ca890d",
+  "normalized_rows": [
+    {
+      "component": "controller",
+      "cost_usd": 5100,
+      "equipment_id": "EQ-WELD-03",
+      "event_id": "ME-012",
+      "event_type": "repair"
+    },
+    {
+      "component": "hydraulic_pump",
+      "cost_usd": 4200,
+      "equipment_id": "EQ-PRESS-01",
+      "event_id": "ME-008",
+      "event_type": "replacement"
+    },
+    {
+      "component": "spindle",
+      "cost_usd": 2950,
+      "equipment_id": "EQ-CNC-02",
+      "event_id": "ME-009",
+      "event_type": "repair"
+    },
+    {
+      "component": "spindle",
+      "cost_usd": 3400,
+      "equipment_id": "EQ-CNC-02",
+      "event_id": "ME-002",
+      "event_type": "repair"
+    },
+    {
+      "component": "torch",
+      "cost_usd": 1650,
+      "equipment_id": "EQ-WELD-03",
+      "event_id": "ME-006",
+      "event_type": "repair"
+    }
+  ]
+}

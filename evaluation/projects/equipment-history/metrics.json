@@ -1,0 +1,105 @@
+{
+  "blind_result_accuracy": 0.8,
+  "blind_strict_result_accuracy": 0.25,
+  "blind_contract_variance_rate": 0.55,
+  "blind_execution_success_rate": 1.0,
+  "blind_schema_compliance_rate": 1.0,
+  "blind_empty_result_handling_rate": 1.0,
+  "blind_correction_success_rate": null,
+  "blind_evidence_display_rate": 1.0,
+  "blind_average_elapsed_ms": 1002.3,
+  "blind_evaluation_model": "gemini-2.5-flash",
+  "blind_evaluation_provider": "gemini",
+  "blind_evaluation_estimated_cost_usd": 0.0106473,
+  "blind_evaluation_input_tokens": 52546,
+  "blind_evaluation_output_tokens": 4609,
+  "blind_evaluation_status": "complete",
+  "project_id": "equipment-history",
+  "evaluation_version": "1.0",
+  "schema_version": "1.0",
+  "source_version": "synthetic-equipment-history-v1",
+  "prompt_version": "text2cypher-v1",
+  "evaluation_fingerprint": "2812f3e1c20dffabedd90cab385302c069d584ecd913dbb5eb5f5cd6f3b16415",
+  "status_classification": {
+    "labels": [
+      "success",
+      "empty",
+      "blocked",
+      "needs_clarification",
+      "failed"
+    ],
+    "confusion_matrix": {
+      "success": {
+        "success": 15,
+        "empty": 1,
+        "blocked": 0,
+        "needs_clarification": 0,
+        "failed": 0
+      },
+      "empty": {
+        "success": 0,
+        "empty": 2,
+        "blocked": 0,
+        "needs_clarification": 0,
+        "failed": 0
+      },
+      "blocked": {
+        "success": 0,
+        "empty": 0,
+        "blocked": 1,
+        "needs_clarification": 0,
+        "failed": 0
+      },
+      "needs_clarification": {
+        "success": 1,
+        "empty": 0,
+        "blocked": 0,
+        "needs_clarification": 0,
+        "failed": 0
+      },
+      "failed": {
+        "success": 0,
+        "empty": 0,
+        "blocked": 0,
+        "needs_clarification": 0,
+        "failed": 0
+      }
+    },
+    "accuracy": 0.9,
+    "macro_precision": 0.651042,
+    "macro_recall": 0.734375,
+    "macro_f1": 0.684375,
+    "per_class": {
+      "success": {
+        "precision": 0.9375,
+        "recall": 0.9375,
+        "f1": 0.9375,
+        "support": 16
+      },
+      "empty": {
+        "precision": 0.666667,
+        "recall": 1.0,
+        "f1": 0.8,
+        "support": 2
+      },
+      "blocked": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 1
+      },
+      "needs_clarification": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 1
+      },
+      "failed": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      }
+    }
+  }
+}

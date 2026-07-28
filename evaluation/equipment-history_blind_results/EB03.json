@@ -1,0 +1,14 @@
+{
+  "question_id": "EB03",
+  "category": "replacement_cost",
+  "question": "replacement 작업의 총비용과 작업 수를 보여줘.",
+  "expected_status": "success",
+  "row_count": 1,
+  "rows_sha256": "59602c75a41c6e610fef62cb50dd14df80be17eaf381cc8f67c0f579e4b2cb8a",
+  "normalized_rows": [
+    {
+      "replacement_count": 2,
+      "total_replacement_cost_usd": 5180
+    }
+  ]
+}

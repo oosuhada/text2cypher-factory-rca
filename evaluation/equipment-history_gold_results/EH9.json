@@ -1,0 +1,26 @@
+{
+  "question_id": "EH9",
+  "category": "equipment_cost",
+  "question": "설비별 총 정비 비용을 보여줘.",
+  "expected_status": "success",
+  "row_count": 4,
+  "rows_sha256": "99d56f8d0d6b002a32e62b3211c6194225940f3a165767e0a4245d20740e5ec9",
+  "normalized_rows": [
+    {
+      "equipment_id": "EQ-CNC-02",
+      "total_cost_usd": 6660
+    },
+    {
+      "equipment_id": "EQ-CONV-01",
+      "total_cost_usd": 1160
+    },
+    {
+      "equipment_id": "EQ-PRESS-01",
+      "total_cost_usd": 5630
+    },
+    {
+      "equipment_id": "EQ-WELD-03",
+      "total_cost_usd": 7010
+    }
+  ]
+}

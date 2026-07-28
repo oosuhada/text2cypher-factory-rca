@@ -11,11 +11,19 @@ from typing import Any, Iterable, Mapping
 import yaml
 
 
-def load_gold_questions(path: Path) -> list[dict[str, Any]]:
+def load_gold_questions(
+    path: Path,
+    *,
+    minimum: int = 15,
+    maximum: int = 20,
+) -> list[dict[str, Any]]:
     payload = yaml.safe_load(path.read_text(encoding="utf-8"))
     questions = payload.get("questions", [])
-    if len(questions) != 15:
-        raise ValueError(f"Expected 15 Gold questions, found {len(questions)}")
+    if not minimum <= len(questions) <= maximum:
+        raise ValueError(
+            f"Expected {minimum}-{maximum} Gold questions, "
+            f"found {len(questions)}"
+        )
     return questions
 
 

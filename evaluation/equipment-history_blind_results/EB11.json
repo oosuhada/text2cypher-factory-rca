@@ -1,0 +1,14 @@
+{
+  "question_id": "EB11",
+  "category": "overall_summary",
+  "question": "전체 정비 건수와 총 중단 시간을 알려줘.",
+  "expected_status": "success",
+  "row_count": 1,
+  "rows_sha256": "8ac3f0315533607db735907a3f969ed330b8cdc5a5c6401ecd787cdfef2a0961",
+  "normalized_rows": [
+    {
+      "event_count": 12,
+      "total_downtime_hours": 51.5
+    }
+  ]
+}

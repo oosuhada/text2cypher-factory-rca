@@ -1,0 +1,42 @@
+{
+  "question_id": "EH1",
+  "category": "equipment_history",
+  "question": "EQ-PRESS-01의 정비 이력을 보여줘.",
+  "expected_status": "success",
+  "row_count": 4,
+  "rows_sha256": "f4dac3e3414d579e28acd8c89e55d0d6f483ccd7df167d5721c7cc6c1739c0d9",
+  "normalized_rows": [
+    {
+      "component": "hydraulic_pump",
+      "downtime_hours": 1.5,
+      "equipment_id": "EQ-PRESS-01",
+      "event_date": "2026-01-04",
+      "event_id": "ME-001",
+      "event_type": "inspection"
+    },
+    {
+      "component": "hydraulic_pump",
+      "downtime_hours": 8.0,
+      "equipment_id": "EQ-PRESS-01",
+      "event_date": "2026-03-18",
+      "event_id": "ME-008",
+      "event_type": "replacement"
+    },
+    {
+      "component": "pressure_sensor",
+      "downtime_hours": 2.0,
+      "equipment_id": "EQ-PRESS-01",
+      "event_date": "2026-05-01",
+      "event_id": "ME-011",
+      "event_type": "inspection"
+    },
+    {
+      "component": "seal",
+      "downtime_hours": 3.5,
+      "equipment_id": "EQ-PRESS-01",
+      "event_date": "2026-02-02",
+      "event_id": "ME-004",
+      "event_type": "repair"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "question_id": "EB09",
+  "category": "equipment_components",
+  "question": "EQ-PRESS-01에서 정비한 부품 목록을 보여줘.",
+  "expected_status": "success",
+  "row_count": 4,
+  "rows_sha256": "7e0ad5c6bf72fc46ad9e690cc6aead3fcadab7477f0006b898f57d12b8700b81",
+  "normalized_rows": [
+    {
+      "component": "hydraulic_pump",
+      "event_id": "ME-001"
+    },
+    {
+      "component": "hydraulic_pump",
+      "event_id": "ME-008"
+    },
+    {
+      "component": "pressure_sensor",
+      "event_id": "ME-011"
+    },
+    {
+      "component": "seal",
+      "event_id": "ME-004"
+    }
+  ]
+}

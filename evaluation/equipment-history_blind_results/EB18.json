@@ -1,0 +1,26 @@
+{
+  "question_id": "EB18",
+  "category": "maximum_downtime",
+  "question": "설비별 가장 긴 단일 중단 시간을 보여줘.",
+  "expected_status": "success",
+  "row_count": 4,
+  "rows_sha256": "26a107bf34fb4180373013863fa6c71ce6f3bf05410379dffb22b40d8f2a1053",
+  "normalized_rows": [
+    {
+      "equipment_id": "EQ-CNC-02",
+      "maximum_downtime_hours": 7.0
+    },
+    {
+      "equipment_id": "EQ-CONV-01",
+      "maximum_downtime_hours": 4.0
+    },
+    {
+      "equipment_id": "EQ-PRESS-01",
+      "maximum_downtime_hours": 8.0
+    },
+    {
+      "equipment_id": "EQ-WELD-03",
+      "maximum_downtime_hours": 9.0
+    }
+  ]
+}

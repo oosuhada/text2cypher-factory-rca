@@ -1,0 +1,28 @@
+{
+  "question_id": "EB06",
+  "category": "month_filter",
+  "question": "2026년 2월에 발생한 정비 이벤트를 알려줘.",
+  "expected_status": "success",
+  "row_count": 3,
+  "rows_sha256": "d185a21c7d39c152367ce3fc79c19e1a2b7fc491cbaafa870ddad47e4280d5ad",
+  "normalized_rows": [
+    {
+      "component": "coolant_pump",
+      "event_date": "2026-02-15",
+      "event_id": "ME-005",
+      "event_type": "inspection"
+    },
+    {
+      "component": "seal",
+      "event_date": "2026-02-02",
+      "event_id": "ME-004",
+      "event_type": "repair"
+    },
+    {
+      "component": "torch",
+      "event_date": "2026-02-21",
+      "event_id": "ME-006",
+      "event_type": "repair"
+    }
+  ]
+}

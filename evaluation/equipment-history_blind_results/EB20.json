@@ -1,0 +1,26 @@
+{
+  "question_id": "EB20",
+  "category": "repair_component_distribution",
+  "question": "repair 작업에서 부품별 발생 건수를 보여줘.",
+  "expected_status": "success",
+  "row_count": 4,
+  "rows_sha256": "febd68f69c5b22d7bc405a28b7606493281f6575ac116d9d0f7be9279121ddd1",
+  "normalized_rows": [
+    {
+      "component": "controller",
+      "repair_count": 1
+    },
+    {
+      "component": "seal",
+      "repair_count": 1
+    },
+    {
+      "component": "spindle",
+      "repair_count": 2
+    },
+    {
+      "component": "torch",
+      "repair_count": 1
+    }
+  ]
+}

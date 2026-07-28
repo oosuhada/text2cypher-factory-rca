@@ -1,0 +1,26 @@
+{
+  "question_id": "EH7",
+  "category": "replacement_technician",
+  "question": "replacement 유형의 정비 이력과 담당 기술자를 보여줘.",
+  "expected_status": "success",
+  "row_count": 2,
+  "rows_sha256": "ebdf5cfaedeb3b4cab2d14b6593c60a77c657cf3b08a971d149742c3942f616c",
+  "normalized_rows": [
+    {
+      "component": "belt",
+      "cost_usd": 980,
+      "equipment_id": "EQ-CONV-01",
+      "event_id": "ME-003",
+      "technician_id": "T-03",
+      "technician_name": "Park"
+    },
+    {
+      "component": "hydraulic_pump",
+      "cost_usd": 4200,
+      "equipment_id": "EQ-PRESS-01",
+      "event_id": "ME-008",
+      "technician_id": "T-01",
+      "technician_name": "Kim"
+    }
+  ]
+}

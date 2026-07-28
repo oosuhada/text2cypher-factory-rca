@@ -326,11 +326,10 @@ class MappingWorkspace:
                         },
                     )
                     continue
-                relationship_key = (
-                    source_value,
-                    target_value,
-                    *property_values,
-                )
+                # The loader MERGEs one relationship per source/target/type.
+                # Keep preview counts identical to the actual graph identity;
+                # later property differences update that relationship.
+                relationship_key = (source_value, target_value)
                 if relationship_key in valid_relationships:
                     duplicate_rows += 1
                     isolation_count += 1

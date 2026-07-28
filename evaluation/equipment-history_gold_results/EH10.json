@@ -1,0 +1,34 @@
+{
+  "question_id": "EH10",
+  "category": "date_filter",
+  "question": "2026년 4월 이후 발생한 정비 이력을 보여줘.",
+  "expected_status": "success",
+  "row_count": 4,
+  "rows_sha256": "8237ca9d25416339e2d0d6f398188e526d064bf896843e62e53bb01c611f369c",
+  "normalized_rows": [
+    {
+      "equipment_id": "EQ-CNC-02",
+      "event_date": "2026-04-03",
+      "event_id": "ME-009",
+      "event_type": "repair"
+    },
+    {
+      "equipment_id": "EQ-PRESS-01",
+      "event_date": "2026-05-01",
+      "event_id": "ME-011",
+      "event_type": "inspection"
+    },
+    {
+      "equipment_id": "EQ-WELD-03",
+      "event_date": "2026-04-17",
+      "event_id": "ME-010",
+      "event_type": "inspection"
+    },
+    {
+      "equipment_id": "EQ-WELD-03",
+      "event_date": "2026-05-20",
+      "event_id": "ME-012",
+      "event_type": "repair"
+    }
+  ]
+}
