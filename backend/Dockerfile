@@ -17,6 +17,7 @@ COPY --chown=factorygraph:factorygraph backend /app/backend
 COPY --chown=factorygraph:factorygraph frontend /app/frontend
 COPY --chown=factorygraph:factorygraph evaluation /app/evaluation
 COPY --chown=factorygraph:factorygraph schemas /app/schemas
+COPY --chown=factorygraph:factorygraph prompts /app/prompts
 COPY --chown=factorygraph:factorygraph data /app/data
 COPY --chown=factorygraph:factorygraph infra/schema.cypher /app/infra/schema.cypher
 

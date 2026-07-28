@@ -44,8 +44,8 @@ P3 필수 요구사항을 코드·테스트·검증 문서에 연결한다. 기�
 | FR-4.5 | 자기수정 | 완료 | LangGraph correction loop | 실패 유형별 표본 확대 |
 | FR-4.6 | 재검증 통과 쿼리만 실행 | 완료 | `workflow.py` | 보안 회귀 유지 |
 | FR-4.7 | 상태 계약 | 완료 | `service-contract.md`, API schema | UI 회귀 유지 |
-| FR-4.8 | schema·Cypher·검증 근거 반환 | 부분 완료 | Query response·audit | prompt/schema version 필드 통합 |
-| FR-4.9 | 프로젝트별 prompt·few-shot·Gold | 부분 완료 | project schema·Gold 파일 분리 | prompt Registry 명시화 |
+| FR-4.8 | schema·Cypher·검증 근거 반환 | 완료 | `metadata`, evidence provenance, 검증 Cypher SHA-256, query audit | UI 버전 표시는 2단계 |
+| FR-4.9 | 프로젝트별 prompt·few-shot·Gold | 완료 | `prompts/*/manifest.yml`, `PromptRegistry`, `EvaluationRegistry` | 신규 프로젝트 자동 생성은 1-7 |
 | FR-5.1~5.7 | Streamlit 질의·근거·대화 UI | 완료 | `frontend/streamlit_app.py`, UI 테스트 | 제품형 UX는 2단계에서 고도화 |
 | FR-6.1 | 정확도 평가 리포트 | 완료 | `stage16-validation.md`, `metrics.json` | 최신 릴리스마다 갱신 |
 | FR-6.2 | 최종 발표자료 | 부분 완료 | 원본 멘토링 자료·발표 문서 | 팀 최종 발표자료 별도 작성 |

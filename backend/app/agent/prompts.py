@@ -42,6 +42,10 @@ def correction_prompt(
     return f"""You are correcting a read-only Neo4j Cypher query.
 Return one corrected Cypher query only, without Markdown or explanation.
 Never add a write clause, procedure call, administration command, or a second statement.
+When returning a relationship property, bind the relationship to a variable
+(for example, [rel:RELATIONSHIP_TYPE]) and return rel.property_name.
+If an unknown identifier came directly from the user question, preserve it as
+a read filter so the database can return an honest empty result.
 
 Schema:
 {schema}

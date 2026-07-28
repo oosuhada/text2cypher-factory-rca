@@ -17,9 +17,14 @@ from backend.app.agent.model import (
     OpenAICypherModel,
     has_vertex_credentials,
 )
+from backend.app.agent.prompt_registry import PromptRegistry
 from backend.app.agent.workflow import TextToCypherAgent
 from backend.app.agent.schema import SCHEMA_CONTEXT
-from backend.app.agent.semantic_validation import validate_domain_semantics
+from backend.app.agent.semantic_validation import (
+    build_domain_validator,
+    validate_domain_semantics,
+)
+from backend.app.schema_registry import SchemaRegistry
 from backend.app.etl.cli import password_from_keychain
 from backend.app.services.dashboard_service import DashboardService
 from backend.app.services.feedback_service import FeedbackService
@@ -97,21 +102,34 @@ def build_service_bundle(
         auth=(username, password),
     )
     driver.verify_connectivity()
-    project_examples = (
-        project_root / "evaluation" / f"{project_id}_gold.yml"
-    )
+    prompt_contract = None
+    try:
+        prompt_contract = PromptRegistry(project_root).load(project_id)
+    except KeyError:
+        # Projects created through the onboarding flow receive their prompt
+        # manifest in stage 1-7. Keep the current schema path usable until then.
+        pass
+    project_examples = project_root / "evaluation" / f"{project_id}_gold.yml"
     examples_path = (
-        project_examples
+        prompt_contract.examples_path
+        if prompt_contract
+        else project_examples
         if project_examples.exists()
         else project_root / "evaluation" / "gold_questions.yml"
     )
     examples = GoldExampleStore(examples_path)
+    request_timeout_seconds = (
+        prompt_contract.timeout_seconds if prompt_contract else 30.0
+    )
     try:
         if resolved_provider == "openai":
             resolved_model_name = model_name or os.getenv(
                 "OPENAI_MODEL", "gpt-4.1-mini"
             )
-            model = OpenAICypherModel(model=resolved_model_name)
+            model = OpenAICypherModel(
+                model=resolved_model_name,
+                timeout_seconds=request_timeout_seconds,
+            )
         elif resolved_provider == "gemini":
             resolved_model_name = model_name or os.getenv(
                 "GOOGLE_VERTEX_MODEL", "gemini-2.5-flash"
@@ -121,6 +139,7 @@ def build_service_bundle(
                 location=os.getenv(
                     "GOOGLE_VERTEX_LOCATION", "us-central1"
                 ),
+                timeout_seconds=request_timeout_seconds,
             )
         else:
             resolved_model_name = "gold-lookup"
@@ -135,27 +154,52 @@ def build_service_bundle(
 
     database = os.getenv("NEO4J_DATABASE", "neo4j")
     primary_graph = Neo4jReadGraph(driver, database=database)
-    agent = TextToCypherAgent(
-        model=model,
-        graph=primary_graph,
-        examples_path=examples_path,
-        schema_context=(
-            schema_context or SCHEMA_CONTEXT
+    if prompt_contract:
+        schema_manifest = SchemaRegistry(project_root / "schemas").load(
+            project_id
         )
-        + (
+        resolved_schema_context = prompt_contract.schema_context
+        semantic_validator = build_domain_validator(
+            schema_manifest,
+            include_cip_rules=(
+                prompt_contract.domain_validator == "cip-dmd"
+            ),
+        )
+        agent_metadata = prompt_contract.metadata()
+        agent_max_attempts = prompt_contract.max_attempts
+        agent_timeout_seconds = prompt_contract.timeout_seconds
+        few_shot_count = prompt_contract.few_shot_count
+    else:
+        resolved_schema_context = (
+            schema_context or SCHEMA_CONTEXT
+        ) + (
             ""
             if project_id == "cip-dmd"
             else (
                 "\n\nProject isolation:\n"
                 f"- Every MATCH must restrict project_id to '{project_id}'."
             )
-        ),
-        semantic_validator=(
+        )
+        semantic_validator = (
             validate_domain_semantics
             if project_id == "cip-dmd"
             else (lambda _question, _statement: [])
-        ),
+        )
+        agent_metadata = {"project_id": project_id}
+        agent_max_attempts = 3
+        agent_timeout_seconds = 30.0
+        few_shot_count = 6
+    agent = TextToCypherAgent(
+        model=model,
+        graph=primary_graph,
+        examples_path=examples_path,
+        max_attempts=agent_max_attempts,
+        schema_context=resolved_schema_context,
+        semantic_validator=semantic_validator,
         project_id=project_id,
+        few_shot_count=few_shot_count,
+        timeout_seconds=agent_timeout_seconds,
+        metadata=agent_metadata,
     )
     processed_root = project_root / "data" / "processed"
     project_processed_root = (
@@ -171,15 +215,13 @@ def build_service_bundle(
                 model=GoldCypherModel(examples),
                 graph=Neo4jReadGraph(driver, database=database),
                 examples_path=examples_path,
-                schema_context=(
-                    schema_context or SCHEMA_CONTEXT
-                ),
-                semantic_validator=(
-                    validate_domain_semantics
-                    if project_id == "cip-dmd"
-                    else (lambda _question, _statement: [])
-                ),
+                max_attempts=agent_max_attempts,
+                schema_context=resolved_schema_context,
+                semantic_validator=semantic_validator,
                 project_id=project_id,
+                few_shot_count=few_shot_count,
+                timeout_seconds=agent_timeout_seconds,
+                metadata=agent_metadata,
             ),
             audit_log_path=audit_log_path,
             provider="gold-fallback",

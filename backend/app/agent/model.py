@@ -57,8 +57,14 @@ class OpenAICypherModel:
         self,
         model: str = "gpt-4.1-mini",
         chat: Any | None = None,
+        timeout_seconds: float = 30.0,
     ):
-        self.chat = chat or ChatOpenAI(model=model, temperature=0)
+        self.chat = chat or ChatOpenAI(
+            model=model,
+            temperature=0,
+            timeout=timeout_seconds,
+            max_retries=1,
+        )
 
     def generate(
         self, question: str, schema: str, few_shot_examples: str
@@ -125,6 +131,7 @@ class GeminiCypherModel:
         project: str | None = None,
         location: str = "us-central1",
         client: Any | None = None,
+        timeout_seconds: float = 30.0,
     ):
         self.model = model
         self.location = location
@@ -150,7 +157,11 @@ class GeminiCypherModel:
             project=self.project,
             location=location,
             credentials=credentials,
-            http_options=types.HttpOptions(api_version="v1"),
+            # google-genai uses milliseconds for HttpOptions.timeout.
+            http_options=types.HttpOptions(
+                api_version="v1",
+                timeout=max(1, int(timeout_seconds * 1000)),
+            ),
         )
 
     def _invoke(self, prompt: str, purpose: str) -> str:

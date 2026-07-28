@@ -10,6 +10,15 @@
   "cypher": "MATCH ...",
   "rows": [],
   "row_count": 2,
+  "metadata": {
+    "project_id": "cip-dmd",
+    "schema_version": "1.1",
+    "source_version": "CiP-DMD public release",
+    "prompt_version": "text2cypher-v1",
+    "evaluation_version": "1.0",
+    "prompt_template_sha256": "...",
+    "prompt_fingerprint": "..."
+  },
   "evidence": {
     "nodes": [],
     "relationships": [],
@@ -21,13 +30,21 @@
       "nodes": false,
       "relationships": false,
       "rows": false
+    },
+    "provenance": {
+      "project_id": "cip-dmd",
+      "schema_version": "1.1",
+      "prompt_version": "text2cypher-v1",
+      "verified_statement_sha256": "..."
     }
   },
   "validation": {
     "attempts": 1,
     "errors": [],
     "trace": [],
-    "elapsed_ms": 90
+    "elapsed_ms": 90,
+    "verified_statement_sha256": "...",
+    "execution_verified": true
   },
   "usage": {
     "call_count": 1,
@@ -50,6 +67,17 @@
 | `failed` | 재시도 후에도 검증 실패 | 답변 보류와 오류 표시 |
 | `needs_clarification` | 질문 조건 부족 | 추가 조건 요청 |
 | `unsupported` | Gold에 등록되지 않은 질문 | Auto/Gemini 모드 전환 안내 |
+
+## 실행 안전 계약
+
+- 생성·교정된 쿼리는 READ 전용 검사, 도메인 값 검사, 프로젝트 범위 검사,
+  Neo4j `EXPLAIN` 검증을 순서대로 통과해야 한다.
+- 검증을 통과한 정확한 문자열의 SHA-256을 상태에 기록하며, 실행 직전
+  현재 쿼리 해시와 일치하지 않으면 `VERIFICATION_REQUIRED`로 중단한다.
+- 모델 호출·검증·실행 오류와 전체 처리 제한시간 초과는 예외를 외부로
+  노출하지 않고 `failed` 상태와 검증 이력으로 반환한다.
+- `metadata`와 `evidence.provenance`는 어떤 프로젝트·스키마·프롬프트로
+  결과를 만들었는지 재현할 수 있게 한다.
 
 ## 근거 그래프 규칙
 

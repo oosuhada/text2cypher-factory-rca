@@ -10,10 +10,10 @@ import yaml
 
 from backend.app.agent.examples import GoldExampleStore
 from backend.app.agent.graph import ReadGraph
-from backend.app.agent.model import CypherModel, normalize_model_cypher
+from backend.app.agent.model import CypherModel
 from backend.app.agent.schema import SCHEMA_CONTEXT
 from backend.app.agent.semantic_validation import validate_domain_semantics
-from backend.app.agent.workflow import has_project_scope
+from backend.app.agent.workflow import TextToCypherAgent
 from backend.app.security.read_only import (
     detect_ambiguous_request,
     detect_write_request,
@@ -146,121 +146,42 @@ def evaluate_question(
         [str, str], list[str]
     ] = validate_domain_semantics,
     project_id: str = "cip-dmd",
+    few_shot_count: int = 6,
+    timeout_seconds: float = 30.0,
+    metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     started = perf_counter()
     question_text = str(question["question"]).strip()
     expected_status = str(question["expected_status"])
-    guard_state = _state_for_guard(question_text)
-    correction_attempted = False
-    generated = guard_state is None
-    final_validation_passed = guard_state is not None
-    write_executed = False
-
-    if guard_state is not None:
-        state = guard_state
-    else:
-        few_shot = (
-            examples.format_for_prompt(question_text)
-            if variant.use_few_shot
-            else ""
-        )
-        trace = []
-        errors: list[str] = []
-        statement = ""
-        attempts = 0
-        records: list[dict[str, Any]] = []
-        status = "failed"
-        try:
-            statement = normalize_model_cypher(
-                model.generate(question_text, schema_context, few_shot)
-            )
-            trace.append({"step": "generate_cypher"})
-        except Exception as error:
-            errors = [f"MODEL_ERROR: {error}"]
-            trace.append({"step": "generate_cypher", "failed": True})
-
-        while not errors or not errors[0].startswith("MODEL_ERROR"):
-            attempts += 1
-            errors = validate_read_only(statement)
-            unsafe = any(
-                error.startswith(
-                    ("WRITE_CLAUSE", "DISALLOWED_COMMAND", "MULTIPLE")
-                )
-                for error in errors
-            )
-            if not errors:
-                errors = semantic_validator(question_text, statement)
-            if (
-                not errors
-                and project_id != "cip-dmd"
-                and not has_project_scope(statement, project_id)
-            ):
-                errors = [
-                    "PROJECT_SCOPE: Query must restrict graph access to "
-                    f"project_id {project_id!r}."
-                ]
-            if not errors:
-                errors = graph.explain(statement)
-            trace.append(
-                {
-                    "step": "validate_cypher",
-                    "attempt": attempts,
-                    "passed": not errors,
-                    "errors": errors,
-                }
-            )
-            if unsafe:
-                status = "blocked"
-                break
-            if not errors:
-                final_validation_passed = True
-                try:
-                    records = graph.execute(statement)
-                    status = "success" if records else "empty"
-                    trace.append(
-                        {
-                            "step": "execute_cypher",
-                            "row_count": len(records),
-                        }
-                    )
-                except Exception as error:
-                    errors = [f"EXECUTION_ERROR: {error}"]
-                    status = "failed"
-                break
-            if not variant.enable_correction or attempts >= max_attempts:
-                status = "failed"
-                break
-            correction_attempted = True
-            try:
-                statement = normalize_model_cypher(
-                    model.correct(
-                        question_text,
-                        schema_context,
-                        statement,
-                        errors,
-                    )
-                )
-                trace.append(
-                    {"step": "correct_cypher", "after_attempt": attempts}
-                )
-            except Exception as error:
-                errors = [f"MODEL_ERROR: {error}"]
-                status = "failed"
-                break
-
-        state = {
-            "question": question_text,
-            "statement": statement,
-            "records": records,
-            "status": status,
-            "attempts": attempts,
-            "errors": errors,
-            "trace": trace,
-            "elapsed_ms": int((perf_counter() - started) * 1000),
-        }
-
-    state["elapsed_ms"] = int((perf_counter() - started) * 1000)
+    generated = _state_for_guard(question_text) is None
+    state = TextToCypherAgent(
+        model=model,
+        graph=graph,
+        examples_path=examples.path,
+        max_attempts=max_attempts if variant.enable_correction else 1,
+        schema_context=schema_context,
+        semantic_validator=semantic_validator,
+        project_id=project_id,
+        few_shot_count=few_shot_count if variant.use_few_shot else 0,
+        timeout_seconds=timeout_seconds,
+        metadata=metadata,
+    ).invoke(question_text)
     formatted = format_agent_result(state)
+    trace = formatted["validation"]["trace"]
+    correction_attempted = any(
+        event.get("step") == "correct_cypher" for event in trace
+    )
+    final_validation_passed = any(
+        event.get("step") == "validate_cypher"
+        and event.get("passed") is True
+        for event in trace
+    )
+    write_executed = any(
+        event.get("step") == "execute_cypher"
+        and event.get("executed") is True
+        and formatted["status"] == "blocked"
+        for event in trace
+    )
     if expected_snapshot is None:
         status_match = formatted["status"] == expected_status
         comparison = {
@@ -322,6 +243,11 @@ def evaluate_question(
         ),
         "schema_compliant": final_validation_passed if generated else None,
         "read_only_compliant": not write_executed,
+        "execution_verified": (
+            formatted["validation"].get("execution_verified", False)
+            if formatted["status"] in {"success", "empty"}
+            else None
+        ),
         "empty_handled": (
             formatted["status"] == "empty"
             if expected_status == "empty"
@@ -475,6 +401,11 @@ def summarize_results(results: list[dict[str, Any]]) -> dict[str, Any]:
         ),
         "read_only_compliance_rate": _rate(
             [result["read_only_compliant"] for result in results]
+        ),
+        "unverified_execution_count": sum(
+            result.get("execution_verified") is False
+            for result in results
+            if result.get("execution_verified") is not None
         ),
         "empty_result_handling_rate": _rate(
             [result["empty_handled"] for result in results]

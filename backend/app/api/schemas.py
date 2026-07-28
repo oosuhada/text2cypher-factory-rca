@@ -39,6 +39,7 @@ class QueryResponse(BaseModel):
     cypher: str = ""
     rows: list[dict[str, Any]] = Field(default_factory=list)
     row_count: int = 0
+    metadata: dict[str, Any] = Field(default_factory=dict)
     evidence: dict[str, Any] = Field(default_factory=dict)
     validation: dict[str, Any] = Field(default_factory=dict)
     usage: dict[str, Any] = Field(default_factory=dict)

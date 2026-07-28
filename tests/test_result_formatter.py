@@ -72,6 +72,42 @@ class ResultFormatterTest(unittest.TestCase):
             }.issubset(relationship_types)
         )
 
+    def test_response_exposes_versioned_provenance_and_verification(self):
+        statement_hash = "a" * 64
+        result = format_agent_result(
+            {
+                "question": "전체 건수를 알려줘",
+                "statement": "RETURN 1 AS count",
+                "records": [{"count": 1}],
+                "status": "success",
+                "attempts": 1,
+                "errors": [],
+                "validated_statement_sha256": statement_hash,
+                "metadata": {
+                    "project_id": "equipment-history",
+                    "schema_version": "1.0",
+                    "prompt_version": "text2cypher-v1",
+                },
+                "trace": [
+                    {
+                        "step": "execute_cypher",
+                        "executed": True,
+                        "verified_statement_sha256": statement_hash,
+                    }
+                ],
+                "elapsed_ms": 5,
+            }
+        )
+        self.assertEqual(
+            result["metadata"]["project_id"],
+            "equipment-history",
+        )
+        self.assertEqual(
+            result["evidence"]["provenance"]["schema_version"],
+            "1.0",
+        )
+        self.assertTrue(result["validation"]["execution_verified"])
+
     def test_empty_response_has_no_evidence_or_invented_entity(self):
         result = format_agent_result(
             {

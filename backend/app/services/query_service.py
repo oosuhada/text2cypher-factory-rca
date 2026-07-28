@@ -59,6 +59,13 @@ class QueryService:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "question": result.get("question", ""),
             "provider": self.provider,
+            "project_id": result.get("metadata", {}).get("project_id"),
+            "schema_version": result.get("metadata", {}).get(
+                "schema_version"
+            ),
+            "prompt_version": result.get("metadata", {}).get(
+                "prompt_version"
+            ),
             "status": result.get("status", "failed"),
             "row_count": result.get("row_count", 0),
             "attempts": validation.get("attempts", 0),
@@ -73,6 +80,9 @@ class QueryService:
                 "relationship_count", 0
             ),
             "error_count": len(validation.get("errors", [])),
+            "execution_verified": validation.get(
+                "execution_verified", False
+            ),
             **result.get("usage", {}),
         }
         self.audit_log_path.parent.mkdir(parents=True, exist_ok=True)

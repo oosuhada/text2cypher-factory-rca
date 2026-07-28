@@ -38,6 +38,9 @@ relationships:
   cardinality: ONE_TO_MANY
   targets:
   - MaintenanceEvent
+domain_values:
+  Equipment.equipment_type: [press, milling, conveyor, welding]
+  MaintenanceEvent.event_type: [inspection, repair, replacement]
 output_rules:
 - Return maintenance evidence only from project equipment-history.
 - Do not claim causality from maintenance co-occurrence.

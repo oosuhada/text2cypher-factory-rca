@@ -46,6 +46,10 @@ class DeploymentContractTest(unittest.TestCase):
             "COPY --chown=factorygraph:factorygraph schemas /app/schemas",
             python_dockerfile,
         )
+        self.assertIn(
+            "COPY --chown=factorygraph:factorygraph prompts /app/prompts",
+            python_dockerfile,
+        )
         self.assertNotIn("COPY .env", python_dockerfile)
         self.assertNotIn("COPY .env", web_dockerfile)
 

@@ -1,0 +1,13 @@
+project_id: cip-dmd
+prompt_version: text2cypher-v1
+schema_version: "1.1"
+few_shot:
+  questions: evaluation/gold_questions.yml
+  count: 6
+max_attempts: 3
+timeout_seconds: 30
+domain_validator: cip-dmd
+rules:
+  - Match display names such as DMC 50H with Equipment.name, not equipment_id.
+  - Treat an empty result as valid evidence and never invent a manufacturing entity.
+  - Return component_role and qc_pass when the question explicitly asks for them.
