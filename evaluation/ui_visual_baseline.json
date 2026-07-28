@@ -1,6 +1,6 @@
 {
-  "version": "enterprise-ui-2.8",
-  "css_sha256": "31b3f00ea57b4deab73adf2086f64eefb83361aab25a5b4c385e6c8755b1ed30",
+  "version": "enterprise-ui-2.9",
+  "css_sha256": "14339a09faeb4453f1705efb6dc1e06a76d884c53be3677b29a89146303ca41e",
   "locales": [
     "ko",
     "en"
@@ -55,6 +55,18 @@
       "Run detail"
     ]
   },
+  "sidebar_order": [
+    "대화",
+    "역할 미리보기",
+    "프로젝트",
+    "언어 / Language",
+    "실행 설정",
+    "작업공간 이동"
+  ],
+  "navigation_contracts": [
+    "pending-page-transition",
+    "explicit-home-return"
+  ],
   "navigation": [
     {
       "label": "Home",

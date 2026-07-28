@@ -8,6 +8,7 @@ import {
   MessageSquareText,
   Network,
   DatabaseZap,
+  FolderKanban,
   Workflow,
   X,
 } from "lucide-react";
@@ -20,6 +21,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { useProject } from "@/components/project-context";
 
 const NAVIGATION = [
+  { href: "/projects", label: "Projects", icon: FolderKanban },
   { href: "/query", label: "Query", icon: MessageSquareText },
   { href: "/graph", label: "Graph", icon: Network },
   { href: "/history", label: "History", icon: History },

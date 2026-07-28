@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { ProjectOverview } from "@/components/project-overview";
+
 import "./landing.css";
 
 const CAPABILITIES = [
@@ -160,6 +162,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <ProjectOverview />
 
       <section className="shell page-section">
         <span className="eyebrow">What the system proves</span>

@@ -10,6 +10,7 @@ from typing import Any
 from .design_system import (
     ACTION_ROLES,
     NAVIGATION_ITEMS,
+    SIDEBAR_SECTION_ORDER,
     SUPPORTED_LOCALES,
     Action,
     Role,
@@ -35,7 +36,7 @@ VISUAL_LANDMARKS = {
 def current_visual_contract() -> dict[str, Any]:
     css = build_global_css()
     return {
-        "version": "enterprise-ui-2.8",
+        "version": "enterprise-ui-2.9",
         "css_sha256": sha256(css.encode("utf-8")).hexdigest(),
         "locales": list(SUPPORTED_LOCALES),
         "responsive_breakpoints": [760],
@@ -50,6 +51,11 @@ def current_visual_contract() -> dict[str, Any]:
             page: list(landmarks)
             for page, landmarks in VISUAL_LANDMARKS.items()
         },
+        "sidebar_order": list(SIDEBAR_SECTION_ORDER),
+        "navigation_contracts": [
+            "pending-page-transition",
+            "explicit-home-return",
+        ],
         "navigation": [
             {
                 "label": item.label,
@@ -115,6 +121,9 @@ def run_ui_quality_gate(project_root: Path) -> dict[str, Any]:
         "get_services.clear()",
         "evaluation_filters",
         "explorer_widget_revision",
+        "navigation_widget_revision",
+        "pending_page",
+        "render_workspace_link(",
     )
     missing_markers = [
         marker for marker in required_runtime_markers if marker not in app_source

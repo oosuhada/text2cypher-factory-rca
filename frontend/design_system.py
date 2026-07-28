@@ -91,6 +91,15 @@ ACTION_ROLES: Final = {
     Action.MANAGE_PLATFORM: frozenset({Role.ADMIN}),
 }
 
+SIDEBAR_SECTION_ORDER: Final = (
+    "대화",
+    "역할 미리보기",
+    "프로젝트",
+    "언어 / Language",
+    "실행 설정",
+    "작업공간 이동",
+)
+
 SUPPORTED_LOCALES: Final = ("ko", "en")
 PAGE_DESCRIPTIONS_EN: Final = {
     "Home": "Platform purpose, recent projects and system status",
@@ -470,6 +479,27 @@ def build_global_css() -> str:
         color:var(--p3-text-muted);
         font-size:{type_tokens["size_sm"]};
       }}
+      .p3-workspace-link {{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        min-height:2.55rem;
+        border:1px solid var(--p3-border);
+        border-radius:var(--p3-radius-md);
+        padding:.6rem .9rem;
+        color:var(--p3-text) !important;
+        background:var(--p3-surface);
+        font-size:.86rem;
+        font-weight:650;
+        line-height:1;
+        text-decoration:none !important;
+        transition:border-color 120ms ease,background 120ms ease;
+      }}
+      .p3-workspace-link:hover {{
+        border-color:var(--p3-brand-500);
+        background:var(--p3-brand-100);
+      }}
+      .p3-workspace-link--stretch {{width:100%;}}
       .p3-stage-badge {{
         white-space:nowrap;
         border:1px solid #99F6E4;
