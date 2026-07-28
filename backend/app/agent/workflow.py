@@ -110,6 +110,13 @@ def create_text2cypher_agent(
             }
         return {
             "statement": statement,
+            "statement_history": [
+                {
+                    "kind": "generated",
+                    "attempt": 1,
+                    "statement": statement,
+                }
+            ],
             "errors": [],
             "status": "running",
             "next_action": "validate",
@@ -245,6 +252,13 @@ def create_text2cypher_agent(
             }
         return {
             "statement": statement,
+            "statement_history": [
+                {
+                    "kind": "corrected",
+                    "attempt": state.get("attempts", 0) + 1,
+                    "statement": statement,
+                }
+            ],
             "errors": [],
             "status": "running",
             "next_action": "validate",
@@ -391,6 +405,7 @@ class TextToCypherAgent:
             "status": "running",
             "next_action": "end",
             "trace": [],
+            "statement_history": [],
             "deadline_monotonic": started + self.timeout_seconds,
             "validated_statement_sha256": "",
             "metadata": self.metadata,
