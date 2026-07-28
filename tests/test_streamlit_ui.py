@@ -244,7 +244,7 @@ class StreamlitIntegrationTest(unittest.TestCase):
             for radio in data_app.radio
             if radio.label == "Navigation"
         )
-        data_navigation.set_value("Data & Health").run(timeout=30)
+        data_navigation.set_value("Data Sources").run(timeout=30)
         self.assertEqual(len(data_app.exception), 0)
         self.assertTrue(
             any(

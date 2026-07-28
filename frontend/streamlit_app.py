@@ -33,6 +33,15 @@ from frontend.app_services import (
 from frontend.api_client import FactoryGraphApiClient
 from frontend.conversation_history import upsert_conversation
 from frontend.data_preflight import inspect_uploaded_source
+from frontend.design_system import (
+    NAVIGATION_ITEMS,
+    PAGE_BY_LABEL,
+    Role,
+    ViewState,
+    build_global_css,
+    navigation_for_role,
+    state_copy,
+)
 from frontend.presentation import (
     evidence_to_dot,
     filter_evidence,
@@ -44,15 +53,7 @@ from frontend.presentation import (
 
 APP_TITLE = "Factory Graph RCA"
 SERVICE_BUNDLE_VERSION = "2026-07-28-shared-api-v2"
-NAVIGATION_PAGES = (
-    "Home",
-    "Query Studio",
-    "Evidence Lab",
-    "Graph Explorer",
-    "Operations",
-    "Schema Studio",
-    "Data & Health",
-)
+NAVIGATION_PAGES = tuple(item.label for item in NAVIGATION_ITEMS)
 EXAMPLE_QUESTIONS = [
     (
         "제품 Genealogy",
@@ -284,6 +285,7 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+st.markdown(build_global_css(), unsafe_allow_html=True)
 
 
 @st.cache_resource(show_spinner=False)
@@ -316,6 +318,7 @@ def get_reference_intake_archive() -> bytes:
 
 def initialize_session() -> None:
     st.session_state.setdefault("active_page", "Home")
+    st.session_state.setdefault("preview_role", Role.ADMIN.value)
     st.session_state.setdefault("messages", [])
     st.session_state.setdefault("last_result", None)
     st.session_state.setdefault("conversations", [])
@@ -335,6 +338,74 @@ def navigate_to_page(page: str) -> None:
     if page not in NAVIGATION_PAGES:
         return
     st.session_state["active_page"] = page
+
+
+def render_page_header(page: str) -> None:
+    item = PAGE_BY_LABEL[page]
+    badge = (
+        "운영 화면"
+        if item.delivery == "available"
+        else f"Stage {item.implementation_stage} 준비"
+    )
+    st.markdown(
+        f"""
+        <section class="p3-page-head">
+          <div>
+            <h1>{item.icon} {item.label}</h1>
+            <p>{item.description}</p>
+          </div>
+          <span class="p3-stage-badge">{badge}</span>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_view_state(
+    state: ViewState,
+    *,
+    page: str,
+    detail: str | None = None,
+) -> None:
+    copy = state_copy(state, page_label=page)
+    message = detail or copy.message
+    st.markdown(
+        f"""
+        <div class="p3-state-card" data-view-state="{state.value}">
+          <h3>{copy.title}</h3>
+          <p>{message}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_foundation_workspace(page: str) -> None:
+    item = PAGE_BY_LABEL[page]
+    render_page_header(page)
+    render_view_state(
+        ViewState.READY,
+        page=page,
+        detail=(
+            f"정보구조와 접근 권한은 2-1에서 확정했습니다. 세부 업무 "
+            f"기능은 구현계획 {item.implementation_stage}에서 연결됩니다."
+        ),
+    )
+    st.markdown(
+        """
+        <div class="p3-foundation-grid">
+          <div class="p3-foundation-card">
+            <b>상태 계약</b>
+            <span>정상·로딩·빈 상태·오류를 같은 언어와 구조로 표시합니다.</span>
+          </div>
+          <div class="p3-foundation-card">
+            <b>API 경계</b>
+            <span>업무 상태는 FastAPI가 소유하며 UI가 파일·DB를 우회하지 않습니다.</span>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def sync_active_conversation() -> None:
@@ -1415,11 +1486,11 @@ def render_generic_dataset_upload() -> None:
                     hide_index=True,
                 )
         if st.button(
-            "Schema Studio에서 매핑 검토 →",
+            "Pipeline에서 매핑 검토 →",
             type="primary",
             key=f"goto-schema-{project_id}",
         ):
-            navigate_to_page("Schema Studio")
+            navigate_to_page("Pipeline")
             st.rerun()
 
 
@@ -2023,12 +2094,37 @@ def _switch_project(project_id: str) -> None:
 
 
 def render_sidebar() -> tuple[str, str, str, str]:
-    st.sidebar.markdown("### Navigation")
+    st.sidebar.markdown("### Workspace")
+    role_value = st.sidebar.selectbox(
+        "역할 미리보기",
+        options=tuple(role.value for role in Role),
+        key="preview_role",
+        help=(
+            "2-1 UI 권한 설계를 검증하는 프로토타입입니다. "
+            "실제 사용자 인증·SSO는 Admin 단계에서 연결합니다."
+        ),
+    )
+    role = Role(role_value)
+    allowed_items = navigation_for_role(role)
+    allowed_pages = tuple(item.label for item in allowed_items)
+    if st.session_state.get("active_page") not in allowed_pages:
+        st.session_state["active_page"] = "Home"
     page = st.sidebar.radio(
         "Navigation",
-        options=NAVIGATION_PAGES,
+        options=allowed_pages,
         key="active_page",
+        format_func=lambda label: (
+            f"{PAGE_BY_LABEL[label].icon}  {label}"
+            + (
+                f"  · {PAGE_BY_LABEL[label].implementation_stage}"
+                if PAGE_BY_LABEL[label].delivery == "foundation"
+                else ""
+            )
+        ),
         label_visibility="collapsed",
+    )
+    st.sidebar.caption(
+        f"{role.value} 권한 · {len(allowed_pages)}개 작업공간"
     )
     st.sidebar.divider()
     if page == "Home":
@@ -2065,25 +2161,32 @@ def render_sidebar() -> tuple[str, str, str, str]:
         ),
     )
     _switch_project(selected_project_id)
-    with st.sidebar.expander("새 프로젝트 만들기"):
-        with st.form("create-project-form"):
-            new_id = st.text_input("프로젝트 ID", placeholder="factory-demo")
-            new_name = st.text_input("이름", placeholder="Factory Demo")
-            new_domain = st.text_input("도메인", placeholder="manufacturing")
-            new_dataset = st.text_input("데이터셋", placeholder="CSV upload")
-            submitted = st.form_submit_button("프로젝트 생성")
-        if submitted:
-            try:
-                registry.create(
-                    project_id=new_id,
-                    name=new_name,
-                    domain_type=new_domain,
-                    dataset_name=new_dataset,
+    if role in {Role.DATA_STEWARD, Role.ADMIN}:
+        with st.sidebar.expander("새 프로젝트 만들기"):
+            with st.form("create-project-form"):
+                new_id = st.text_input(
+                    "프로젝트 ID", placeholder="factory-demo"
                 )
-                st.success("프로젝트를 생성했습니다.")
-                st.rerun()
-            except ValueError as error:
-                st.error(str(error))
+                new_name = st.text_input("이름", placeholder="Factory Demo")
+                new_domain = st.text_input(
+                    "도메인", placeholder="manufacturing"
+                )
+                new_dataset = st.text_input(
+                    "데이터셋", placeholder="CSV upload"
+                )
+                submitted = st.form_submit_button("프로젝트 생성")
+            if submitted:
+                try:
+                    registry.create(
+                        project_id=new_id,
+                        name=new_name,
+                        domain_type=new_domain,
+                        dataset_name=new_dataset,
+                    )
+                    st.success("프로젝트를 생성했습니다.")
+                    st.rerun()
+                except ValueError as error:
+                    st.error(str(error))
     st.sidebar.divider()
     st.sidebar.markdown("### 대화")
     if st.sidebar.button(
@@ -2131,46 +2234,57 @@ def render_sidebar() -> tuple[str, str, str, str]:
 
     st.sidebar.divider()
     st.sidebar.markdown("### 실행 설정")
-    provider = st.sidebar.selectbox(
-        "생성 모드",
-        options=("auto", "gemini", "gold", "openai"),
-        format_func=lambda value: (
-            {
-                "auto": "자동 · OpenAI 없으면 Gemini",
-                "gemini": "Vertex Gemini · 자유 질문",
-                "gold": "Gold 데모 · 회귀검증 전용",
-                "openai": "OpenAI · 자유 질문",
-            }[value]
-        ),
-    )
-    use_openai_model = provider == "openai" or (
-        provider == "auto" and bool(os.getenv("OPENAI_API_KEY"))
-    )
-    default_model = (
-        os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
-        if use_openai_model
-        else os.getenv("GOOGLE_VERTEX_MODEL", "gemini-2.5-flash")
-    )
-    model_name = st.sidebar.text_input(
-        "생성 모델",
-        value=default_model,
-        disabled=provider == "gold",
-        key=f"model-name-{provider}",
-    )
-    if provider == "gold":
-        st.sidebar.info(
-            "추천 질문과 Gold 15개만 정확히 실행하는 회귀검증 모드입니다."
+    if role in {Role.DATA_STEWARD, Role.ADMIN}:
+        provider = st.sidebar.selectbox(
+            "생성 모드",
+            options=("auto", "gemini", "gold", "openai"),
+            format_func=lambda value: (
+                {
+                    "auto": "자동 · OpenAI 없으면 Gemini",
+                    "gemini": "Vertex Gemini · 자유 질문",
+                    "gold": "Gold 데모 · 회귀검증 전용",
+                    "openai": "OpenAI · 자유 질문",
+                }[value]
+            ),
         )
-    elif provider == "gemini":
-        st.sidebar.info(
-            "Vertex AI Gemini로 새로운 자연어 질문을 처리합니다."
+        use_openai_model = provider == "openai" or (
+            provider == "auto" and bool(os.getenv("OPENAI_API_KEY"))
         )
-    elif provider == "auto":
-        st.sidebar.info(
-            "OpenAI 키가 없으면 Vertex AI Gemini를 자동 사용합니다."
+        default_model = (
+            os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+            if use_openai_model
+            else os.getenv("GOOGLE_VERTEX_MODEL", "gemini-2.5-flash")
         )
+        model_name = st.sidebar.text_input(
+            "생성 모델",
+            value=default_model,
+            disabled=provider == "gold",
+            key=f"model-name-{provider}",
+        )
+        if provider == "gold":
+            st.sidebar.info(
+                "추천 질문과 Gold 15개만 정확히 실행하는 회귀검증 모드입니다."
+            )
+        elif provider == "gemini":
+            st.sidebar.info(
+                "Vertex AI Gemini로 새로운 자연어 질문을 처리합니다."
+            )
+        elif provider == "auto":
+            st.sidebar.info(
+                "OpenAI 키가 없으면 Vertex AI Gemini를 자동 사용합니다."
+            )
+        else:
+            st.sidebar.caption("OPENAI_API_KEY 환경변수가 필요합니다.")
     else:
-        st.sidebar.caption("OPENAI_API_KEY 환경변수가 필요합니다.")
+        provider = "auto"
+        model_name = (
+            os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+            if os.getenv("OPENAI_API_KEY")
+            else os.getenv("GOOGLE_VERTEX_MODEL", "gemini-2.5-flash")
+        )
+        st.sidebar.caption(
+            "모델과 provider는 Data Steward 또는 Admin이 관리합니다."
+        )
 
     st.sidebar.divider()
     st.sidebar.markdown("### 안전 설정")
@@ -2182,7 +2296,7 @@ def render_sidebar() -> tuple[str, str, str, str]:
 
 
 def render_schema_studio() -> None:
-    st.markdown("## Schema Studio")
+    render_page_header("Pipeline")
     st.caption("업로드한 컬럼을 그래프 노드·관계로 매핑하고 승인합니다.")
     projects = ProjectRegistry(
         PROJECT_ROOT / "data" / "processed" / "projects.sqlite3"
@@ -2202,7 +2316,7 @@ def render_schema_studio() -> None:
     )
     uploads = datasets.list(project_id)
     if not uploads:
-        st.info("먼저 Data & Health에서 데이터셋을 업로드해 프로파일링하세요.")
+        st.info("먼저 Data Sources에서 데이터셋을 업로드해 프로파일링하세요.")
         return
     upload = uploads[0]
     upload_id = st.selectbox(
@@ -2320,20 +2434,19 @@ def main() -> None:
     if page == "Home":
         render_streamlit_landing()
         return
-    if page == "Schema Studio":
+    if page in {
+        "Projects",
+        "Evaluations",
+        "Approval Queue",
+        "Audit Logs",
+        "Admin",
+    }:
+        render_foundation_workspace(page)
+        return
+    if page == "Pipeline":
         render_schema_studio()
         return
-    st.markdown(
-        """
-        <div class="p3-hero">
-          <div class="p3-kicker">Manufacturing Knowledge Graph</div>
-          <h1>Factory Graph RCA</h1>
-          <p>완제품 · 구성품 · 공정 · 장비 · 이상 · 품질을 연결해
-          검증 가능한 RCA 후보를 탐색합니다.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    render_page_header(page)
     try:
         services = get_services(
             provider,
@@ -2342,7 +2455,7 @@ def main() -> None:
             project_id,
         )
     except Exception as error:
-        if page == "Data & Health":
+        if page == "Data Sources":
             st.warning(f"질의 서비스 연결 전 데이터 온보딩 모드입니다: {error}")
             render_data_health_tab(None, None)
             return
@@ -2360,13 +2473,11 @@ def main() -> None:
 
     if page == "Query Studio":
         render_chat_tab(services)
-    elif page == "Evidence Lab":
-        render_evidence_tab()
     elif page == "Graph Explorer":
         render_graph_explorer(services)
-    elif page == "Operations":
+    elif page == "Dashboard":
         render_dashboard_tab(services, dashboard_snapshot)
-    elif page == "Data & Health":
+    elif page == "Data Sources":
         render_data_health_tab(services, dashboard_snapshot)
 
 
