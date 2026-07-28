@@ -9,6 +9,7 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
+SOURCE_VERSION = "synthetic-equipment-history-v1"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -57,8 +58,22 @@ def main() -> None:
     projects.update(
         "equipment-history",
         schema_version="1.0",
-        status="mapping_ready",
+        source_version=SOURCE_VERSION,
     )
+    current_status = projects.require("equipment-history")["status"]
+    if current_status == "draft":
+        projects.transition(
+            "equipment-history",
+            "profiling",
+            reason="example_source_profiled",
+        )
+        current_status = "profiling"
+    if current_status == "profiling":
+        projects.transition(
+            "equipment-history",
+            "mapping_review",
+            reason="example_mapping_approved",
+        )
     print(
         json.dumps(
             {

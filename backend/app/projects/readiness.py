@@ -132,10 +132,17 @@ class ProjectReadinessService:
         if project["source_type"] == "file":
             try:
                 mapping = self.mappings.get(project_id)
+                upload_ids = {
+                    str(upload["upload_id"]) for upload in uploads
+                }
                 mapping_approved = (
-                    str(mapping.get("schema_version"))
+                    str(
+                        mapping.get("schema_version")
+                        or (mapping.get("manifest") or {}).get("version")
+                    )
                     == str(project.get("schema_version"))
-                    and str(mapping.get("upload_id")) == source_version
+                    and str(mapping.get("status")) == "approved"
+                    and str(mapping.get("upload_id")) in upload_ids
                 )
             except KeyError:
                 mapping_approved = project_id == "cip-dmd"

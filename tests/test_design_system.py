@@ -1,6 +1,7 @@
 import unittest
 
 from frontend.design_system import (
+    Action,
     DESIGN_TOKENS,
     NAVIGATION_ITEMS,
     PAGE_BY_LABEL,
@@ -10,7 +11,9 @@ from frontend.design_system import (
     ViewState,
     build_global_css,
     can_access,
+    can_perform,
     navigation_for_role,
+    page_description,
     state_copy,
 )
 
@@ -54,6 +57,8 @@ class DesignSystemContractTest(unittest.TestCase):
         self.assertEqual(admin_pages, set(PAGE_BY_LABEL))
         self.assertTrue(can_access(Role.DOMAIN_EXPERT, "Approval Queue"))
         self.assertFalse(can_access(Role.VIEWER, "Admin"))
+        self.assertFalse(can_perform(Role.VIEWER, Action.RERUN_QUERY))
+        self.assertTrue(can_perform(Role.ADMIN, Action.MANAGE_PLATFORM))
 
     def test_every_workspace_has_all_four_view_state_contracts(self):
         for item in NAVIGATION_ITEMS:
@@ -85,6 +90,18 @@ class DesignSystemContractTest(unittest.TestCase):
         self.assertIn("--p3-success", css)
         self.assertIn(".p3-page-head", css)
         self.assertIn(".p3-state-card", css)
+        self.assertIn(".p3-skip-link", css)
+        self.assertIn("focus-visible", css)
+        self.assertIn("prefers-reduced-motion", css)
+        self.assertIn("forced-colors", css)
+        self.assertIn("max-width: 760px", css)
+
+    def test_korean_and_english_page_copy_are_available(self):
+        self.assertEqual(
+            page_description("Dashboard", "ko"),
+            PAGE_BY_LABEL["Dashboard"].description,
+        )
+        self.assertIn("operational", page_description("Dashboard", "en"))
 
     def test_wireflows_only_reference_declared_workspaces(self):
         declared = set(PAGE_BY_LABEL)
@@ -113,4 +130,3 @@ class DesignSystemContractTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

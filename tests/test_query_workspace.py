@@ -1,6 +1,8 @@
 import unittest
 
 from frontend.query_workspace import (
+    example_questions,
+    query_placeholder,
     query_context_versions,
     query_status_presentation,
     statement_history,
@@ -8,6 +10,25 @@ from frontend.query_workspace import (
 
 
 class QueryWorkspaceTest(unittest.TestCase):
+    def test_examples_and_placeholder_are_project_scoped(self):
+        cip_examples = example_questions("cip-dmd")
+        equipment_examples = example_questions("equipment-history")
+        self.assertTrue(any("완제품" in question for _, question in cip_examples))
+        self.assertFalse(
+            any("완제품" in question for _, question in equipment_examples)
+        )
+        self.assertTrue(
+            all(
+                "정비" in question or "중단" in question
+                for _, question in equipment_examples
+            )
+        )
+        self.assertIn(
+            "EQ-PRESS-01",
+            query_placeholder("equipment-history"),
+        )
+        self.assertIn("완제품", query_placeholder("cip-dmd"))
+
     def test_all_runtime_statuses_have_explicit_presentation(self):
         for status in (
             "success",

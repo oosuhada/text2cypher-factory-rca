@@ -1,5 +1,6 @@
 {
   "title": "Equipment Maintenance History",
+  "source_version": "synthetic-equipment-history-v1",
   "nodes": [
     {
       "label": "Equipment",
