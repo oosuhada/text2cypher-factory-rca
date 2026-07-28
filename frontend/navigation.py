@@ -23,6 +23,9 @@ NAVIGATION_PAGES = tuple(item.label for item in NAVIGATION_ITEMS)
 def navigate_to_page(page: str) -> None:
     if page in NAVIGATION_PAGES:
         st.session_state["pending_page"] = page
+        workspace_key = PAGE_BY_LABEL[page].key
+        st.session_state["consumed_workspace_query"] = workspace_key
+        st.query_params["workspace"] = workspace_key
 
 
 def workspace_url(page: str) -> str:
@@ -136,4 +139,3 @@ def render_sidebar_navigation(role: Role) -> str:
         f"{role.value} 권한 · {len(allowed_pages)}개 작업공간"
     )
     return page
-

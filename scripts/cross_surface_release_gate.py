@@ -90,6 +90,16 @@ def validate_streamlit_architecture() -> dict[str, int]:
         ),
         "Streamlit Query Studio",
     )
+    navigation_source = _read(FRONTEND_ROOT / "navigation.py")
+    _require(
+        navigation_source,
+        (
+            'st.session_state["pending_page"] = page',
+            'st.session_state["consumed_workspace_query"] = workspace_key',
+            'st.query_params["workspace"] = workspace_key',
+        ),
+        "Streamlit atomic navigation",
+    )
     return {
         "entrypoint_lines": entrypoint_lines,
         "page_modules": len(actual_pages),

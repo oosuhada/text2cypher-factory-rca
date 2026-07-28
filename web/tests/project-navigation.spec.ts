@@ -408,3 +408,19 @@ test("mobile header uses a drawer without horizontal overflow", async ({
     ),
   ).toBe(true);
 });
+
+test("standard laptop header collapses before horizontal overflow", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await mockProjectApi(page);
+  await page.goto("/query?project_id=cip-dmd");
+
+  await expect(page.getByRole("button", { name: "메뉴 열기" }))
+    .toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+});

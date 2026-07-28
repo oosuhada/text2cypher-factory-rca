@@ -26,16 +26,15 @@
 
 ## 최종 검증
 
-- 로컬 release gate: Python 회귀 199개 PASS
+- 로컬 release gate: Python 회귀 226개 PASS
 - API·traceability·비밀정보 검사 PASS
 - Streamlit UI visual contract PASS
-- Next.js lint·production build PASS
+- Next.js lint·production build, React Playwright 7개 PASS
 - Docker Compose contract는 GitHub의 fresh-environment E2E에서 PASS
 - GitHub Actions:
-  [implementation CI run 30329342963](https://github.com/oosuhada/text2cypher-factory-rca/actions/runs/30329342963)
+  [교차 UI Release Gate run 30346988017](https://github.com/oosuhada/text2cypher-factory-rca/actions/runs/30346988017)
 - 브라우저 실측:
-  Home, Projects, Data Sources, Pipeline, Query Studio, Graph Explorer,
-  Dashboard, Evaluations, Audit Logs 모두 오류 없이 렌더링
+  Streamlit 11개 workspace, React 8개 route 모두 오류 없이 렌더링
 - 프로젝트 전환:
   CiP-DMD와 Equipment Maintenance History 컨텍스트 분리 확인
 - RBAC:
@@ -48,6 +47,8 @@
 - 구현 범위: `08bf94c`(2-1) ~ `7f5797c`(2-8)
 - 완료 tag: `p3-enterprise-ui-v1`
 - 이전 백엔드 기준선: `p3-required-backend-v1`
+- 최종 리팩토링 감사:
+  [`refactor-final-audit-and-phase3-readiness.md`](./refactor-final-audit-and-phase3-readiness.md)
 
 3단계 변경은 2단계 핵심 사용자 여정과 release gate를 깨뜨리지 않아야
 하며, `scripts/release_check.sh`가 통과해야 병합할 수 있다.

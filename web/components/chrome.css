@@ -147,7 +147,12 @@
   font-size: 0.77rem;
 }
 
-@media (max-width: 900px) {
+/*
+ * The complete desktop chrome needs more horizontal space than the
+ * 1,180px product shell. Collapse it before a standard laptop viewport
+ * starts pushing header actions outside the document.
+ */
+@media (max-width: 1600px) {
   .header-inner {
     min-height: 64px;
     gap: 12px;

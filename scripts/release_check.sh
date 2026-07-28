@@ -66,6 +66,7 @@ for document in \
   docs/module-ownership.md \
   docs/final-presentation-evidence-pack.md \
   docs/refactor-stage5-final-release-gate.md \
+  docs/refactor-final-audit-and-phase3-readiness.md \
   release/backend-v1.yml; do
   test -s "$document"
 done
