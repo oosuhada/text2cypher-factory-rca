@@ -376,6 +376,12 @@
 
 ### 2-5. Interactive Graph Explorer
 
+상태: **구현·검증 완료 (2026-07-28)**
+
+검증 기록:
+
+- [`enterprise-stage2-5-interactive-graph-explorer.md`](./enterprise-stage2-5-interactive-graph-explorer.md)
+
 목표:
 
 - Graphviz 정적 그림을 업무용 탐색 화면으로 교체한다.
@@ -399,6 +405,12 @@
 
 ### 2-6. Dashboard·Evaluations
 
+상태: **구현·검증 완료 (2026-07-28)**
+
+검증 기록:
+
+- [`enterprise-stage2-6-dashboard-evaluations.md`](./enterprise-stage2-6-dashboard-evaluations.md)
+
 목표:
 
 - 데이터·그래프·Agent 품질·운영 상태를 함께 보여준다.
@@ -419,6 +431,12 @@
 
 ### 2-7. History·Audit·운영 상태
 
+상태: **구현·검증 완료 (2026-07-28)**
+
+검증 기록:
+
+- [`enterprise-stage2-7-history-audit-operations.md`](./enterprise-stage2-7-history-audit-operations.md)
+
 목표:
 
 - 사용자가 과거 질문과 데이터 작업을 재현한다.
@@ -437,6 +455,12 @@
 - 민감한 prompt·credential은 감사 화면에 노출하지 않는다.
 
 ### 2-8. 엔터프라이즈 UI 품질 Gate
+
+상태: **구현·검증 완료 (2026-07-28)**
+
+검증 기록:
+
+- [`enterprise-stage2-8-ui-quality-gate.md`](./enterprise-stage2-8-ui-quality-gate.md)
 
 목표:
 
@@ -460,6 +484,8 @@
 릴리스 Gate:
 
 - 프로젝트 생성→적재→평가→질의→근거 탐색을 UI에서 완결한다.
+- **통과 (2026-07-28)**:
+  [`enterprise-stage2-release.md`](./enterprise-stage2-release.md)
 
 ---
 
