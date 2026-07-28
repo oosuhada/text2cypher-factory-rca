@@ -25,6 +25,12 @@ class DatasetWorkspaceTest(unittest.TestCase):
             self.assertEqual(columns["temperature"]["inferred_type"], "FLOAT")
             self.assertEqual(columns["temperature"]["missing_count"], 1)
             self.assertEqual(
+                result["files"][0]["profile_version"], "1.0"
+            )
+            self.assertEqual(
+                result["files"][0]["quality"]["missing_cell_count"], 1
+            )
+            self.assertEqual(
                 workspace.get("equipment-history", result["upload_id"])["status"],
                 "profiled",
             )

@@ -5,6 +5,21 @@ CiP-DMD의 완제품·구성품·공정·품질 관계를 Neo4j로 구조화하�
 구현 순서와 완료 조건은 [MVP_단계별_구현_계획.md](./MVP_단계별_구현_계획.md)를 따른다.
 PPT 대조 후 수정 근거는 [방향 수정 기록](./docs/direction-correction-2026-07-27.md)에 정리했다.
 
+## 최종 목표 명세와 확장 트랙
+
+- [P3 엔터프라이즈 플랫폼 통합 기능명세](./docs/p3-enterprise-platform-functional-spec.md)
+- [P3 엔터프라이즈 플랫폼 단계별 작업계획서](./docs/p3-enterprise-platform-implementation-plan.md)
+- [P3 요구사항 Baseline·Gap Matrix](./docs/p3-requirements-traceability.md)
+- [엔터프라이즈 트랙 1-1~1-3 구현·검증](./docs/enterprise-stage1-1-3-validation.md)
+- 플랫폼 공통 API·Registry·스키마·ETL·다중 도메인:
+  [`platform-stage1~11`](./docs/platform-stage1-shared-api.md)
+- 제품 리팩터링·Data Intake·Graph Explorer·HITL·배포:
+  [`refactor-stage1~8`](./docs/refactor-stage1-2-validation.md)
+
+통합 기능명세는 발표자료의 P3 필수 범위, 다중 프로젝트 사내 플랫폼 UI,
+P4에서 차용할 LangGraph Router·Tool Registry·RAG·권고·HITL·알림·감사로그를
+구분해 정의한다. 단계별 작업계획서는 이를 `1-x / 2-x / 3-x` 릴리스로 나눈다.
+
 ## 프로젝트형 플랫폼 확장
 
 새 프로젝트를 만들고 CSV/JSON을 업로드한 뒤 컬럼 프로파일 → 그래프

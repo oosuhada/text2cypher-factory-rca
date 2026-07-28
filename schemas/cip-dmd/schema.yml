@@ -1,9 +1,14 @@
 project_id: cip-dmd
 version: "1.1"
+source_version: "CiP-DMD public release"
 title: CiP-DMD Manufacturing Genealogy
 nodes:
   - label: Part
     identity: part_id
+    required_properties: [part_id, part_type]
+    source:
+      dataset: CiP-DMD
+      entity: metadata.parts
     properties:
       part_id: STRING
       part_type: STRING
@@ -41,6 +46,7 @@ nodes:
       is_normal: BOOLEAN
   - label: ProcessRun
     identity: run_id
+    required_properties: [run_id]
     properties:
       run_id: STRING
       sequence: INTEGER
@@ -50,6 +56,7 @@ nodes:
       sensor_file_count: INTEGER
   - label: QualityMeasurement
     identity: measurement_id
+    required_properties: [measurement_id, feature, qc_pass]
     properties:
       measurement_id: STRING
       feature: STRING
@@ -64,26 +71,33 @@ relationships:
   - type: ASSEMBLED_FROM
     source: Cylinder
     targets: [CylinderBottom, PistonRod]
+    cardinality: ONE_TO_MANY
     properties:
       component_role: STRING
   - type: UNDERWENT
     source: Part
     targets: [ProcessRun]
+    cardinality: ONE_TO_MANY
   - type: INSTANCE_OF
     source: ProcessRun
     targets: [Process]
+    cardinality: MANY_TO_ONE
   - type: RUN_ON
     source: ProcessRun
     targets: [Equipment]
+    cardinality: MANY_TO_ONE
   - type: CLASSIFIED_AS
     source: ProcessRun
     targets: [AnomalyClass]
+    cardinality: MANY_TO_ONE
   - type: HAS_MEASUREMENT
     source: Part
     targets: [QualityMeasurement]
+    cardinality: ONE_TO_MANY
   - type: FOR_PROCESS
     source: QualityMeasurement
     targets: [Process]
+    cardinality: MANY_TO_ONE
 domain_values:
   Process.name: [saw, cnc_milling_machine, cnc_lathe, assembly]
   AnomalyClass.code: ["0", "1", "2", "3"]
@@ -94,3 +108,25 @@ output_rules:
   - If the question asks for a component role, return ASSEMBLED_FROM.component_role.
   - If the question asks for pass/fail, return QualityMeasurement.qc_pass.
   - Keep result aliases concise and based on the requested business term.
+query_scenarios:
+  - id: schema-q1
+    question: 압력검사에 실패한 완제품의 구성품과 상류 공정을 보여줘.
+    required_nodes: [Cylinder, Part, ProcessRun, QualityMeasurement]
+    required_relationships: [ASSEMBLED_FROM, UNDERWENT, HAS_MEASUREMENT]
+    required_properties:
+      - Cylinder.part_id
+      - QualityMeasurement.qc_pass
+  - id: schema-q2
+    question: 밀링 anomaly class 2가 발생한 부품과 연결 완제품을 보여줘.
+    required_nodes: [CylinderBottom, ProcessRun, AnomalyClass, Cylinder]
+    required_relationships: [UNDERWENT, CLASSIFIED_AS, ASSEMBLED_FROM]
+    required_properties:
+      - AnomalyClass.code
+      - CylinderBottom.part_id
+  - id: schema-q3
+    question: 특정 완제품의 구성품·공정·검사 genealogy를 보여줘.
+    required_nodes: [Cylinder, Part, ProcessRun, QualityMeasurement]
+    required_relationships: [ASSEMBLED_FROM, UNDERWENT, HAS_MEASUREMENT]
+    required_properties:
+      - Cylinder.part_id
+      - ProcessRun.run_id
