@@ -26,3 +26,5 @@ web/.env.local
 web/next-env.d.ts
 web/.next/
 web/node_modules/
+web/playwright-report/
+web/test-results/

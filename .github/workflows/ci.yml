@@ -43,6 +43,10 @@ jobs:
         run: pnpm lint
       - name: Build web application
         run: pnpm build
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Run project navigation E2E
+        run: pnpm test:e2e
 
   packaged-e2e:
     runs-on: ubuntu-latest

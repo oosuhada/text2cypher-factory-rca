@@ -90,10 +90,14 @@ export function ProjectWorkspace() {
                   <button
                     type="button"
                     className={active ? "ghost-button" : "secondary-button"}
-                    disabled={active || switching}
-                    onClick={() => void switchProject(project.project_id)}
+                    disabled={switching || Boolean(openingProjectId)}
+                    onClick={() =>
+                      void openProject(project.project_id, "recommended")
+                    }
                   >
-                    {active ? "현재 프로젝트" : "프로젝트 전환"}
+                    {openingProjectId === project.project_id
+                      ? "여는 중…"
+                      : "작업 열기"}
                   </button>
                   <button
                     type="button"
