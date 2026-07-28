@@ -36,7 +36,7 @@ VISUAL_LANDMARKS = {
 def current_visual_contract() -> dict[str, Any]:
     css = build_global_css()
     return {
-        "version": "enterprise-ui-2.9",
+        "version": "enterprise-ui-2.10",
         "css_sha256": sha256(css.encode("utf-8")).hexdigest(),
         "locales": list(SUPPORTED_LOCALES),
         "responsive_breakpoints": [760],
@@ -131,6 +131,27 @@ def run_ui_quality_gate(project_root: Path) -> dict[str, Any]:
     if missing_markers:
         raise RuntimeError(
             f"Streamlit 상태·복구 계약 누락: {missing_markers}"
+        )
+    sidebar_source = app_source[
+        app_source.index("def render_sidebar()")
+        : app_source.index("def render_schema_studio()")
+    ]
+    sidebar_markers = (
+        "_render_sidebar_project(",
+        "_render_sidebar_navigation(",
+        "_render_sidebar_conversations(",
+        "_render_sidebar_execution(",
+        '"역할 미리보기"',
+        '"언어 / Language"',
+        '"### 안전 설정"',
+    )
+    sidebar_positions = [
+        sidebar_source.index(marker) for marker in sidebar_markers
+    ]
+    if sidebar_positions != sorted(sidebar_positions):
+        raise RuntimeError(
+            "Streamlit sidebar가 프로젝트 → 작업공간 → 대화 → "
+            "실행 설정 → 역할 → 언어 → 안전 설정 순서가 아닙니다."
         )
     return {
         "status": "PASS",

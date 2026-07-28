@@ -92,12 +92,13 @@ ACTION_ROLES: Final = {
 }
 
 SIDEBAR_SECTION_ORDER: Final = (
-    "대화",
-    "역할 미리보기",
     "프로젝트",
-    "언어 / Language",
-    "실행 설정",
     "작업공간 이동",
+    "대화",
+    "실행 설정",
+    "역할 미리보기",
+    "언어 / Language",
+    "안전 설정",
 )
 
 SUPPORTED_LOCALES: Final = ("ko", "en")
@@ -428,6 +429,7 @@ def build_global_css() -> str:
         --p3-brand-950: {color["brand_950"]};
         --p3-brand-700: {color["brand_700"]};
         --p3-brand-500: {color["brand_500"]};
+        --p3-brand-100: {color["brand_100"]};
         --p3-surface: {color["surface"]};
         --p3-surface-subtle: {color["surface_subtle"]};
         --p3-border: {color["border"]};
@@ -460,6 +462,13 @@ def build_global_css() -> str:
         outline-offset:2px !important;
       }}
       button, [role="button"] {{min-height:2.5rem;}}
+      [data-testid="stSidebarHeader"] {{
+        min-height:2.7rem;
+        height:2.7rem;
+      }}
+      [data-testid="stSidebarUserContent"] {{
+        padding-top:0 !important;
+      }}
       .p3-page-head {{
         display:flex;
         justify-content:space-between;
