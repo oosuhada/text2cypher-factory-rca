@@ -28,6 +28,7 @@ PPT 대조 후 수정 근거는 [방향 수정 기록](./docs/direction-correcti
 - [Streamlit 리팩토링 1단계 · 공통 기반 분리](./docs/refactor-stage-common-foundation.md)
 - [Streamlit 리팩토링 2단계 · 페이지 모듈 분리](./docs/refactor-stage-page-modules.md)
 - [리팩토링 3단계 · React 구조·UX](./docs/refactor-stage3-react-structure-ux.md)
+- [리팩토링 4단계 · 화면별 품질 개선](./docs/refactor-stage4-screen-quality.md)
 - 플랫폼 공통 API·Registry·스키마·ETL·다중 도메인:
   [`platform-stage1~11`](./docs/platform-stage1-shared-api.md)
 - 제품 리팩터링·Data Intake·Graph Explorer·HITL·배포:

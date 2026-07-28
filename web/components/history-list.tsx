@@ -29,7 +29,10 @@ export function HistoryList() {
         </span>
         <h2>아직 저장된 대화가 없습니다.</h2>
         <p>Query Studio에서 질문을 실행하면 이 기기에 최근 20개가 저장됩니다.</p>
-        <Link href="/query" className="primary-button">
+        <Link
+          href={`/query?project_id=${encodeURIComponent(projectId)}`}
+          className="primary-button"
+        >
           첫 질문 시작 <ArrowRight size={16} />
         </Link>
       </div>

@@ -69,9 +69,10 @@ def render_inline_evidence(
         "처리 근거 전체 보기 · 결과 / Cypher / 관계 경로 / 검증",
         expanded=expanded and response.get("status") == "success",
     ):
-        result_column, cypher_column = st.columns([1.15, 1])
-        with result_column:
-            st.markdown("##### 조회 결과")
+        result_tab, cypher_tab, graph_tab, validation_tab = st.tabs(
+            ("조회 결과", "생성 Cypher", "관계 경로", "검증 이력")
+        )
+        with result_tab:
             rows = response.get("rows", [])
             if rows:
                 st.dataframe(
@@ -90,8 +91,7 @@ def render_inline_evidence(
                 st.info(
                     "실행 결과가 없거나 정책상 쿼리를 실행하지 않았습니다."
                 )
-        with cypher_column:
-            st.markdown("##### 생성·수정 Cypher")
+        with cypher_tab:
             statements = statement_history(response)
             if statements:
                 kind_copy = {
@@ -113,39 +113,41 @@ def render_inline_evidence(
             else:
                 st.info("실행된 Cypher가 없습니다.")
 
-        evidence = response.get("evidence", {})
-        st.markdown("##### 실제 조회 관계")
-        if evidence.get("nodes"):
-            st.graphviz_chart(
-                evidence_to_dot(evidence, rankdir="LR"),
-                width="stretch",
-            )
-            st.caption(
-                f"근거 노드 {evidence.get('node_count', 0)}개 · "
-                f"관계 {evidence.get('relationship_count', 0)}개"
-            )
-        else:
-            st.info(
-                "집계 질의, 빈 결과 또는 실행 전 차단 상태이므로 "
-                "관계 경로를 임의 생성하지 않습니다."
-            )
+        with graph_tab:
+            evidence = response.get("evidence", {})
+            if evidence.get("nodes"):
+                st.graphviz_chart(
+                    evidence_to_dot(evidence, rankdir="LR"),
+                    width="stretch",
+                )
+                st.caption(
+                    f"근거 노드 {evidence.get('node_count', 0)}개 · "
+                    f"관계 {evidence.get('relationship_count', 0)}개"
+                )
+            else:
+                st.info(
+                    "집계 질의, 빈 결과 또는 실행 전 차단 상태이므로 "
+                    "관계 경로를 임의 생성하지 않습니다."
+                )
 
-        st.markdown("##### Validation·Self-correction trace")
-        validation = response.get("validation", {})
-        trace = validation.get("trace", [])
-        if trace:
-            st.dataframe(
-                pd.DataFrame(flatten_rows_for_table(trace)),
-                width="stretch",
-                hide_index=True,
-            )
-        errors = validation.get("errors", [])
-        if errors:
-            st.error("\n".join(str(error) for error in errors))
-        elif trace:
-            st.success("쓰기 차단·의미 검사·EXPLAIN 검증을 통과했습니다.")
-        else:
-            st.caption("모델 실행 전에 질문 guard에서 종료됐습니다.")
+        with validation_tab:
+            validation = response.get("validation", {})
+            trace = validation.get("trace", [])
+            if trace:
+                st.dataframe(
+                    pd.DataFrame(flatten_rows_for_table(trace)),
+                    width="stretch",
+                    hide_index=True,
+                )
+            errors = validation.get("errors", [])
+            if errors:
+                st.error("\n".join(str(error) for error in errors))
+            elif trace:
+                st.success(
+                    "쓰기 차단·의미 검사·EXPLAIN 검증을 통과했습니다."
+                )
+            else:
+                st.caption("모델 실행 전에 질문 guard에서 종료됐습니다.")
 
 def render_expert_review(
     response: dict[str, Any],
@@ -162,80 +164,81 @@ def render_expert_review(
         ).encode("utf-8")
     ).hexdigest()
     existing = st.session_state["expert_reviews"].get(fingerprint)
-    st.markdown("##### 도메인 전문가 검증")
-    st.caption(
-        "판정은 원래 답변을 덮어쓰지 않고 append-only 감사기록으로 남습니다."
-    )
-    if existing:
-        decision_labels = {
-            "verified": "검증 완료",
-            "needs_followup": "추가 확인 필요",
-            "disputed": "이견 있음",
-        }
-        st.success(
-            f"{decision_labels.get(existing['decision'], existing['decision'])} "
-            f"· 검토자 {existing['reviewer']} · "
-            f"기록 ID {existing['review_id'][:8]}"
-        )
-        return
     active_role = Role(
         st.session_state.get("active_role", Role.VIEWER.value)
     )
     if not can_perform(active_role, Action.REVIEW_RESULT):
-        st.caption(
-            "판정 기록은 Domain Expert, Data Steward 또는 Admin 권한이 필요합니다."
-        )
         return
-    st.session_state.setdefault(f"{key_prefix}-reviewer", "domain-expert")
-    st.session_state.setdefault(f"{key_prefix}-decision", "verified")
-    st.session_state.setdefault(f"{key_prefix}-note", "")
-    with st.form(f"{key_prefix}-expert-review"):
-        reviewer_column, decision_column = st.columns([1, 2])
-        with reviewer_column:
-            reviewer = st.text_input(
-                "검토자 표시",
-                max_chars=120,
-                key=f"{key_prefix}-reviewer",
-            )
-        with decision_column:
-            decision = st.radio(
-                "판정",
-                options=("verified", "needs_followup", "disputed"),
-                format_func=lambda value: {
-                    "verified": "검증 완료",
-                    "needs_followup": "추가 확인 필요",
-                    "disputed": "이견 있음",
-                }[value],
-                horizontal=True,
-                key=f"{key_prefix}-decision",
-            )
-        note = st.text_area(
-            "판정 근거 또는 추가 확인 사항",
-            max_chars=2000,
-            placeholder="예: MES 원장과 결과 건수 대조 완료",
-            key=f"{key_prefix}-note",
+    with st.expander(
+        "도메인 전문가 검증 · 전문가 전용",
+        expanded=False,
+    ):
+        st.caption(
+            "판정은 원래 답변을 덮어쓰지 않고 append-only "
+            "감사기록으로 남습니다."
         )
-        submitted = st.form_submit_button(
-            "전문가 판정 기록",
-            type="primary",
-            key=f"{key_prefix}-submit-review",
-        )
-    if submitted:
-        try:
-            record = feedback_service.record_review(
-                question=response.get("question", ""),
-                cypher=response.get("cypher", ""),
-                query_status=response.get("status", "unknown"),
-                provider=response.get("provider", "unknown"),
-                row_count=int(response.get("row_count", 0)),
-                decision=decision,
-                reviewer=reviewer,
-                note=note,
+        if existing:
+            decision_labels = {
+                "verified": "검증 완료",
+                "needs_followup": "추가 확인 필요",
+                "disputed": "이견 있음",
+            }
+            st.success(
+                f"{decision_labels.get(existing['decision'], existing['decision'])} "
+                f"· 검토자 {existing['reviewer']} · "
+                f"기록 ID {existing['review_id'][:8]}"
             )
-            st.session_state["expert_reviews"][fingerprint] = record
-            st.rerun()
-        except Exception as error:
-            st.error(f"전문가 검증 기록에 실패했습니다: {error}")
+            return
+        st.session_state.setdefault(f"{key_prefix}-reviewer", "domain-expert")
+        st.session_state.setdefault(f"{key_prefix}-decision", "verified")
+        st.session_state.setdefault(f"{key_prefix}-note", "")
+        with st.form(f"{key_prefix}-expert-review"):
+            reviewer_column, decision_column = st.columns([1, 2])
+            with reviewer_column:
+                reviewer = st.text_input(
+                    "검토자 표시",
+                    max_chars=120,
+                    key=f"{key_prefix}-reviewer",
+                )
+            with decision_column:
+                decision = st.radio(
+                    "판정",
+                    options=("verified", "needs_followup", "disputed"),
+                    format_func=lambda value: {
+                        "verified": "검증 완료",
+                        "needs_followup": "추가 확인 필요",
+                        "disputed": "이견 있음",
+                    }[value],
+                    horizontal=True,
+                    key=f"{key_prefix}-decision",
+                )
+            note = st.text_area(
+                "판정 근거 또는 추가 확인 사항",
+                max_chars=2000,
+                placeholder="예: MES 원장과 결과 건수 대조 완료",
+                key=f"{key_prefix}-note",
+            )
+            submitted = st.form_submit_button(
+                "전문가 판정 기록",
+                type="primary",
+                key=f"{key_prefix}-submit-review",
+            )
+        if submitted:
+            try:
+                record = feedback_service.record_review(
+                    question=response.get("question", ""),
+                    cypher=response.get("cypher", ""),
+                    query_status=response.get("status", "unknown"),
+                    provider=response.get("provider", "unknown"),
+                    row_count=int(response.get("row_count", 0)),
+                    decision=decision,
+                    reviewer=reviewer,
+                    note=note,
+                )
+                st.session_state["expert_reviews"][fingerprint] = record
+                st.rerun()
+            except Exception as error:
+                st.error(f"전문가 검증 기록에 실패했습니다: {error}")
 
 def render_chat_history(services: ServiceBundle) -> str | None:
     messages = st.session_state["messages"]
