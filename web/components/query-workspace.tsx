@@ -103,11 +103,25 @@ type EvidenceTab = "table" | "graph" | "cypher" | "trace";
 
 export function QueryWorkspace() {
   const {
+    projects,
     activeProject,
     readiness,
     loading: projectLoading,
+    switching: projectSwitching,
     error: projectError,
+    switchProject,
   } = useProject();
+  const searchParams = useSearchParams();
+  const requestedProjectId = searchParams.get("project_id")?.trim() ?? "";
+  const requestedProjectExists =
+    !requestedProjectId ||
+    projects.some(
+      (project) => project.project_id === requestedProjectId,
+    );
+  const projectContextPending = Boolean(
+    requestedProjectId &&
+      requestedProjectId !== activeProject?.project_id,
+  );
   const projectId = activeProject?.project_id ?? "cip-dmd";
   const isEquipmentHistory = projectId === "equipment-history";
   const examples =
@@ -116,8 +130,22 @@ export function QueryWorkspace() {
       : isEquipmentHistory
         ? EQUIPMENT_EXAMPLES
         : [];
-  const queryEnabled = Boolean(readiness?.can_query);
-  const searchParams = useSearchParams();
+  const queryEnabled = Boolean(
+    readiness?.can_query &&
+      !projectContextPending &&
+      !projectSwitching,
+  );
+  const [projectSwitchError, setProjectSwitchError] = useState<{
+    projectId: string;
+    message: string;
+  } | null>(null);
+  const projectRouteError =
+    !projectLoading && requestedProjectId && !requestedProjectExists
+      ? `프로젝트 '${requestedProjectId}'을 찾을 수 없습니다.`
+      : projectContextPending &&
+          projectSwitchError?.projectId === requestedProjectId
+        ? projectSwitchError.message
+        : "";
   const [question, setQuestion] = useState("");
   const [submittedQuestion, setSubmittedQuestion] = useState("");
   const [response, setResponse] = useState<QueryResponse | null>(null);
@@ -134,6 +162,39 @@ export function QueryWorkspace() {
   const [reviewLoading, setReviewLoading] = useState(false);
   const [reviewError, setReviewError] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (
+      projectLoading ||
+      !requestedProjectId ||
+      requestedProjectId === activeProject?.project_id
+    ) {
+      return;
+    }
+    if (!requestedProjectExists) {
+      return;
+    }
+    let cancelled = false;
+    void switchProject(requestedProjectId).catch((reason) => {
+      if (cancelled) return;
+      setProjectSwitchError({
+        projectId: requestedProjectId,
+        message:
+          reason instanceof Error
+            ? reason.message
+            : "요청한 프로젝트로 전환하지 못했습니다.",
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    activeProject?.project_id,
+    projectLoading,
+    requestedProjectExists,
+    requestedProjectId,
+    switchProject,
+  ]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -351,10 +412,27 @@ export function QueryWorkspace() {
         </div>
 
         <div className="conversation-body">
-          {(projectLoading || (!readiness && !projectError)) && (
+          {(projectLoading ||
+            projectSwitching ||
+            projectContextPending ||
+            (!readiness && !projectError)) && (
             <div className="conversation-empty">
               <LoaderCircle className="spin" size={28} />
-              <h2>프로젝트 상태를 확인하고 있습니다.</h2>
+              <h2>
+                {projectContextPending
+                  ? "요청한 프로젝트로 전환하고 있습니다."
+                  : "프로젝트 상태를 확인하고 있습니다."}
+              </h2>
+            </div>
+          )}
+
+          {projectRouteError && (
+            <div className="query-error">
+              <AlertTriangle size={19} />
+              <div>
+                <strong>프로젝트를 열 수 없습니다</strong>
+                <p>{projectRouteError}</p>
+              </div>
             </div>
           )}
 

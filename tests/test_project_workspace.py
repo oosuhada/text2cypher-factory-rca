@@ -9,6 +9,7 @@ from frontend.project_context import (
 from frontend.project_workspace import (
     filter_projects,
     next_action_presentation,
+    project_destination_page,
     relative_updated_at,
     status_presentation,
 )
@@ -79,7 +80,34 @@ class ProjectWorkspaceTest(unittest.TestCase):
             "30분 전",
         )
 
+    def test_project_destination_opens_query_when_ready(self):
+        self.assertEqual(
+            project_destination_page(
+                {"can_query": True, "next_action": "upload"}
+            ),
+            "Query Studio",
+        )
+
+    def test_project_destination_opens_next_required_workspace(self):
+        self.assertEqual(
+            project_destination_page(
+                {"can_query": False, "next_action": "upload"}
+            ),
+            "Data Sources",
+        )
+        self.assertEqual(
+            project_destination_page(
+                {"can_query": False, "next_action": "validate"}
+            ),
+            "Pipeline",
+        )
+        self.assertEqual(
+            project_destination_page(
+                {"can_query": False, "next_action": "evaluate"}
+            ),
+            "Evaluations",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
-

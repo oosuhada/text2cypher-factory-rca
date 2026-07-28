@@ -4,6 +4,7 @@ import { ArrowRight, FolderKanban, Plus } from "lucide-react";
 import Link from "next/link";
 
 import { useProject } from "@/components/project-context";
+import { useProjectNavigation } from "@/components/use-project-navigation";
 
 function relativeProjectTime(value: string) {
   const elapsed = Date.now() - new Date(value).getTime();
@@ -23,6 +24,7 @@ export function ProjectOverview() {
     error,
     switchProject,
   } = useProject();
+  const { openProject, openingProjectId } = useProjectNavigation();
   const recentProjects = [...projects]
     .sort(
       (left, right) =>
@@ -100,9 +102,18 @@ export function ProjectOverview() {
                 >
                   {active ? "현재 프로젝트" : "프로젝트 전환"}
                 </button>
-                <Link href="/query" className="ghost-button">
-                  Query 열기
-                </Link>
+                <button
+                  type="button"
+                  className="ghost-button"
+                  disabled={switching || Boolean(openingProjectId)}
+                  onClick={() =>
+                    void openProject(project.project_id, "query")
+                  }
+                >
+                  {openingProjectId === project.project_id
+                    ? "여는 중…"
+                    : "Query 열기"}
+                </button>
               </div>
             </article>
           );
