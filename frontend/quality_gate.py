@@ -115,12 +115,19 @@ def run_ui_quality_gate(project_root: Path) -> dict[str, Any]:
         name: (root / "frontend" / name).read_text(encoding="utf-8")
         for name in (
             "streamlit_app.py",
+            "runtime.py",
             "session_state.py",
             "navigation.py",
             "sidebar.py",
             "common_ui.py",
         )
     }
+    frontend_sources.update(
+        {
+            f"pages/{path.name}": path.read_text(encoding="utf-8")
+            for path in sorted((root / "frontend" / "pages").glob("*.py"))
+        }
+    )
     runtime_source = "\n".join(frontend_sources.values())
     required_runtime_markers = (
         "pending_audit_question",

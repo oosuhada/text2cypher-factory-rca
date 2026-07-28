@@ -123,8 +123,14 @@ class DeploymentContractTest(unittest.TestCase):
         session_source = (
             PROJECT_ROOT / "frontend" / "session_state.py"
         ).read_text(encoding="utf-8")
+        page_source = "\n".join(
+            path.read_text(encoding="utf-8")
+            for path in sorted(
+                (PROJECT_ROOT / "frontend" / "pages").glob("*.py")
+            )
+        )
         source = "\n".join(
-            (app_source, navigation_source, session_source)
+            (app_source, navigation_source, session_source, page_source)
         )
         self.assertIn('return f"/?workspace=', navigation_source)
         self.assertIn("render_workspace_link(", navigation_source)
@@ -133,10 +139,10 @@ class DeploymentContractTest(unittest.TestCase):
             navigation_source,
         )
         self.assertIn("navigation_widget_revision", source)
-        self.assertIn("Gold Question 15/15", app_source)
+        self.assertIn("Gold Question 15/15", page_source)
         self.assertIn(
             'st.session_state.get("latest_project_upload") or {}',
-            app_source,
+            page_source,
         )
 
 
