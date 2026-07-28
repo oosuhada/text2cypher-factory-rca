@@ -1,0 +1,29 @@
+{
+  "measured_at": "2026-07-28",
+  "environment": "Apple Silicon local development environment, Python 3.14",
+  "scope": "Python preprocessing only; browser FPS and interaction latency must be measured separately on the deployment device.",
+  "results": [
+    {
+      "node_count": 1000,
+      "relationship_count": 999,
+      "renderer_policy": "canvas",
+      "label_mode": "full",
+      "sampling_required": false,
+      "recommended_limit": 1000,
+      "preparation_ms_median": 1.424,
+      "preparation_ms_max": 3.725,
+      "serialized_payload_bytes": 321327
+    },
+    {
+      "node_count": 10000,
+      "relationship_count": 9999,
+      "renderer_policy": "webgl",
+      "label_mode": "selected",
+      "sampling_required": true,
+      "recommended_limit": 2000,
+      "preparation_ms_median": 36.94,
+      "preparation_ms_max": 91.157,
+      "serialized_payload_bytes": 3154325
+    }
+  ]
+}

@@ -35,6 +35,7 @@ from backend.app.services.diagnostics import (
 from backend.app.services.project_load_service import (
     ProjectGraphLoadService,
 )
+from backend.app.services.graph_service import node_search_contract
 from backend.app.etl.cli import password_from_keychain
 
 from .schemas import (
@@ -963,16 +964,16 @@ def create_app(
                 raise ValueError(f"지원하지 않는 노드 라벨입니다: {label}")
             if resolved_project_id == "cip-dmd":
                 return bundle.graph.search_nodes(label, q, limit)
-            node = next(
-                row for row in contract["nodes"] if row["label"] == label
+            identity_property, search_properties = node_search_contract(
+                contract, label
             )
             return bundle.graph.search_nodes(
                 label,
                 q,
                 limit,
                 project_id=resolved_project_id,
-                identity_property=identity_by_label[label],
-                search_properties=tuple((node.get("properties") or {}).keys()),
+                identity_property=identity_property,
+                search_properties=search_properties,
             )
         except KeyError as error:
             raise HTTPException(

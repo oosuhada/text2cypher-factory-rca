@@ -244,7 +244,7 @@ class StreamlitIntegrationTest(unittest.TestCase):
         self.assertEqual(len(graph_app.exception), 0)
         self.assertTrue(
             any(
-                box.label == "노드 유형"
+                box.label == "시작 노드 유형"
                 for box in graph_app.selectbox
             )
         )
