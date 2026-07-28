@@ -670,3 +670,9 @@ def render_graph_explorer(services: ServiceBundle) -> None:
             width="stretch",
             hide_index=True,
         )
+
+
+if __name__ == "__main__":
+    from frontend.legacy_page_redirect import redirect_legacy_page
+
+    redirect_legacy_page("graph_explorer")

@@ -9,5 +9,8 @@ font = "sans-serif"
 headless = true
 runOnSave = true
 
+[client]
+showSidebarNavigation = false
+
 [browser]
 gatherUsageStats = false

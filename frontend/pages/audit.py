@@ -252,3 +252,9 @@ def render_audit_workspace() -> None:
             "Authorization header, API key, DB password는 저장하거나 표시하지 않습니다."
         )
     api.close()
+
+
+if __name__ == "__main__":
+    from frontend.legacy_page_redirect import redirect_legacy_page
+
+    redirect_legacy_page("audit_logs")

@@ -173,3 +173,9 @@ def render_evidence_tab() -> None:
             st.error("\n".join(str(error) for error in errors))
         elif trace:
             st.success("모든 검증 단계를 통과했습니다.")
+
+
+if __name__ == "__main__":
+    from frontend.legacy_page_redirect import redirect_legacy_page
+
+    redirect_legacy_page("query_studio")

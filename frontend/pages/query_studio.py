@@ -366,3 +366,9 @@ def render_chat_tab(services: ServiceBundle) -> None:
     if question:
         submit_question(question, services)
         st.rerun()
+
+
+if __name__ == "__main__":
+    from frontend.legacy_page_redirect import redirect_legacy_page
+
+    redirect_legacy_page("query_studio")

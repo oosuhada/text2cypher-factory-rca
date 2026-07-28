@@ -22,14 +22,14 @@ class StreamlitPageArchitectureTest(unittest.TestCase):
         self.assertEqual(function_names, {"main"})
         self.assertLessEqual(len(source.splitlines()), 150)
 
-    def test_each_workspace_has_a_page_module(self):
+    def test_each_workspace_has_an_official_module(self):
         expected_modules = {
             "audit.py",
             "dashboard.py",
             "data_sources.py",
             "evaluations.py",
             "evidence.py",
-            "graph_explorer_page.py",
+            "graph_explorer.py",
             "home.py",
             "projects.py",
             "query_studio.py",
@@ -37,19 +37,56 @@ class StreamlitPageArchitectureTest(unittest.TestCase):
         }
         actual_modules = {
             path.name
-            for path in (FRONTEND_ROOT / "pages").glob("*.py")
+            for path in (FRONTEND_ROOT / "workspaces").glob("*.py")
             if path.name != "__init__.py"
         }
         self.assertEqual(actual_modules, expected_modules)
 
-    def test_page_modules_do_not_import_the_entrypoint(self):
-        for path in (FRONTEND_ROOT / "pages").glob("*.py"):
-            source = path.read_text(encoding="utf-8")
-            self.assertNotIn(
-                "frontend.streamlit_app",
-                source,
-                msg=f"{path.name} creates a circular entrypoint dependency",
+    def test_entrypoint_uses_hidden_router_and_workspace_boundary(self):
+        entrypoint = (FRONTEND_ROOT / "streamlit_app.py").read_text(
+            encoding="utf-8"
+        )
+        router = (FRONTEND_ROOT / "streamlit_router.py").read_text(
+            encoding="utf-8"
+        )
+        console = (FRONTEND_ROOT / "internal_console.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("build_hidden_navigation", entrypoint)
+        self.assertIn('st.navigation(pages, position="hidden")', router)
+        self.assertIn("frontend.workspaces.", console)
+        self.assertNotIn("frontend.pages.", entrypoint + router + console)
+
+    def test_legacy_pages_redirect_to_canonical_workspaces(self):
+        expected_redirects = {
+            "audit.py": "audit_logs",
+            "dashboard.py": "dashboard",
+            "data_sources.py": "data_sources",
+            "evaluations.py": "evaluations",
+            "evidence.py": "query_studio",
+            "graph_explorer_page.py": "graph_explorer",
+            "home.py": "home",
+            "projects.py": "projects",
+            "query_studio.py": "query_studio",
+            "schema_studio.py": "pipeline",
+        }
+        for filename, workspace_key in expected_redirects.items():
+            source = (FRONTEND_ROOT / "pages" / filename).read_text(
+                encoding="utf-8"
             )
+            self.assertIn('if __name__ == "__main__":', source)
+            self.assertIn("redirect_legacy_page", source)
+            self.assertIn(
+                f'redirect_legacy_page("{workspace_key}")', source
+            )
+            self.assertNotIn("frontend.streamlit_app", source)
+
+    def test_automatic_sidebar_navigation_is_disabled(self):
+        config = (
+            PROJECT_ROOT / ".streamlit" / "config.toml"
+        ).read_text(encoding="utf-8")
+        self.assertIn("[client]", config)
+        self.assertIn("showSidebarNavigation = false", config)
 
     def test_runtime_resources_are_outside_entrypoint(self):
         runtime_source = (

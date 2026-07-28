@@ -243,3 +243,9 @@ def render_projects_workspace() -> None:
             st.rerun()
         except ValueError as error:
             st.error(str(error))
+
+
+if __name__ == "__main__":
+    from frontend.legacy_page_redirect import redirect_legacy_page
+
+    redirect_legacy_page("projects")

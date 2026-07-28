@@ -13,17 +13,29 @@ FRONTEND_ROOT = PROJECT_ROOT / "frontend"
 WEB_COMPONENTS = PROJECT_ROOT / "web" / "components"
 WEB_LIB = PROJECT_ROOT / "web" / "lib"
 
-REQUIRED_STREAMLIT_PAGES = {
+REQUIRED_STREAMLIT_WORKSPACES = {
     "audit.py",
     "dashboard.py",
     "data_sources.py",
     "evaluations.py",
     "evidence.py",
-    "graph_explorer_page.py",
+    "graph_explorer.py",
     "home.py",
     "projects.py",
     "query_studio.py",
     "schema_studio.py",
+}
+REQUIRED_LEGACY_PAGE_REDIRECTS = {
+    "audit.py": "audit_logs",
+    "dashboard.py": "dashboard",
+    "data_sources.py": "data_sources",
+    "evaluations.py": "evaluations",
+    "evidence.py": "query_studio",
+    "graph_explorer_page.py": "graph_explorer",
+    "home.py": "home",
+    "projects.py": "projects",
+    "query_studio.py": "query_studio",
+    "schema_studio.py": "pipeline",
 }
 REQUIRED_REACT_QUERY_MODULES = {
     "expert-review.tsx",
@@ -66,16 +78,50 @@ def validate_streamlit_architecture() -> dict[str, int]:
             f"Streamlit entrypoint가 다시 비대해졌습니다: {entrypoint_lines}행"
         )
 
-    actual_pages = {
+    actual_workspaces = {
         path.name
-        for path in (FRONTEND_ROOT / "pages").glob("*.py")
+        for path in (FRONTEND_ROOT / "workspaces").glob("*.py")
         if path.name != "__init__.py"
     }
-    if actual_pages != REQUIRED_STREAMLIT_PAGES:
+    if actual_workspaces != REQUIRED_STREAMLIT_WORKSPACES:
         raise RuntimeError(
-            "Streamlit page module 계약 불일치: "
-            f"missing={sorted(REQUIRED_STREAMLIT_PAGES - actual_pages)}, "
-            f"unexpected={sorted(actual_pages - REQUIRED_STREAMLIT_PAGES)}"
+            "Streamlit workspace module 계약 불일치: "
+            f"missing={sorted(REQUIRED_STREAMLIT_WORKSPACES - actual_workspaces)}, "
+            f"unexpected={sorted(actual_workspaces - REQUIRED_STREAMLIT_WORKSPACES)}"
+        )
+    router_source = _read(FRONTEND_ROOT / "streamlit_router.py")
+    console_source = _read(FRONTEND_ROOT / "internal_console.py")
+    if "frontend.pages." in entrypoint + router_source + console_source:
+        raise RuntimeError(
+            "Streamlit runtime 경계가 framework-reserved pages namespace를 import합니다."
+        )
+    _require(
+        entrypoint + router_source + console_source,
+        (
+            "build_hidden_navigation",
+            'st.navigation(pages, position="hidden")',
+            "frontend.workspaces.",
+        ),
+        "Streamlit hidden router and workspace boundary",
+    )
+
+    config_source = _read(PROJECT_ROOT / ".streamlit" / "config.toml")
+    _require(
+        config_source,
+        ("[client]", "showSidebarNavigation = false"),
+        "Streamlit automatic sidebar suppression",
+    )
+    legacy_pages = FRONTEND_ROOT / "pages"
+    for filename, workspace_key in REQUIRED_LEGACY_PAGE_REDIRECTS.items():
+        source = _read(legacy_pages / filename)
+        _require(
+            source,
+            (
+                'if __name__ == "__main__":',
+                "redirect_legacy_page",
+                f'redirect_legacy_page("{workspace_key}")',
+            ),
+            f"Legacy Streamlit redirect {filename}",
         )
 
     query_source = _read(FRONTEND_ROOT / "pages" / "query_studio.py")
@@ -103,7 +149,9 @@ def validate_streamlit_architecture() -> dict[str, int]:
     )
     return {
         "entrypoint_lines": entrypoint_lines,
-        "page_modules": len(actual_pages),
+        "workspace_modules": len(actual_workspaces),
+        "legacy_redirects": len(REQUIRED_LEGACY_PAGE_REDIRECTS),
+        "automatic_sidebar": 0,
     }
 
 

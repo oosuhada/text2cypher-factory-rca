@@ -617,7 +617,11 @@
 
 ### 2.9-2. Streamlit 자동 페이지 충돌 제거
 
-상태: **다음 진행 단계**
+상태: **구현·검증 완료 (2026-07-28)**
+
+검증 기록:
+
+- [`enterprise-stage2-9-2-streamlit-navigation.md`](./enterprise-stage2-9-2-streamlit-navigation.md)
 
 목적:
 
@@ -666,7 +670,7 @@
 
 ### 2.9-3. 개발·평가 기능 격리
 
-상태: **2.9-2 이후 진행**
+상태: **다음 진행 단계**
 
 목적:
 

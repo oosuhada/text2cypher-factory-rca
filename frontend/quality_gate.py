@@ -137,6 +137,8 @@ def run_ui_quality_gate(project_root: Path) -> dict[str, Any]:
         name: (root / "frontend" / name).read_text(encoding="utf-8")
         for name in (
             "streamlit_app.py",
+            "streamlit_router.py",
+            "internal_console.py",
             "runtime.py",
             "session_state.py",
             "navigation.py",
@@ -146,10 +148,37 @@ def run_ui_quality_gate(project_root: Path) -> dict[str, Any]:
     }
     frontend_sources.update(
         {
-            f"pages/{path.name}": path.read_text(encoding="utf-8")
+            f"workspaces/{path.name}": path.read_text(encoding="utf-8")
+            for path in sorted(
+                (root / "frontend" / "workspaces").glob("*.py")
+            )
+        }
+    )
+    frontend_sources.update(
+        {
+            f"legacy-pages/{path.name}": path.read_text(encoding="utf-8")
             for path in sorted((root / "frontend" / "pages").glob("*.py"))
         }
     )
+    config_source = (
+        root / ".streamlit" / "config.toml"
+    ).read_text(encoding="utf-8")
+    if "showSidebarNavigation = false" not in config_source:
+        raise RuntimeError("Streamlit 자동 사이드바 내비게이션이 활성화돼 있습니다.")
+    runtime_boundary = "\n".join(
+        frontend_sources[name]
+        for name in (
+            "streamlit_app.py",
+            "streamlit_router.py",
+            "internal_console.py",
+        )
+    )
+    if "frontend.pages." in runtime_boundary:
+        raise RuntimeError("Streamlit runtime 경계가 예약된 pages namespace를 사용합니다.")
+    if "frontend.workspaces." not in runtime_boundary:
+        raise RuntimeError("Streamlit 공식 workspace boundary가 누락됐습니다.")
+    if 'st.navigation(pages, position="hidden")' not in runtime_boundary:
+        raise RuntimeError("Streamlit 숨김 공식 라우터가 누락됐습니다.")
     runtime_source = "\n".join(frontend_sources.values())
     required_runtime_markers = (
         "pending_audit_question",

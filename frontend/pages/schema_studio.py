@@ -456,3 +456,9 @@ def render_schema_studio() -> None:
                     )
         finally:
             api.close()
+
+
+if __name__ == "__main__":
+    from frontend.legacy_page_redirect import redirect_legacy_page
+
+    redirect_legacy_page("pipeline")

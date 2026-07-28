@@ -241,3 +241,9 @@ def render_home_project_overview() -> None:
         "모든 프로젝트 보기 →",
         "Projects",
     )
+
+
+if __name__ == "__main__":
+    from frontend.legacy_page_redirect import redirect_legacy_page
+
+    redirect_legacy_page("home")
