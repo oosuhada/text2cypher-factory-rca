@@ -2828,17 +2828,191 @@ def render_evidence_tab() -> None:
             st.success("모든 검증 단계를 통과했습니다.")
 
 
+def normalize_dashboard_snapshot(
+    raw_snapshot: dict[str, Any],
+) -> dict[str, Any]:
+    """Keep domain-specific dashboards usable when optional KPIs do not exist."""
+
+    snapshot = deepcopy(raw_snapshot)
+    snapshot.setdefault("totals", {"nodes": 0, "relationships": 0})
+    snapshot.setdefault("node_counts", [])
+    snapshot.setdefault("relationship_counts", [])
+    snapshot.setdefault("equipment_runs", [])
+    snapshot.setdefault("anomaly_runs", [])
+    snapshot.setdefault("quality_failures", [])
+    integrity = snapshot.setdefault("integrity", {})
+    for key in (
+        "complete_genealogy",
+        "incomplete_genealogy",
+        "orphan_process_runs",
+        "orphan_measurements",
+        "quality_failure_count",
+    ):
+        if integrity.get(key) is None:
+            integrity[key] = 0
+    integrity.setdefault("genealogy_rate", 0.0)
+    evaluation = snapshot.setdefault("evaluation", {})
+    evaluation_defaults = {
+        "schema_version": "project-defined",
+        "gold_execution_success_rate": 0.0,
+        "read_only_compliance_rate": 0.0,
+        "unit_test_count": 0,
+        "blind_result_accuracy": None,
+        "blind_evaluation_status": "not_run",
+    }
+    for key, value in evaluation_defaults.items():
+        evaluation.setdefault(key, value)
+    runtime = snapshot.setdefault("runtime", {})
+    runtime_defaults = {
+        "query_count": 0,
+        "success_rate": None,
+        "average_elapsed_ms": 0.0,
+        "median_elapsed_ms": 0.0,
+        "p95_elapsed_ms": 0.0,
+        "correction_count": 0,
+        "correction_success_rate": None,
+        "status_counts": [],
+        "provider_counts": [],
+        "recent_queries": [],
+        "model_call_count": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "estimated_cost_usd": 0.0,
+        "error_count": 0,
+        "error_rate": None,
+    }
+    for key, value in runtime_defaults.items():
+        runtime.setdefault(key, value)
+    snapshot.setdefault("runtime_scope", {})
+    snapshot.setdefault("provenance", {})
+    return snapshot
+
+
+def render_dashboard_scope_filters(
+    snapshot: dict[str, Any],
+    *,
+    key_prefix: str = "dashboard",
+) -> dict[str, Any]:
+    runtime = snapshot.get("runtime") or {}
+    providers = [
+        str(row.get("provider"))
+        for row in runtime.get("provider_counts", [])
+        if row.get("provider")
+    ]
+    statuses = [
+        str(row.get("status"))
+        for row in runtime.get("status_counts", [])
+        if row.get("status")
+    ]
+    st.markdown("#### 전역 운영 필터")
+    project_id = st.session_state.get("active_project_id", "cip-dmd")
+    columns = st.columns([1, 2, 2, 2])
+    columns[0].text_input(
+        "프로젝트",
+        value=project_id,
+        disabled=True,
+        key=f"{key_prefix}-project-{project_id}",
+    )
+    selected_providers = columns[1].multiselect(
+        "Provider",
+        options=providers,
+        default=[],
+        placeholder="전체 provider",
+        key=f"{key_prefix}-provider-{project_id}",
+    )
+    selected_statuses = columns[2].multiselect(
+        "실행 상태",
+        options=statuses,
+        default=[],
+        placeholder="전체 상태",
+        key=f"{key_prefix}-status-{project_id}",
+    )
+    window = columns[3].selectbox(
+        "기간",
+        options=("전체", "최근 7일", "최근 30일", "최근 90일"),
+        key=f"{key_prefix}-window-{project_id}",
+    )
+    days = {
+        "전체": None,
+        "최근 7일": 7,
+        "최근 30일": 30,
+        "최근 90일": 90,
+    }[window]
+    filters = {
+        "providers": selected_providers,
+        "statuses": selected_statuses,
+        "days": days,
+    }
+    st.session_state["evaluation_filters"][project_id] = filters
+    return filters
+
+
+def render_metric_provenance(snapshot: dict[str, Any]) -> None:
+    provenance = snapshot.get("provenance") or {}
+    scope = snapshot.get("runtime_scope") or {}
+    etl = snapshot.get("etl")
+    with st.expander("지표 원본·집계 범위"):
+        rows = [
+            {
+                "source": "Neo4j",
+                "scope": provenance.get("graph_project_id", "현재 프로젝트"),
+                "records": (
+                    snapshot.get("totals", {}).get("nodes", 0)
+                ),
+                "version": snapshot.get("evaluation", {}).get(
+                    "schema_version", "project-defined"
+                ),
+            },
+            {
+                "source": provenance.get("metrics_file") or "평가 미실행",
+                "scope": "승인된 평가 결과",
+                "records": snapshot.get("evaluation", {}).get(
+                    "blind_question_count", 0
+                ),
+                "version": (
+                    provenance.get("metrics_sha256") or "—"
+                )[:12],
+            },
+            {
+                "source": provenance.get("audit_file", "query audit"),
+                "scope": (
+                    f"{scope.get('filtered_event_count', 0)} / "
+                    f"{scope.get('source_event_count', 0)} events"
+                ),
+                "records": scope.get("filtered_event_count", 0),
+                "version": provenance.get("generated_at", "현재"),
+            },
+        ]
+        st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
+        if etl:
+            st.caption(
+                "최근 ETL · "
+                f"{etl.get('finished_at') or etl.get('started_at')} · "
+                f"{etl.get('status')} · 멱등성 {etl.get('idempotency_status')}"
+            )
+
+
 def render_dashboard_tab(
     services: ServiceBundle, snapshot: dict[str, Any] | None = None
 ) -> None:
     st.subheader("그래프와 평가 현황")
-    st.caption("화면의 수치는 현재 Neo4j와 검증 결과 파일에서 조회합니다.")
+    st.caption(
+        "모든 위젯은 현재 프로젝트와 동일한 provider·상태·기간 범위를 "
+        "사용합니다. 그래프 수치는 Neo4j, 품질 수치는 승인된 평가 산출물에서 조회합니다."
+    )
     if snapshot is None:
         try:
             snapshot = services.dashboard.snapshot()
         except Exception as error:
             st.error(f"대시보드 데이터를 불러오지 못했습니다: {error}")
             return
+    runtime_filters = render_dashboard_scope_filters(snapshot)
+    if any(runtime_filters.values()):
+        try:
+            snapshot = services.dashboard.snapshot(runtime_filters)
+        except Exception as error:
+            st.warning(f"필터 적용에 실패해 전체 범위를 표시합니다: {error}")
+    snapshot = normalize_dashboard_snapshot(snapshot)
 
     totals = snapshot["totals"]
     evaluation = snapshot["evaluation"]
@@ -2904,39 +3078,51 @@ def render_dashboard_tab(
         left, right = st.columns(2)
         with left:
             st.markdown("##### 장비별 공정 실행")
-            st.bar_chart(
-                pd.DataFrame(snapshot["equipment_runs"]),
-                x="equipment",
-                y="run_count",
-                color="#7C3AED",
-                horizontal=True,
-            )
+            if snapshot["equipment_runs"]:
+                st.bar_chart(
+                    pd.DataFrame(snapshot["equipment_runs"]),
+                    x="equipment",
+                    y="run_count",
+                    color="#7C3AED",
+                    horizontal=True,
+                )
+            else:
+                st.info("이 스키마에는 장비별 공정 집계가 정의되지 않았습니다.")
         with right:
             st.markdown("##### 장비 상세")
-            st.dataframe(
-                pd.DataFrame(snapshot["equipment_runs"]),
-                width="stretch",
-                hide_index=True,
-            )
+            if snapshot["equipment_runs"]:
+                st.dataframe(
+                    pd.DataFrame(snapshot["equipment_runs"]),
+                    width="stretch",
+                    hide_index=True,
+                )
+            else:
+                st.info("표시할 장비 집계가 없습니다.")
     with quality_tab:
         left, right = st.columns(2)
         with left:
             st.markdown("##### 이상 유형 분포")
-            st.bar_chart(
-                pd.DataFrame(snapshot["anomaly_runs"]),
-                x="anomaly_code",
-                y="run_count",
-                color="#DC2626",
-            )
+            if snapshot["anomaly_runs"]:
+                st.bar_chart(
+                    pd.DataFrame(snapshot["anomaly_runs"]),
+                    x="anomaly_code",
+                    y="run_count",
+                    color="#DC2626",
+                )
+            else:
+                st.info("이 스키마에는 이상 유형 집계가 정의되지 않았습니다.")
         with right:
             st.markdown("##### 품질 불합격 상위 항목")
-            st.bar_chart(
-                pd.DataFrame(snapshot["quality_failures"]),
-                x="feature",
-                y="failure_count",
-                color="#D97706",
-                horizontal=True,
-            )
+            if snapshot["quality_failures"]:
+                st.bar_chart(
+                    pd.DataFrame(snapshot["quality_failures"]),
+                    x="feature",
+                    y="failure_count",
+                    color="#D97706",
+                    horizontal=True,
+                )
+            else:
+                st.info("이 스키마에는 품질 불합격 집계가 정의되지 않았습니다.")
 
     st.markdown("#### Agent 품질과 런타임")
     runtime = snapshot["runtime"]
@@ -3229,6 +3415,244 @@ def render_dashboard_tab(
             "Blind 평가셋·정답 기준선·평가기 구현은 완료됐습니다. "
             "생성 모델 연결 후 실제 비교 점수가 확정됩니다."
         )
+
+    render_metric_provenance(snapshot)
+
+
+def render_evaluations_workspace(
+    services: ServiceBundle,
+    snapshot: dict[str, Any] | None = None,
+) -> None:
+    render_page_header("Evaluations")
+    if snapshot is None:
+        try:
+            snapshot = services.dashboard.snapshot()
+        except Exception as error:
+            render_view_state(
+                ViewState.ERROR,
+                page="Evaluations",
+                detail=f"평가 결과를 불러오지 못했습니다: {error}",
+            )
+            return
+    runtime_filters = render_dashboard_scope_filters(
+        snapshot, key_prefix="evaluations"
+    )
+    if any(runtime_filters.values()):
+        try:
+            snapshot = services.dashboard.snapshot(runtime_filters)
+        except Exception as error:
+            st.warning(f"필터 적용에 실패해 전체 범위를 표시합니다: {error}")
+    snapshot = normalize_dashboard_snapshot(snapshot)
+    evaluation = snapshot["evaluation"]
+    blind = snapshot.get("blind_evaluation")
+    status_evaluation = snapshot.get("status_evaluation")
+
+    st.markdown("### 평가 릴리스 게이트")
+    gate_columns = st.columns(6)
+    gate_columns[0].metric(
+        "Gold 실행",
+        f"{evaluation['gold_execution_success_rate']:.0%}",
+    )
+    gate_columns[1].metric(
+        "Blind 의미값",
+        "미실행"
+        if evaluation.get("blind_result_accuracy") is None
+        else f"{evaluation['blind_result_accuracy']:.1%}",
+    )
+    gate_columns[2].metric(
+        "엄격 계약",
+        "미실행"
+        if evaluation.get("blind_strict_result_accuracy") is None
+        else f"{evaluation['blind_strict_result_accuracy']:.1%}",
+    )
+    gate_columns[3].metric(
+        "Macro F1",
+        "미실행"
+        if evaluation.get("status_macro_f1") is None
+        else f"{evaluation['status_macro_f1']:.1%}",
+    )
+    gate_columns[4].metric(
+        "읽기 전용",
+        f"{evaluation['read_only_compliance_rate']:.0%}",
+    )
+    gate_columns[5].metric(
+        "테스트",
+        f"{evaluation['unit_test_count']} PASS",
+    )
+
+    if not blind:
+        render_view_state(
+            ViewState.EMPTY,
+            page="Evaluations",
+            detail=(
+                "이 프로젝트의 승인된 Gold·Blind 평가 결과가 없습니다. "
+                "Pipeline에서 스키마와 기준셋을 승인한 뒤 평가를 실행하세요."
+            ),
+        )
+        render_metric_provenance(snapshot)
+        return
+
+    comparison_rows = blind.get("comparison", [])
+    comparison_tab, failures_tab, questions_tab, contract_tab = st.tabs(
+        ["모델·프롬프트 비교", "실패 유형", "질문별 결과", "평가 계약"]
+    )
+    with comparison_tab:
+        comparison = pd.DataFrame(comparison_rows)
+        if not comparison.empty:
+            visible_columns = [
+                column
+                for column in (
+                    "variant",
+                    "execution_success_rate",
+                    "result_accuracy",
+                    "strict_result_accuracy",
+                    "schema_compliance_rate",
+                    "read_only_compliance_rate",
+                    "correction_success_rate",
+                    "average_elapsed_ms",
+                    "model_call_count",
+                    "input_tokens",
+                    "output_tokens",
+                    "estimated_cost_usd",
+                )
+                if column in comparison.columns
+            ]
+            st.dataframe(
+                comparison[visible_columns],
+                width="stretch",
+                hide_index=True,
+            )
+            chart_columns = st.columns(2)
+            with chart_columns[0]:
+                st.caption("Baseline → Few-shot → Self-correction 정확도")
+                st.bar_chart(
+                    comparison,
+                    x="variant",
+                    y="result_accuracy",
+                    color="#2563EB",
+                )
+            with chart_columns[1]:
+                st.caption("평균 지연시간")
+                st.bar_chart(
+                    comparison,
+                    x="variant",
+                    y="average_elapsed_ms",
+                    color="#D97706",
+                )
+        st.caption(
+            f"{blind.get('provider', 'unknown')} / "
+            f"{blind.get('model', 'unknown')} · "
+            f"prompt {blind.get('prompt_version', 'unknown')} · "
+            f"{blind.get('question_count', 0)}문항"
+        )
+    with failures_tab:
+        failure_rows = []
+        for row in comparison_rows:
+            for failure, count in (row.get("failure_counts") or {}).items():
+                failure_rows.append(
+                    {
+                        "variant": row.get("variant"),
+                        "failure_type": failure,
+                        "count": count,
+                    }
+                )
+        if failure_rows:
+            failure_frame = pd.DataFrame(failure_rows)
+            st.bar_chart(
+                failure_frame,
+                x="failure_type",
+                y="count",
+                color="variant",
+            )
+            st.dataframe(
+                failure_frame, width="stretch", hide_index=True
+            )
+        else:
+            st.success("기록된 실패 유형이 없습니다.")
+        if status_evaluation:
+            st.markdown("#### 상태 분류 혼동행렬")
+            matrix_column, class_column = st.columns(2)
+            matrix_column.dataframe(
+                pd.DataFrame(status_evaluation["matrix"]),
+                width="stretch",
+                hide_index=True,
+            )
+            class_column.dataframe(
+                pd.DataFrame(status_evaluation["per_class"]),
+                width="stretch",
+                hide_index=True,
+            )
+    with questions_tab:
+        variants = blind.get("variants") or {}
+        variant_names = list(variants)
+        selected_variant = st.selectbox(
+            "평가 조건",
+            variant_names,
+            index=max(0, len(variant_names) - 1),
+            key="evaluation-question-variant",
+        )
+        questions = (
+            variants.get(selected_variant, {}).get("questions", [])
+            if selected_variant
+            else []
+        )
+        outcome = st.multiselect(
+            "결과 필터",
+            sorted(
+                {
+                    str(question.get("outcome", "unknown"))
+                    for question in questions
+                }
+            ),
+            placeholder="전체 결과",
+            key="evaluation-outcome-filter",
+        )
+        filtered_questions = [
+            question
+            for question in questions
+            if not outcome
+            or str(question.get("outcome", "unknown")) in outcome
+        ]
+        st.dataframe(
+            pd.DataFrame(flatten_rows_for_table(filtered_questions)),
+            width="stretch",
+            hide_index=True,
+        )
+    with contract_tab:
+        contract_rows = [
+            {
+                "contract": "Project scope",
+                "value": snapshot.get("provenance", {}).get(
+                    "graph_project_id"
+                ),
+            },
+            {"contract": "Schema", "value": evaluation["schema_version"]},
+            {
+                "contract": "Evaluation",
+                "value": evaluation.get("evaluation_version"),
+            },
+            {
+                "contract": "Prompt",
+                "value": evaluation.get("prompt_version"),
+            },
+            {
+                "contract": "Evaluation fingerprint",
+                "value": evaluation.get("evaluation_fingerprint"),
+            },
+        ]
+        st.dataframe(
+            pd.DataFrame(contract_rows), width="stretch", hide_index=True
+        )
+        st.download_button(
+            "평가 증적 JSON 다운로드",
+            data=json.dumps(blind, ensure_ascii=False, indent=2),
+            file_name=(
+                f"{st.session_state.get('active_project_id', 'project')}"
+                "-evaluation-evidence.json"
+            ),
+            mime="application/json",
+        )
+    render_metric_provenance(snapshot)
 
 
 def _switch_project(project_id: str) -> None:
@@ -3908,7 +4332,6 @@ def main() -> None:
         render_projects_workspace()
         return
     if page in {
-        "Evaluations",
         "Approval Queue",
         "Audit Logs",
         "Admin",
@@ -3918,7 +4341,8 @@ def main() -> None:
     if page == "Pipeline":
         render_schema_studio()
         return
-    render_page_header(page)
+    if page != "Evaluations":
+        render_page_header(page)
     try:
         services = get_services(
             provider,
@@ -3949,6 +4373,8 @@ def main() -> None:
         render_graph_explorer(services)
     elif page == "Dashboard":
         render_dashboard_tab(services, dashboard_snapshot)
+    elif page == "Evaluations":
+        render_evaluations_workspace(services, dashboard_snapshot)
     elif page == "Data Sources":
         render_data_health_tab(services, dashboard_snapshot)
 

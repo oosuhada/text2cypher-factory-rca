@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from inspect import signature
 import os
 from pathlib import Path
 from threading import Lock
@@ -817,14 +818,28 @@ def create_app(
             raise HTTPException(status_code=422, detail=str(error)) from error
 
     @application.get("/api/v1/metrics")
-    def metrics(project_id: str | None = None) -> dict:
+    def metrics(
+        project_id: str | None = None,
+        provider: list[str] | None = None,
+        query_status: list[str] | None = None,
+        days: int | None = None,
+    ) -> dict:
         try:
             resolved_project_id = (
                 project_id or projects.active_project_id() or "cip-dmd"
             )
             projects.require(resolved_project_id)
             bundle = registry.get(resolved_project_id)
-            return bundle.dashboard.snapshot()
+            runtime_filters = {
+                "providers": provider or [],
+                "statuses": query_status or [],
+                "days": days,
+                "project_id": resolved_project_id,
+            }
+            snapshot = bundle.dashboard.snapshot
+            if signature(snapshot).parameters:
+                return snapshot(runtime_filters)
+            return snapshot()
         except (KeyError, ValueError) as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         except Exception as error:

@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timedelta, timezone
+from hashlib import sha256
 from pathlib import Path
+from statistics import median
 from typing import Any
 
 from neo4j import Driver, READ_ACCESS
@@ -25,6 +28,57 @@ def load_query_audit(
     return events
 
 
+def filter_runtime_events(
+    events: list[dict[str, Any]],
+    *,
+    providers: list[str] | None = None,
+    statuses: list[str] | None = None,
+    days: int | None = None,
+    project_id: str | None = None,
+) -> list[dict[str, Any]]:
+    """Apply one shared operational scope before every runtime aggregation."""
+
+    provider_set = {value for value in providers or [] if value}
+    status_set = {value for value in statuses or [] if value}
+    since = (
+        datetime.now(timezone.utc) - timedelta(days=days)
+        if days and days > 0
+        else None
+    )
+    filtered = []
+    for event in events:
+        if provider_set and str(event.get("provider")) not in provider_set:
+            continue
+        if status_set and str(event.get("status")) not in status_set:
+            continue
+        if project_id and str(event.get("project_id")) != project_id:
+            continue
+        if since:
+            try:
+                timestamp = datetime.fromisoformat(
+                    str(event.get("timestamp", "")).replace("Z", "+00:00")
+                )
+            except ValueError:
+                continue
+            if timestamp.tzinfo is None:
+                timestamp = timestamp.replace(tzinfo=timezone.utc)
+            if timestamp < since:
+                continue
+        filtered.append(event)
+    return filtered
+
+
+def _percentile(values: list[float], quantile: float) -> float:
+    if not values:
+        return 0.0
+    ordered = sorted(values)
+    index = min(
+        len(ordered) - 1,
+        max(0, round((len(ordered) - 1) * quantile)),
+    )
+    return ordered[index]
+
+
 def summarize_runtime(events: list[dict[str, Any]]) -> dict[str, Any]:
     total = len(events)
     status_counts: dict[str, int] = {}
@@ -40,15 +94,27 @@ def summarize_runtime(events: list[dict[str, Any]]) -> dict[str, Any]:
         for event in corrected
         if event.get("status") in {"success", "empty"}
     ]
+    elapsed_values = [
+        float(event.get("elapsed_ms", 0)) for event in events
+    ]
     average_elapsed = (
-        sum(float(event.get("elapsed_ms", 0)) for event in events) / total
-        if total
-        else 0.0
+        sum(elapsed_values) / total if total else 0.0
+    )
+    provider_counts: dict[str, int] = {}
+    for event in events:
+        provider = str(event.get("provider", "unknown"))
+        provider_counts[provider] = provider_counts.get(provider, 0) + 1
+    error_count = sum(
+        int(event.get("error_count", 0) or 0) for event in events
     )
     return {
         "query_count": total,
         "success_rate": successes / total if total else None,
         "average_elapsed_ms": round(average_elapsed, 1),
+        "median_elapsed_ms": round(median(elapsed_values), 1)
+        if elapsed_values
+        else 0.0,
+        "p95_elapsed_ms": round(_percentile(elapsed_values, 0.95), 1),
         "correction_count": len(corrected),
         "correction_success_rate": (
             len(corrected_successes) / len(corrected)
@@ -59,6 +125,12 @@ def summarize_runtime(events: list[dict[str, Any]]) -> dict[str, Any]:
             {"status": status, "count": count}
             for status, count in sorted(status_counts.items())
         ],
+        "provider_counts": [
+            {"provider": provider, "count": count}
+            for provider, count in sorted(provider_counts.items())
+        ],
+        "error_count": error_count,
+        "error_rate": error_count / total if total else None,
         "recent_queries": list(reversed(events[-20:])),
         "model_call_count": int(
             sum(float(event.get("call_count", 0)) for event in events)
@@ -180,7 +252,9 @@ class DashboardService:
         ) as session:
             return [dict(record) for record in session.run(cypher)]
 
-    def snapshot(self) -> dict[str, Any]:
+    def snapshot(
+        self, runtime_filters: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         totals = self._query(
             """
             MATCH (node)
@@ -271,7 +345,15 @@ class DashboardService:
             if blind_results_path.exists()
             else None
         )
-        audit_events = load_query_audit(self.audit_log_path)
+        all_audit_events = load_query_audit(self.audit_log_path)
+        runtime_filters = runtime_filters or {}
+        audit_events = filter_runtime_events(
+            all_audit_events,
+            providers=runtime_filters.get("providers"),
+            statuses=runtime_filters.get("statuses"),
+            days=runtime_filters.get("days"),
+            project_id=runtime_filters.get("project_id"),
+        )
         etl_report = latest_successful_etl(self.processed_root)
         return {
             "totals": totals,
@@ -324,4 +406,21 @@ class DashboardService:
                 else None
             ),
             "runtime": summarize_runtime(audit_events),
+            "runtime_scope": {
+                "providers": runtime_filters.get("providers") or [],
+                "statuses": runtime_filters.get("statuses") or [],
+                "days": runtime_filters.get("days"),
+                "source_event_count": len(all_audit_events),
+                "filtered_event_count": len(audit_events),
+            },
+            "provenance": {
+                "graph_project_id": "cip-dmd",
+                "metrics_file": self.metrics_path.name,
+                "metrics_sha256": sha256(
+                    self.metrics_path.read_bytes()
+                ).hexdigest(),
+                "audit_file": self.audit_log_path.name,
+                "audit_event_count": len(all_audit_events),
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+            },
         }
