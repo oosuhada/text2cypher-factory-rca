@@ -27,6 +27,7 @@ PPT 대조 후 수정 근거는 [방향 수정 기록](./docs/direction-correcti
 - [2.9 제품화 단계 기능명세·작업계획](./docs/p3-enterprise-platform-implementation-plan.md#29단계--p3-사용자-서비스-제품화완성)
 - [2.9-1 단일 제품 UI·Surface 경계 검증](./docs/enterprise-stage2-9-1-surface-boundary.md)
 - [2.9-2 Streamlit 단일 내비게이션·이전 URL 호환 검증](./docs/enterprise-stage2-9-2-streamlit-navigation.md)
+- [2.9-3 개발·평가 기능 격리 검증](./docs/enterprise-stage2-9-3-ui-mode-isolation.md)
 - [UX 내비게이션 재검증·수정](./docs/ux-navigation-correction-2026-07-28.md)
 - [Streamlit 리팩토링 1단계 · 공통 기반 분리](./docs/refactor-stage-common-foundation.md)
 - [Streamlit 리팩토링 2단계 · 페이지 모듈 분리](./docs/refactor-stage-page-modules.md)
@@ -88,6 +89,7 @@ Text-to-Cypher 질의까지 같은 파이프라인으로 실행할 수 있다. �
 | 엔터프라이즈 2-8 — UI 기능 기준선 | **기능 기준선 완료·제품화 Gate 재개방** | 반응형·접근성·역할별 메뉴/행동·상태/복구·두 도메인 기능 계약 |
 | 제품화 2.9-1 — 단일 제품 UI·Surface 경계 | **구현·검증 완료** | React 제품 진입점·Streamlit Internal Console·운영 경로 리디렉션·프로젝트 컨텍스트 전달 |
 | 제품화 2.9-2 — Streamlit 자동 페이지 충돌 제거 | **구현·검증 완료** | 숨김 공식 라우터·자동 메뉴 0개·작업공간 메뉴 1개·이전 URL 10개 비어 있지 않은 안내 화면 |
+| 제품화 2.9-3 — 개발·평가 기능 격리 | **구현·검증 완료** | `P3_UI_MODE` 프로필·demo 기본값·provider/role 제어 격리·foundation 메뉴 숨김·배포 금지 문구 검사 |
 
 ## 확정 데이터
 

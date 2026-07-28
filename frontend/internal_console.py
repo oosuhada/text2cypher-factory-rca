@@ -19,6 +19,7 @@ from frontend.runtime import (
 )
 from frontend.session_state import initialize_session
 from frontend.sidebar import render_sidebar as render_sidebar_shell
+from frontend.ui_mode import is_development
 from frontend.workspaces.audit import render_audit_workspace
 from frontend.workspaces.dashboard import render_dashboard_tab
 from frontend.workspaces.data_sources import render_data_health_tab
@@ -77,10 +78,11 @@ def render_internal_console() -> None:
         )
         return
     st.session_state["_active_service_bundle"] = services
-    st.sidebar.caption(
-        f"실제 연결: {services.provider} / {services.model_name} · "
-        f"{getattr(services, 'transport', 'direct')}"
-    )
+    if is_development():
+        st.sidebar.caption(
+            f"개발 진단: {services.provider} / {services.model_name} · "
+            f"{getattr(services, 'transport', 'direct')}"
+        )
     try:
         dashboard_snapshot = services.dashboard.snapshot()
     except Exception as error:

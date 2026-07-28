@@ -15,6 +15,7 @@ from frontend.design_system import (
     state_copy,
 )
 from frontend.navigation import render_page_header
+from frontend.ui_mode import is_development
 
 
 def failure_response(question: str, error: Exception) -> dict[str, Any]:
@@ -101,30 +102,33 @@ def render_startup_failure(
     project_root: Path,
     clear_services: Callable[[], None],
 ) -> None:
-    st.error(
-        f"서비스 연결 준비가 완료되지 않았습니다: {error}",
-        icon="🩺",
-    )
-    st.code(str(error))
-    checks = collect_demo_diagnostics(project_root)
-    st.markdown("#### 실행 진단")
-    st.dataframe(
-        pd.DataFrame(checks),
-        width="stretch",
-        hide_index=True,
-    )
-    st.markdown("#### 복구 명령")
-    st.code(
-        "./scripts/run_demo.sh\n"
-        "# 또는\n"
-        "./infra/set_homebrew_mode.sh reader\n"
-        "./scripts/run_streamlit.sh",
-        language="bash",
-    )
-    st.info(
-        "생성 모델 인증이 없으면 자동 모드가 Gold 고정 데모로 전환됩니다. "
-        "Neo4j 연결은 질의 실행에 필요합니다."
-    )
+    if is_development():
+        st.error(
+            f"서비스 연결 준비가 완료되지 않았습니다: {error}",
+            icon="🩺",
+        )
+        st.code(str(error))
+        checks = collect_demo_diagnostics(project_root)
+        st.markdown("#### 실행 진단")
+        st.dataframe(
+            pd.DataFrame(checks),
+            width="stretch",
+            hide_index=True,
+        )
+        st.markdown("#### 복구 명령")
+        st.code(
+            "./scripts/run_demo.sh\n"
+            "# 또는\n"
+            "./infra/set_homebrew_mode.sh reader\n"
+            "./scripts/run_streamlit.sh",
+            language="bash",
+        )
+        st.info(
+            "개발 환경의 생성 모델 인증과 Neo4j 연결 상태를 확인하세요."
+        )
+    else:
+        st.error("서비스 연결 준비가 완료되지 않았습니다.", icon="🩺")
+        st.info("운영 담당자에게 연결 상태 확인을 요청한 뒤 다시 시도해 주세요.")
     if st.button("서비스 다시 연결", type="primary"):
         clear_services()
         st.rerun()

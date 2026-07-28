@@ -18,6 +18,7 @@ from frontend.project_workspace import (
 )
 from frontend.runtime import PROJECT_ROOT, clear_service_cache
 from frontend.sidebar import switch_project
+from frontend.ui_mode import configured_role, current_ui_mode, is_development
 
 
 def _switch_project(project_id: str) -> None:
@@ -33,7 +34,12 @@ def render_projects_workspace() -> None:
         PROJECT_ROOT / "data" / "processed" / "projects.sqlite3"
     )
     registry.ensure_default()
-    role = Role(st.session_state.get("preview_role", Role.ADMIN.value))
+    mode = current_ui_mode()
+    role = (
+        Role(st.session_state.get("preview_role", Role.ADMIN.value))
+        if is_development(mode)
+        else configured_role(mode)
+    )
 
     search_column, status_column, favorite_column = st.columns([3, 2, 1])
     search = search_column.text_input(

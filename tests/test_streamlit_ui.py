@@ -144,6 +144,8 @@ class PresentationTest(unittest.TestCase):
 class StreamlitIntegrationTest(unittest.TestCase):
     def setUp(self):
         self._conversation_temp = TemporaryDirectory()
+        self._previous_ui_mode = os.environ.get("P3_UI_MODE")
+        os.environ["P3_UI_MODE"] = "development"
         self._previous_conversation_path = os.environ.get(
             "P3_CONVERSATION_DB_PATH"
         )
@@ -152,6 +154,10 @@ class StreamlitIntegrationTest(unittest.TestCase):
         )
 
     def tearDown(self):
+        if self._previous_ui_mode is None:
+            os.environ.pop("P3_UI_MODE", None)
+        else:
+            os.environ["P3_UI_MODE"] = self._previous_ui_mode
         if self._previous_conversation_path is None:
             os.environ.pop("P3_CONVERSATION_DB_PATH", None)
         else:
