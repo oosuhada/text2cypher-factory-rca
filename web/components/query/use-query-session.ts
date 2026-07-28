@@ -115,6 +115,11 @@ export function useQuerySession(
     }
   }
 
+  function prepareFollowUp(value = submittedQuestion) {
+    setQuestion(value);
+    setError("");
+  }
+
   async function copyCypher() {
     if (!response?.cypher) return;
     await navigator.clipboard.writeText(response.cypher);
@@ -168,6 +173,7 @@ export function useQuerySession(
     reviewLoading,
     reviewError,
     runQuestion,
+    prepareFollowUp,
     loadConversation,
     copyCypher,
     submitReview,

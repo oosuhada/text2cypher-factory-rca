@@ -15,6 +15,7 @@ import type { FormEvent, RefObject } from "react";
 
 import type { Project, ProjectReadiness } from "@/lib/types";
 import { ExpertReview } from "@/components/query/expert-review";
+import { ResponseNextActions } from "@/components/query/response-next-actions";
 import {
   QUERY_PROGRESS,
   QUERY_STATUS_LABEL,
@@ -115,7 +116,7 @@ export function QueryConversationPanel({
             </p>
             <Link
               className="primary-button"
-              href={readiness.next_action === "upload" ? "/data" : "/schema"}
+              href={`${readiness.next_action === "upload" ? "/data" : "/schema"}?project_id=${encodeURIComponent(activeProject?.project_id ?? "")}`}
             >
               {readiness.next_action === "upload"
                 ? "Data Pipeline 열기"
@@ -190,8 +191,7 @@ export function QueryConversationPanel({
               <div>
                 <strong>FactoryGraph Agent</strong>
                 <small>
-                  {session.response.provider} ·{" "}
-                  {session.response.validation.elapsed_ms}ms
+                  읽기 전용 검증 완료 · {session.response.validation.elapsed_ms}ms
                 </small>
               </div>
             </div>
@@ -204,21 +204,25 @@ export function QueryConversationPanel({
             )}
             <div className="answer-metrics">
               <span>
-                <Database size={13} /> {session.response.row_count} rows
+                <Database size={13} /> 결과 {session.response.row_count}건
               </span>
               <span>
                 <Network size={13} />{" "}
-                {session.response.evidence.node_count} nodes
+                근거 노드 {session.response.evidence.node_count}개
               </span>
               <span>
                 <ShieldCheck size={13} />{" "}
-                {session.response.validation.attempts} validation
+                검증 {session.response.validation.attempts}회
               </span>
             </div>
-            <a className="evidence-jump" href="#query-evidence">
-              같은 조회의 근거 확인 <ArrowRight size={14} />
-            </a>
-            <ExpertReview session={session} />
+            <ResponseNextActions
+              projectId={activeProject?.project_id ?? "cip-dmd"}
+              inputRef={inputRef}
+              session={session}
+            />
+            {session.response.status === "success" && (
+              <ExpertReview session={session} />
+            )}
           </article>
         )}
       </div>

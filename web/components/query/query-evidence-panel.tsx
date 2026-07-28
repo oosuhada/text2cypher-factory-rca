@@ -27,10 +27,10 @@ export function QueryEvidencePanel({ session }: { session: QuerySession }) {
     <aside className="evidence-panel" id="query-evidence">
       <div className="evidence-heading">
         <div>
-          <strong>Evidence</strong>
-          <span>답변과 동일한 조회의 근거·검증 기록</span>
+          <strong>조회 근거</strong>
+          <span>답변과 동일한 결과표·관계 경로·안전 검증 기록</span>
         </div>
-        {response && <span className="mono">{response.row_count} rows</span>}
+        {response && <span className="mono">결과 {response.row_count}건</span>}
       </div>
 
       {!response ? (

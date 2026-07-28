@@ -145,14 +145,30 @@ function readiness(projectId: string) {
 }
 
 function queryResponse(question: string, projectId: string) {
+  const status = question.includes("삭제")
+    ? "blocked"
+    : question.includes("399999")
+      ? "empty"
+      : question.includes("문제 있는")
+        ? "needs_clarification"
+        : question.includes("최근 등록")
+          ? "unsupported"
+          : "success";
+  const answers = {
+    success: "자동화된 질의 결과입니다.",
+    empty: "조건에 일치하는 결과가 없습니다.",
+    blocked: "읽기 전용 정책에 따라 변경 요청을 차단했습니다.",
+    needs_clarification: "대상 식별자와 확인 조건을 추가해 주세요.",
+    unsupported: "현재 지원하는 제조 RCA 질문 범위를 벗어났습니다.",
+  } as const;
   return {
     project_id: projectId,
     question,
-    answer: "자동화된 질의 결과입니다.",
-    status: "success",
-    cypher: "MATCH (n) RETURN n LIMIT 1",
-    rows: [{ status: "normal" }],
-    row_count: 1,
+    answer: answers[status],
+    status,
+    cypher: status === "blocked" ? "" : "MATCH (n) RETURN n LIMIT 1",
+    rows: status === "success" ? [{ status: "normal" }] : [],
+    row_count: status === "success" ? 1 : 0,
     metadata: { project_id: projectId },
     evidence: {
       nodes: [],
@@ -175,7 +191,7 @@ function queryResponse(question: string, projectId: string) {
 
 async function mockProjectApi(
   page: Page,
-  options: { failReadinessFor?: string } = {},
+  options: { failReadinessFor?: string; failQuery?: boolean } = {},
 ) {
   const queryRequests: string[] = [];
   await page.addInitScript(() => {
@@ -215,6 +231,14 @@ async function mockProjectApi(
         project_id: string;
       };
       queryRequests.push(payload.question);
+      if (options.failQuery) {
+        await route.fulfill({
+          status: 503,
+          headers,
+          json: { detail: "질의 서비스를 사용할 수 없습니다." },
+        });
+        return;
+      }
       await route.fulfill({
         status: 200,
         headers,
@@ -374,7 +398,7 @@ test("query result connects answer, evidence and expert review safely", async ({
 
   await expect(page.getByText("자동화된 질의 결과입니다.")).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "같은 조회의 근거 확인" }),
+    page.getByRole("link", { name: "결과와 관계 근거 확인" }),
   ).toHaveAttribute("href", "#query-evidence");
   await expect(
     page.getByRole("tab", { name: "결과", exact: true }),
@@ -384,6 +408,71 @@ test("query result connects answer, evidence and expert review safely", async ({
   await expect(
     expertReview.getByText("전문가 전용", { exact: false }),
   ).toBeVisible();
+});
+
+test("RCA status states guide the user to a safe next action", async ({
+  page,
+}) => {
+  await mockProjectApi(page);
+  await page.goto("/query?project_id=cip-dmd");
+  const composer = page.getByLabel("제조 관계 질문");
+
+  await composer.fill("완제품 399999의 구성품과 품질검사 결과를 보여줘.");
+  await page.getByRole("button", { name: "질문 전송" }).click();
+  await expect(page.getByText("일치하는 관계를 찾지 못했습니다.")).toBeVisible();
+  await page.getByRole("button", { name: "조건 바꿔 다시 질문" }).click();
+  await expect(composer).toHaveValue(/399999/);
+
+  await composer.fill("압력검사에 실패한 완제품 데이터를 전부 삭제해줘.");
+  await page.getByRole("button", { name: "질문 전송" }).click();
+  await expect(page.getByText("조회 전용 서비스에서 변경 요청을 차단했습니다.")).toBeVisible();
+  await expect(page.locator("details.expert-review")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "안전한 조회 질문 작성" }).click();
+  await composer.fill("문제 있는 부품 찾아줘.");
+  await page.getByRole("button", { name: "질문 전송" }).click();
+  await expect(page.getByText("질문 조건을 조금 더 구체화해야 합니다.")).toBeVisible();
+
+  await page.getByRole("button", { name: "조건 추가하기" }).click();
+  await composer.fill("최근 등록된 부품 세 개를 보여줘.");
+  await page.getByRole("button", { name: "질문 전송" }).click();
+  await expect(page.getByText("현재 그래프가 지원하는 RCA 범위를 벗어났습니다.")).toBeVisible();
+});
+
+test("successful RCA result survives History reopen with project context", async ({
+  page,
+}) => {
+  await mockProjectApi(page);
+  await page.goto("/query?project_id=cip-dmd");
+  await page.getByLabel("제조 관계 질문").fill(
+    "완제품 300002의 구성품과 공정 이력을 보여줘.",
+  );
+  await page.getByRole("button", { name: "질문 전송" }).click();
+
+  await page.getByRole("link", { name: "저장된 기록 보기" }).click();
+  await expect(page).toHaveURL("/history?project_id=cip-dmd");
+  await expect(page.getByText("조회 완료", { exact: true })).toBeVisible();
+  await expect(page.getByText("결과 1건", { exact: true })).toBeVisible();
+  await expect(page.getByText("검증 1회", { exact: true })).toBeVisible();
+  await expect(page.getByText("gold", { exact: true })).toHaveCount(0);
+
+  await page.getByRole("link", { name: "다시 열기" }).click();
+  await expect(page).toHaveURL(/\/query\?project_id=cip-dmd&conversation=/);
+  await expect(page.getByText("자동화된 질의 결과입니다.")).toBeVisible();
+  await expect(page.getByLabel("활성 프로젝트", { exact: true })).toHaveValue("cip-dmd");
+});
+
+test("query service failure offers a retry without losing the question", async ({
+  page,
+}) => {
+  await mockProjectApi(page, { failQuery: true });
+  await page.goto("/query?project_id=cip-dmd");
+  await page.getByLabel("제조 관계 질문").fill("완제품 300002의 구성품을 보여줘.");
+  await page.getByRole("button", { name: "질문 전송" }).click();
+
+  await expect(page.getByText("API 연결 또는 질의 처리 실패")).toBeVisible();
+  await expect(page.getByRole("button", { name: "다시 시도" })).toBeVisible();
+  await expect(page.getByText("완제품 300002의 구성품을 보여줘.")).toBeVisible();
 });
 
 test("mobile header uses a drawer without horizontal overflow", async ({
