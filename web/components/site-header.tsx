@@ -51,6 +51,33 @@ export function SiteHeader() {
       : readiness?.next_action === "map"
         ? "Mapping required"
         : "Upload required";
+  const projectSelector = (className: string) => (
+    <div className={`project-control ${className}`}>
+      <DatabaseZap size={15} />
+      <label>
+        <span>Project · {statusLabel}</span>
+        <select
+          className="project-switcher"
+          aria-label={
+            className.includes("mobile")
+              ? "모바일 활성 프로젝트"
+              : "활성 프로젝트"
+          }
+          value={activeProject?.project_id ?? ""}
+          disabled={!activeProject || switching}
+          onChange={(event) =>
+            void switchProject(event.target.value).catch(() => undefined)
+          }
+        >
+          {projects.map((project) => (
+            <option key={project.project_id} value={project.project_id}>
+              {project.name} · {project.status}
+            </option>
+          ))}
+        </select>
+      </label>
+    </div>
+  );
 
   return (
     <header className="site-header">
@@ -65,7 +92,21 @@ export function SiteHeader() {
           <small>RCA</small>
         </Link>
 
-        <nav className={`primary-nav ${open ? "nav-open" : ""}`}>
+        {open ? (
+          <button
+            type="button"
+            className="nav-backdrop"
+            aria-label="모바일 메뉴 닫기"
+            onClick={() => setOpen(false)}
+          />
+        ) : null}
+
+        <nav
+          className={`primary-nav ${open ? "nav-open" : ""}`}
+          id="primary-navigation"
+          aria-label="주요 작업공간"
+        >
+          {projectSelector("mobile-project-control")}
           {NAVIGATION.map((item) => {
             const active = pathname.startsWith(item.href);
             return (
@@ -83,27 +124,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="header-actions">
-          <div className="project-control">
-            <DatabaseZap size={15} />
-            <label>
-              <span>Project · {statusLabel}</span>
-              <select
-                className="project-switcher"
-                aria-label="활성 프로젝트"
-                value={activeProject?.project_id ?? ""}
-                disabled={!activeProject || switching}
-                onChange={(event) =>
-                  void switchProject(event.target.value)
-                }
-              >
-                {projects.map((project) => (
-                  <option key={project.project_id} value={project.project_id}>
-                    {project.name} · {project.status}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
+          {projectSelector("desktop-project-control")}
           <ApiStatus />
           <ThemeToggle />
           <button
@@ -111,6 +132,7 @@ export function SiteHeader() {
             className="icon-button menu-button"
             aria-label={open ? "메뉴 닫기" : "메뉴 열기"}
             aria-expanded={open}
+            aria-controls="primary-navigation"
             onClick={() => setOpen((value) => !value)}
           >
             {open ? <X size={19} /> : <Menu size={19} />}
