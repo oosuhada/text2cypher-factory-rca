@@ -114,17 +114,29 @@ class DeploymentContractTest(unittest.TestCase):
         self.assertIn("<ProjectWorkspace />", route)
 
     def test_streamlit_uses_url_backed_project_navigation(self):
-        source = (
+        app_source = (
             PROJECT_ROOT / "frontend" / "streamlit_app.py"
         ).read_text(encoding="utf-8")
-        self.assertIn('return f"/?workspace=', source)
-        self.assertIn("render_workspace_link(", source)
-        self.assertIn('st.query_params.get("workspace")', source)
+        navigation_source = (
+            PROJECT_ROOT / "frontend" / "navigation.py"
+        ).read_text(encoding="utf-8")
+        session_source = (
+            PROJECT_ROOT / "frontend" / "session_state.py"
+        ).read_text(encoding="utf-8")
+        source = "\n".join(
+            (app_source, navigation_source, session_source)
+        )
+        self.assertIn('return f"/?workspace=', navigation_source)
+        self.assertIn("render_workspace_link(", navigation_source)
+        self.assertIn(
+            'st.query_params.get("workspace")',
+            navigation_source,
+        )
         self.assertIn("navigation_widget_revision", source)
-        self.assertIn("Gold Question 15/15", source)
+        self.assertIn("Gold Question 15/15", app_source)
         self.assertIn(
             'st.session_state.get("latest_project_upload") or {}',
-            source,
+            app_source,
         )
 
 

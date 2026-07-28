@@ -25,6 +25,7 @@ PPT 대조 후 수정 근거는 [방향 수정 기록](./docs/direction-correcti
 - [엔터프라이즈 트랙 2-8 UI 품질 Gate](./docs/enterprise-stage2-8-ui-quality-gate.md)
 - [엔터프라이즈 2단계 완료 검증·릴리스 기록](./docs/enterprise-stage2-release.md)
 - [UX 내비게이션 재검증·수정](./docs/ux-navigation-correction-2026-07-28.md)
+- [Streamlit 리팩토링 1단계 · 공통 기반 분리](./docs/refactor-stage-common-foundation.md)
 - 플랫폼 공통 API·Registry·스키마·ETL·다중 도메인:
   [`platform-stage1~11`](./docs/platform-stage1-shared-api.md)
 - 제품 리팩터링·Data Intake·Graph Explorer·HITL·배포:

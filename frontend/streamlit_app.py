@@ -10,7 +10,6 @@ import sys
 from typing import Any
 from copy import deepcopy
 from hashlib import sha256
-from uuid import uuid4
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -21,7 +20,6 @@ import streamlit as st
 
 from backend.app.services.diagnostics import collect_demo_diagnostics
 from backend.app.services.data_intake_service import DataIntakeService
-from backend.app.conversations import ConversationStore
 from backend.app.jobs import PipelineJobStore
 from backend.app.ingestion import DatasetWorkspace
 from backend.app.mapping import MappingWorkspace
@@ -32,23 +30,19 @@ from frontend.app_services import (
     build_streamlit_service_bundle,
 )
 from frontend.api_client import FactoryGraphApiClient
-from frontend.conversation_history import (
-    deduplicate_conversation_turns,
-    upsert_conversation,
+from frontend.common_ui import (
+    failure_response,
+    render_foundation_workspace,
+    render_startup_failure,
+    render_view_state,
 )
 from frontend.data_preflight import inspect_uploaded_source
 from frontend.design_system import (
     Action,
-    NAVIGATION_ITEMS,
-    PAGE_BY_KEY,
-    PAGE_BY_LABEL,
     Role,
     ViewState,
     build_global_css,
     can_perform,
-    navigation_for_role,
-    page_description,
-    state_copy,
     ui_text,
 )
 from frontend.graph_explorer import (
@@ -68,9 +62,10 @@ from frontend.presentation import (
     normalize_catalog_evidence,
     rows_to_csv,
 )
-from frontend.project_context import (
-    restore_project_context,
-    snapshot_project_context,
+from frontend.navigation import (
+    navigate_to_page,
+    render_page_header,
+    render_workspace_link,
 )
 from frontend.project_workspace import (
     filter_projects,
@@ -93,11 +88,20 @@ from frontend.onboarding import (
     onboarding_progress,
     profile_quality_warnings,
 )
+from frontend.session_state import (
+    get_conversation_store,
+    initialize_session,
+    open_conversation,
+    sync_active_conversation,
+)
+from frontend.sidebar import (
+    render_sidebar as render_sidebar_shell,
+    switch_project,
+)
 
 
 APP_TITLE = "Factory Graph RCA"
 SERVICE_BUNDLE_VERSION = "2026-07-28-shared-api-v2"
-NAVIGATION_PAGES = tuple(item.label for item in NAVIGATION_ITEMS)
 
 
 st.set_page_config(
@@ -332,6 +336,13 @@ def get_services(
     )
 
 
+def clear_service_cache() -> None:
+    bundle = st.session_state.pop("_active_service_bundle", None)
+    if bundle is not None:
+        bundle.close()
+    get_services.clear()
+
+
 @st.cache_resource(show_spinner=False)
 def get_data_intake_service() -> DataIntakeService:
     return DataIntakeService(PROJECT_ROOT)
@@ -340,269 +351,6 @@ def get_data_intake_service() -> DataIntakeService:
 @st.cache_data(show_spinner=False)
 def get_reference_intake_archive() -> bytes:
     return DataIntakeService(PROJECT_ROOT).build_reference_archive()
-
-
-def get_conversation_store() -> ConversationStore:
-    configured_path = os.getenv("P3_CONVERSATION_DB_PATH", "").strip()
-    store_path = (
-        Path(configured_path).expanduser()
-        if configured_path
-        else PROJECT_ROOT
-        / "data"
-        / "processed"
-        / "conversations.sqlite3"
-    )
-    return ConversationStore(
-        store_path
-    )
-
-
-def initialize_session() -> None:
-    st.session_state.setdefault("active_page", "Home")
-    st.session_state.setdefault("preview_role", Role.ADMIN.value)
-    st.session_state.setdefault("locale", "ko")
-    st.session_state.setdefault("messages", [])
-    st.session_state.setdefault("last_result", None)
-    st.session_state.setdefault("conversations", [])
-    st.session_state.setdefault(
-        "active_conversation_id", str(uuid4())
-    )
-    st.session_state.setdefault("explorer_result", None)
-    st.session_state.setdefault("explorer_search_result", None)
-    st.session_state.setdefault("explorer_selected_node_ids", [])
-    st.session_state.setdefault(
-        "explorer_selected_relationship_ids", []
-    )
-    st.session_state.setdefault("explorer_expansion_history", [])
-    st.session_state.setdefault("explorer_filters", {})
-    st.session_state.setdefault("explorer_widget_revision", 0)
-    st.session_state.setdefault("navigation_widget_revision", 0)
-    st.session_state.setdefault("expert_reviews", {})
-    st.session_state.setdefault("intake_record", None)
-    st.session_state.setdefault("intake_approval_token", None)
-    st.session_state.setdefault("active_project_id", "cip-dmd")
-    st.session_state.setdefault("project_conversations", {})
-    st.session_state.setdefault("conversation_loaded_projects", set())
-    st.session_state.setdefault("query_filters", {})
-    st.session_state.setdefault("evaluation_filters", {})
-    active_project_id = st.session_state["active_project_id"]
-    if active_project_id not in st.session_state["conversation_loaded_projects"]:
-        store = get_conversation_store()
-        conversations = store.list(
-            active_project_id, limit=12
-        )
-        for conversation in conversations:
-            normalized = deduplicate_conversation_turns(
-                conversation["messages"]
-            )
-            if normalized != conversation["messages"]:
-                conversation["messages"] = normalized
-                store.save(active_project_id, conversation)
-        st.session_state["conversations"] = conversations
-        if conversations and not st.session_state["messages"]:
-            current = conversations[0]
-            st.session_state["active_conversation_id"] = current["id"]
-            st.session_state["messages"] = deepcopy(current["messages"])
-            st.session_state["last_result"] = deepcopy(
-                current.get("last_result")
-            )
-        st.session_state["conversation_loaded_projects"].add(
-            active_project_id
-        )
-    normalized_messages = deduplicate_conversation_turns(
-        st.session_state["messages"]
-    )
-    if normalized_messages != st.session_state["messages"]:
-        st.session_state["messages"] = normalized_messages
-        sync_active_conversation()
-
-
-def navigate_to_page(page: str) -> None:
-    if page not in NAVIGATION_PAGES:
-        return
-    # The navigation radio already exists by the time most page buttons run.
-    # Queueing the target avoids mutating an instantiated widget key and lets
-    # render_sidebar apply the transition before the next radio is created.
-    st.session_state["pending_page"] = page
-
-
-def workspace_url(page: str) -> str:
-    return f"/?workspace={PAGE_BY_LABEL[page].key}"
-
-
-def render_workspace_link(
-    label: str,
-    page: str,
-    *,
-    stretch: bool = False,
-) -> None:
-    width_class = " p3-workspace-link--stretch" if stretch else ""
-    st.markdown(
-        (
-            f'<a class="p3-workspace-link{width_class}" '
-            f'href="{workspace_url(page)}" target="_self">{label}</a>'
-        ),
-        unsafe_allow_html=True,
-    )
-
-
-def render_page_header(page: str) -> None:
-    item = PAGE_BY_LABEL[page]
-    locale = st.session_state.get("locale", "ko")
-    badge = (
-        ui_text("operational", locale)
-        if item.delivery == "available"
-        else (
-            f"Stage {item.implementation_stage} "
-            f"{ui_text('preparing', locale)}"
-        )
-    )
-    heading_column, home_column = st.columns([5, 1])
-    with heading_column:
-        st.markdown(
-            f"""
-            <section class="p3-page-head" id="p3-main-content">
-              <div>
-                <h1>{item.icon} {item.label}</h1>
-                <p>{page_description(page, locale)}</p>
-                <span class="p3-stage-badge">{badge}</span>
-              </div>
-            </section>
-            """,
-            unsafe_allow_html=True,
-        )
-    with home_column:
-        st.caption("현재 작업공간")
-        render_workspace_link(
-            "← 운영 홈으로",
-            "Home",
-            stretch=True,
-        )
-
-
-def render_view_state(
-    state: ViewState,
-    *,
-    page: str,
-    detail: str | None = None,
-) -> None:
-    copy = state_copy(state, page_label=page)
-    message = detail or copy.message
-    st.markdown(
-        f"""
-        <div class="p3-state-card" data-view-state="{state.value}">
-          <h3>{copy.title}</h3>
-          <p>{message}</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def render_foundation_workspace(page: str) -> None:
-    item = PAGE_BY_LABEL[page]
-    render_page_header(page)
-    render_view_state(
-        ViewState.READY,
-        page=page,
-        detail=(
-            f"정보구조와 접근 권한은 2-1에서 확정했습니다. 세부 업무 "
-            f"기능은 구현계획 {item.implementation_stage}에서 연결됩니다."
-        ),
-    )
-    st.markdown(
-        """
-        <div class="p3-foundation-grid">
-          <div class="p3-foundation-card">
-            <b>상태 계약</b>
-            <span>정상·로딩·빈 상태·오류를 같은 언어와 구조로 표시합니다.</span>
-          </div>
-          <div class="p3-foundation-card">
-            <b>API 경계</b>
-            <span>업무 상태는 FastAPI가 소유하며 UI가 파일·DB를 우회하지 않습니다.</span>
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def sync_active_conversation() -> None:
-    messages = st.session_state["messages"]
-    if not messages:
-        return
-    st.session_state["conversations"] = upsert_conversation(
-        st.session_state["conversations"],
-        conversation_id=st.session_state["active_conversation_id"],
-        messages=messages,
-        last_result=st.session_state.get("last_result"),
-    )
-    active = next(
-        conversation
-        for conversation in st.session_state["conversations"]
-        if conversation["id"]
-        == st.session_state["active_conversation_id"]
-    )
-    get_conversation_store().save(
-        st.session_state.get("active_project_id", "cip-dmd"),
-        active,
-    )
-
-
-def start_new_conversation() -> None:
-    sync_active_conversation()
-    st.session_state["active_conversation_id"] = str(uuid4())
-    st.session_state["messages"] = []
-    st.session_state["last_result"] = None
-
-
-def open_conversation(conversation_id: str) -> None:
-    conversation = next(
-        (
-            item
-            for item in st.session_state["conversations"]
-            if item["id"] == conversation_id
-        ),
-        None,
-    )
-    if conversation is None:
-        return
-    st.session_state["active_conversation_id"] = conversation_id
-    st.session_state["messages"] = deepcopy(conversation["messages"])
-    st.session_state["last_result"] = deepcopy(
-        conversation.get("last_result")
-    )
-
-
-def failure_response(question: str, error: Exception) -> dict[str, Any]:
-    return {
-        "question": question,
-        "answer": "서비스 연결 또는 질의 처리 중 오류가 발생했습니다.",
-        "status": "failed",
-        "cypher": "",
-        "rows": [],
-        "row_count": 0,
-        "evidence": {
-            "nodes": [],
-            "relationships": [],
-            "node_count": 0,
-            "relationship_count": 0,
-            "source_row_count": 0,
-            "visualized_row_count": 0,
-            "truncated": {
-                "nodes": False,
-                "relationships": False,
-                "rows": False,
-            },
-        },
-        "validation": {
-            "attempts": 0,
-            "errors": [str(error)],
-            "trace": [],
-            "elapsed_ms": 0,
-        },
-        "caveat": None,
-    }
 
 
 def render_response_summary(response: dict[str, Any]) -> None:
@@ -2042,36 +1790,6 @@ def render_graph_explorer(services: ServiceBundle) -> None:
         )
 
 
-def render_startup_failure(error: Exception) -> None:
-    st.error(
-        f"서비스 연결 준비가 완료되지 않았습니다: {error}",
-        icon="🩺",
-    )
-    st.code(str(error))
-    checks = collect_demo_diagnostics(PROJECT_ROOT)
-    st.markdown("#### 실행 진단")
-    st.dataframe(
-        pd.DataFrame(checks),
-        width="stretch",
-        hide_index=True,
-    )
-    st.markdown("#### 복구 명령")
-    st.code(
-        "./scripts/run_demo.sh\n"
-        "# 또는\n"
-        "./infra/set_homebrew_mode.sh reader\n"
-        "./scripts/run_streamlit.sh",
-        language="bash",
-    )
-    st.info(
-        "생성 모델 인증이 없으면 자동 모드가 Gold 고정 데모로 전환됩니다. "
-        "Neo4j 연결은 질의 실행에 필요합니다."
-    )
-    if st.button("서비스 다시 연결", type="primary"):
-        get_services.clear()
-        st.rerun()
-
-
 def render_data_intake_workflow() -> None:
     intake = get_data_intake_service()
     st.markdown("#### CiP-DMD Data Intake")
@@ -2258,7 +1976,7 @@ def render_data_intake_workflow() -> None:
                         )
                     st.session_state["intake_record"] = loaded
                     st.session_state["intake_approval_token"] = None
-                    get_services.clear()
+                    clear_service_cache()
                     st.success(
                         "적재와 reader 모드 복귀를 완료했습니다. 다음 "
                         "화면 갱신부터 새 연결을 사용합니다."
@@ -3976,303 +3694,11 @@ def render_audit_workspace() -> None:
 
 
 def _switch_project(project_id: str) -> None:
-    previous = st.session_state.get("active_project_id", "cip-dmd")
-    if previous == project_id:
-        return
-    sync_active_conversation()
-    st.session_state["project_conversations"][
-        previous
-    ] = snapshot_project_context(st.session_state)
-    if project_id not in st.session_state["conversation_loaded_projects"]:
-        persisted = get_conversation_store().list(project_id, limit=12)
-        context = None
-        if persisted:
-            context = {
-                "conversations": persisted,
-                "active_conversation_id": persisted[0]["id"],
-                "messages": persisted[0]["messages"],
-                "last_result": persisted[0].get("last_result"),
-            }
-        st.session_state["project_conversations"][project_id] = context
-        st.session_state["conversation_loaded_projects"].add(project_id)
-    restore_project_context(
-        st.session_state,
-        st.session_state["project_conversations"].get(project_id),
+    switch_project(
+        project_id,
+        project_root=PROJECT_ROOT,
+        clear_services=clear_service_cache,
     )
-    st.session_state["active_project_id"] = project_id
-    ProjectRegistry(
-        PROJECT_ROOT / "data" / "processed" / "projects.sqlite3"
-    ).activate(project_id)
-    get_services.clear()
-    st.toast(f"{project_id} 워크스페이스로 전환했습니다.", icon="✅")
-
-
-def _render_sidebar_conversations(project_id: str) -> None:
-    st.sidebar.markdown("### 대화")
-    if st.sidebar.button(
-        "＋ 새 대화",
-        type="primary",
-        width="stretch",
-        key="sidebar-new-conversation",
-    ):
-        start_new_conversation()
-        navigate_to_page("Query Studio")
-        st.rerun()
-    conversations = st.session_state["conversations"]
-    if not conversations:
-        st.sidebar.caption("질문을 실행하면 최근 대화가 여기에 표시됩니다.")
-        return
-
-    st.sidebar.caption("프로젝트에 저장된 최근 대화 · 최대 12개")
-    history_search = st.sidebar.text_input(
-        "대화 검색",
-        placeholder="질문 제목 또는 내용",
-        key=f"conversation-search-{project_id}",
-    )
-    visible_conversations = (
-        get_conversation_store().list(
-            project_id,
-            search=history_search,
-            limit=12,
-        )
-        if history_search.strip()
-        else conversations
-    )
-    for conversation in visible_conversations[:6]:
-        is_active = (
-            conversation["id"]
-            == st.session_state["active_conversation_id"]
-        )
-        label = (
-            f"● {conversation['title']}"
-            if is_active
-            else conversation["title"]
-        )
-        if st.sidebar.button(
-            label,
-            key=f"conversation-{conversation['id']}",
-            width="stretch",
-            disabled=is_active,
-        ):
-            open_conversation(conversation["id"])
-            navigate_to_page("Query Studio")
-            st.rerun()
-    if st.sidebar.button(
-        "프로젝트 대화 모두 지우기",
-        key="clear-all-conversations",
-        width="stretch",
-    ):
-        get_conversation_store().delete_project(project_id)
-        st.session_state["conversations"] = []
-        st.session_state["active_conversation_id"] = str(uuid4())
-        st.session_state["messages"] = []
-        st.session_state["last_result"] = None
-        st.rerun()
-
-
-def _render_sidebar_project(
-    project_rows: list[dict[str, Any]],
-    active_project_id: str,
-    role: Role,
-) -> str:
-    project_ids = [row["project_id"] for row in project_rows]
-    st.sidebar.markdown("### 프로젝트")
-    selected_project_id = st.sidebar.selectbox(
-        "활성 워크스페이스",
-        project_ids,
-        index=project_ids.index(active_project_id),
-        format_func=lambda value: next(
-            row["name"] for row in project_rows if row["project_id"] == value
-        ),
-    )
-    if selected_project_id != active_project_id:
-        _switch_project(selected_project_id)
-        st.rerun()
-    if role in {Role.DATA_STEWARD, Role.ADMIN}:
-        if st.sidebar.button(
-            "＋ 프로젝트 만들기",
-            key="sidebar-create-project",
-            width="stretch",
-        ):
-            navigate_to_page("Projects")
-            st.rerun()
-    return selected_project_id
-
-
-def _render_sidebar_execution(role: Role) -> tuple[str, str]:
-    st.sidebar.markdown("### 실행 설정")
-    if role in {Role.DATA_STEWARD, Role.ADMIN}:
-        provider = st.sidebar.selectbox(
-            "생성 모드",
-            options=("auto", "gemini", "gold", "openai"),
-            format_func=lambda value: (
-                {
-                    "auto": "자동 · OpenAI 없으면 Gemini",
-                    "gemini": "Vertex Gemini · 자유 질문",
-                    "gold": "Gold Question 데모 · 정답셋 전용",
-                    "openai": "OpenAI · 자유 질문",
-                }[value]
-            ),
-        )
-        use_openai_model = provider == "openai" or (
-            provider == "auto" and bool(os.getenv("OPENAI_API_KEY"))
-        )
-        default_model = (
-            os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
-            if use_openai_model
-            else os.getenv("GOOGLE_VERTEX_MODEL", "gemini-2.5-flash")
-        )
-        model_name = st.sidebar.text_input(
-            "생성 모델",
-            value=default_model,
-            disabled=provider == "gold",
-            key=f"model-name-{provider}",
-        )
-        if provider == "gold":
-            st.sidebar.info(
-                "추천 질문과 Gold Question 정답셋 15개만 정확히 "
-                "실행하는 회귀검증 모드입니다."
-            )
-        elif provider == "gemini":
-            st.sidebar.info(
-                "Vertex AI Gemini로 새로운 자연어 질문을 처리합니다."
-            )
-        elif provider == "auto":
-            st.sidebar.info(
-                "OpenAI 키가 없으면 Vertex AI Gemini를 자동 사용합니다."
-            )
-        else:
-            st.sidebar.caption("OPENAI_API_KEY 환경변수가 필요합니다.")
-    else:
-        provider = "auto"
-        model_name = (
-            os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
-            if os.getenv("OPENAI_API_KEY")
-            else os.getenv("GOOGLE_VERTEX_MODEL", "gemini-2.5-flash")
-        )
-        st.sidebar.caption(
-            "모델과 provider는 Data Steward 또는 Admin이 관리합니다."
-        )
-    return provider, model_name
-
-
-def _render_sidebar_navigation(role: Role) -> str:
-    st.sidebar.markdown("### 작업공간 이동")
-    allowed_items = navigation_for_role(role)
-    allowed_pages = tuple(item.label for item in allowed_items)
-    requested_workspace = st.query_params.get("workspace")
-    if (
-        requested_workspace in PAGE_BY_KEY
-        and requested_workspace
-        != st.session_state.get("consumed_workspace_query")
-    ):
-        requested_page = PAGE_BY_KEY[requested_workspace].label
-        if requested_page in allowed_pages:
-            st.session_state["pending_page"] = requested_page
-        st.session_state["consumed_workspace_query"] = requested_workspace
-    pending_page = st.session_state.pop("pending_page", None)
-    if pending_page in allowed_pages:
-        st.session_state["active_page"] = pending_page
-        # A programmatic transition must not be overwritten by the browser's
-        # persisted value for the already-mounted radio widget.
-        st.session_state["navigation_widget_revision"] += 1
-    if st.session_state.get("active_page") not in allowed_pages:
-        st.session_state["active_page"] = "Home"
-    current_page = st.session_state["active_page"]
-    page = st.sidebar.radio(
-        "Navigation",
-        options=allowed_pages,
-        index=allowed_pages.index(current_page),
-        key=(
-            "navigation-"
-            f"{st.session_state['navigation_widget_revision']}"
-        ),
-        format_func=lambda label: (
-            f"{PAGE_BY_LABEL[label].icon}  {label}"
-            + (
-                f"  · {PAGE_BY_LABEL[label].implementation_stage}"
-                if PAGE_BY_LABEL[label].delivery == "foundation"
-                else ""
-            )
-        ),
-        label_visibility="collapsed",
-    )
-    if page != current_page:
-        st.session_state["active_page"] = page
-        workspace_key = PAGE_BY_LABEL[page].key
-        st.session_state["consumed_workspace_query"] = workspace_key
-        st.query_params["workspace"] = workspace_key
-    st.sidebar.caption(
-        f"{role.value} 권한 · {len(allowed_pages)}개 작업공간"
-    )
-    return page
-
-
-def render_sidebar() -> tuple[str, str, str, str]:
-    registry = ProjectRegistry(
-        PROJECT_ROOT / "data" / "processed" / "projects.sqlite3"
-    )
-    registry.ensure_default()
-    project_rows = registry.list()
-    project_ids = [row["project_id"] for row in project_rows]
-    active_project_id = st.session_state.get(
-        "active_project_id", registry.active_project_id() or "cip-dmd"
-    )
-    if active_project_id not in project_ids:
-        active_project_id = project_ids[0]
-    role = Role(st.session_state.get("preview_role", Role.ADMIN.value))
-
-    st.sidebar.markdown("### Workspace")
-    selected_project_id = _render_sidebar_project(
-        project_rows,
-        active_project_id,
-        role,
-    )
-    st.sidebar.divider()
-
-    page = _render_sidebar_navigation(role)
-    st.sidebar.divider()
-
-    _render_sidebar_conversations(selected_project_id)
-    st.sidebar.divider()
-
-    provider, model_name = _render_sidebar_execution(role)
-    st.sidebar.divider()
-
-    role_value = st.sidebar.selectbox(
-        "역할 미리보기",
-        options=tuple(candidate.value for candidate in Role),
-        key="preview_role",
-        help=(
-            "2-1 UI 권한 설계를 검증하는 프로토타입입니다. "
-            "실제 사용자 인증·SSO는 Admin 단계에서 연결합니다."
-        ),
-    )
-    role = Role(role_value)
-    st.session_state["active_role"] = role.value
-    st.sidebar.divider()
-
-    locale_label = st.sidebar.segmented_control(
-        "언어 / Language",
-        options=("한국어", "English"),
-        default=(
-            "English"
-            if st.session_state.get("locale") == "en"
-            else "한국어"
-        ),
-        key="locale-control",
-    )
-    st.session_state["locale"] = (
-        "en" if locale_label == "English" else "ko"
-    )
-    st.sidebar.divider()
-
-    st.sidebar.markdown("### 안전 설정")
-    st.sidebar.success("Neo4j reader mode")
-    st.sidebar.caption(
-        "쓰기 의도 차단 · Cypher 검사 · EXPLAIN · DB read-only"
-    )
-    return page, provider, model_name, selected_project_id
 
 
 def render_schema_studio() -> None:
@@ -4714,7 +4140,10 @@ def render_schema_studio() -> None:
 
 def main() -> None:
     initialize_session()
-    page, provider, model_name, project_id = render_sidebar()
+    page, provider, model_name, project_id = render_sidebar_shell(
+        project_root=PROJECT_ROOT,
+        clear_services=clear_service_cache,
+    )
     st.markdown(
         '<a class="p3-skip-link" href="#p3-main-content">'
         f'{ui_text("skip", st.session_state.get("locale", "ko"))}</a>',
@@ -4749,8 +4178,13 @@ def main() -> None:
             st.warning(f"질의 서비스 연결 전 데이터 온보딩 모드입니다: {error}")
             render_data_health_tab(None, None)
             return
-        render_startup_failure(error)
+        render_startup_failure(
+            error,
+            project_root=PROJECT_ROOT,
+            clear_services=clear_service_cache,
+        )
         return
+    st.session_state["_active_service_bundle"] = services
     st.sidebar.caption(
         f"실제 연결: {services.provider} / {services.model_name} · "
         f"{getattr(services, 'transport', 'direct')}"
