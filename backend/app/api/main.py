@@ -7,10 +7,14 @@ import os
 from pathlib import Path
 from threading import Lock
 from typing import Callable, Any
+from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Query, Request, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import JSONResponse
 
 from backend.app.services.bootstrap import ServiceBundle, build_service_bundle
 from neo4j import GraphDatabase, READ_ACCESS
@@ -38,6 +42,7 @@ from .schemas import (
     FeedbackRequest,
     FeedbackSummary,
     DatasetUploadRequest,
+    ErrorEnvelope,
     GraphMappingRequest,
     Neo4jConnectorRequest,
     Neo4jConnectorResponse,
@@ -58,6 +63,50 @@ from .schemas import (
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 BundleFactory = Callable[..., ServiceBundle]
+
+
+ERROR_BY_STATUS = {
+    400: ("BAD_REQUEST", "request", False),
+    401: ("UNAUTHENTICATED", "authorization", False),
+    403: ("FORBIDDEN", "authorization", False),
+    404: ("NOT_FOUND", "request", False),
+    409: ("STATE_CONFLICT", "state", False),
+    422: ("VALIDATION_ERROR", "request", False),
+    429: ("RATE_LIMITED", "dependency", True),
+    500: ("INTERNAL_ERROR", "internal", True),
+    502: ("UPSTREAM_ERROR", "dependency", True),
+    503: ("DEPENDENCY_UNAVAILABLE", "dependency", True),
+    504: ("UPSTREAM_TIMEOUT", "dependency", True),
+}
+
+
+def _error_payload(
+    request: Request,
+    *,
+    status_code: int,
+    detail: Any,
+) -> dict[str, Any]:
+    code, category, retryable = ERROR_BY_STATUS.get(
+        status_code,
+        ("HTTP_ERROR", "internal", status_code >= 500),
+    )
+    message = (
+        detail
+        if isinstance(detail, str)
+        else "요청을 처리하지 못했습니다."
+    )
+    return {
+        "detail": jsonable_encoder(detail),
+        "error": {
+            "code": code,
+            "category": category,
+            "message": message,
+            "retryable": retryable,
+            "request_id": getattr(
+                request.state, "request_id", "unavailable"
+            ),
+        },
+    }
 
 
 class ServiceRegistry:
@@ -255,6 +304,22 @@ def create_app(
             "근거 그래프 및 운영 지표 API"
         ),
         lifespan=lifespan,
+        responses={
+            status_code: {
+                "model": ErrorEnvelope,
+                "description": description,
+            }
+            for status_code, description in (
+                (400, "Bad request"),
+                (403, "Forbidden"),
+                (404, "Not found"),
+                (409, "Lifecycle or readiness conflict"),
+                (422, "Request validation failed"),
+                (500, "Internal error"),
+                (502, "Upstream dependency error"),
+                (503, "Dependency unavailable"),
+            )
+        },
     )
     application.add_middleware(
         CORSMiddleware,
@@ -265,13 +330,44 @@ def create_app(
     )
     application.add_middleware(GZipMiddleware, minimum_size=1000)
 
+    @application.exception_handler(HTTPException)
+    async def http_error(
+        request: Request,
+        error: HTTPException,
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=error.status_code,
+            content=_error_payload(
+                request,
+                status_code=error.status_code,
+                detail=error.detail,
+            ),
+            headers=error.headers,
+        )
+
+    @application.exception_handler(RequestValidationError)
+    async def validation_error(
+        request: Request,
+        error: RequestValidationError,
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            content=_error_payload(
+                request,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=error.errors(),
+            ),
+        )
+
     @application.middleware("http")
     async def security_headers(request: Request, call_next):
+        request.state.request_id = str(uuid4())
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "no-referrer"
         response.headers["Cache-Control"] = "no-store"
+        response.headers["X-Request-ID"] = request.state.request_id
         return response
 
     @application.get("/api/v1/health/live")

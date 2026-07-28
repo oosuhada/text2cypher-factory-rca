@@ -13,3 +13,15 @@
   37.5%였다. 문법 수정과 업무 의미 회복을 같은 능력으로 설명하지 않는다.
 - 최초 Blind 실행 후 의미 검증을 보완했으므로 최신 수치는 회귀 측정이다.
   외부 일반화 성능에는 별도의 신규 holdout이 필요하다.
+- 외부 Neo4j schema introspection은 일반 속성 그래프의 시작점이다. 같은
+  관계 타입이 여러 의미로 재사용되거나 identity 속성이 없는 모델은
+  도메인 전문가의 수동 schema review가 필요하다.
+- 파일 적재나 외부 DB 연결만으로 자유 질의를 허용하지 않는다. 현재
+  source/schema/prompt/Gold/evaluation version이 모두 일치하는 Blind
+  평가가 있어야 `ready`가 된다.
+- Docker 패키지는 로컬 재현과 발표용 단일 호스트 구성이며, 고객 운영에
+  필요한 SSO/RBAC, TLS reverse proxy, rate limit, 중앙 secret manager,
+  백업·재해복구는 별도 배포 계층이다.
+- Neo4j Community의 단일 database와 `project_id` 속성 격리는 프로토타입
+  경계다. 삼성전자·SK하이닉스 수준의 실제 멀티테넌시에서는 database 또는
+  instance 분리와 최소권한 계정을 우선한다.

@@ -29,7 +29,7 @@ P3 필수 요구사항을 코드·테스트·검증 문서에 연결한다. 기�
 | FR-2.3 | Neo4j 배치·벌크 적재 | 완료 | `backend/app/etl/load.py`, transactional `generic_loader.py` | 운영 데이터 크기별 성능 실측은 배포 단계 |
 | FR-2.4 | 적재 무결성 검증 | 완료 | 트랜잭션 내부 원본 projection→노드·관계 reconciliation, 교차 프로젝트 관계 검사 | 신규 도메인마다 동일 Gate 적용 |
 | FR-2.5 | 멱등성 | 완료 | 실제 Neo4j 두 번째 도메인 2회 적재 시 신규 노드·관계 0건 | 장기 운영 시 stale record 정책 추가 |
-| FR-2.6 | 파일 hash·lineage·격리 기록 | 완료 | 원본·정규화 SHA-256, archive/sheet lineage, dry-run isolation | 영속 Job audit는 후속 |
+| FR-2.6 | 파일 hash·lineage·격리 기록 | 완료 | 원본·정규화 SHA-256, archive/sheet lineage, `backend-lineage.md` | 영속 Job audit는 후속 |
 | FR-2.7 | dry-run과 실제 적재 분리 | 완료 | mapping preview의 범용 `dry_run` 보고서와 승인 적재 분리 | UI 시각화는 2단계 |
 | FR-3.1 | 대표 질문 15~20개 | 완료 | `evaluation/gold_questions.yml` 15문항 | 새 도메인은 별도 기준셋 필요 |
 | FR-3.2 | 정답 Cypher·결과 snapshot | 완료 | `evaluation/gold_results/`, `gold_validation.py` | schema version 연결 보강 |
@@ -43,14 +43,14 @@ P3 필수 요구사항을 코드·테스트·검증 문서에 연결한다. 기�
 | FR-4.4 | EXPLAIN 검증 | 완료 | `workflow.py`, `graph.py` | 실제 DB 버전별 검증 |
 | FR-4.5 | 자기수정 | 완료 | LangGraph correction loop | 실패 유형별 표본 확대 |
 | FR-4.6 | 재검증 통과 쿼리만 실행 | 완료 | `workflow.py` | 보안 회귀 유지 |
-| FR-4.7 | 상태 계약 | 완료 | `service-contract.md`, API schema | UI 회귀 유지 |
+| FR-4.7 | 상태 계약 | 완료 | `service-contract.md`, `api-contract.md`, OpenAPI release gate | UI 회귀 유지 |
 | FR-4.8 | schema·Cypher·검증 근거 반환 | 완료 | `metadata`, evidence provenance, 검증 Cypher SHA-256, query audit | UI 버전 표시는 2단계 |
-| FR-4.9 | 프로젝트별 prompt·few-shot·Gold | 완료 | `prompts/*/manifest.yml`, `PromptRegistry`, `EvaluationRegistry` | 신규 프로젝트 자동 생성은 1-7 |
+| FR-4.9 | 프로젝트별 prompt·few-shot·Gold | 완료 | `prompts/*/manifest.yml`, `PromptRegistry`, `EvaluationRegistry`, readiness version linkage | 신규 도메인은 전문가 승인 기준셋 필요 |
 | FR-5.1~5.7 | Streamlit 질의·근거·대화 UI | 완료 | `frontend/streamlit_app.py`, UI 테스트 | 제품형 UX는 2단계에서 고도화 |
 | FR-6.1 | 정확도 평가 리포트 | 완료 | `stage16-validation.md`, `metrics.json` | 최신 릴리스마다 갱신 |
-| FR-6.2 | 최종 발표자료 | 부분 완료 | 원본 멘토링 자료·발표 문서 | 팀 최종 발표자료 별도 작성 |
+| FR-6.2 | 최종 발표자료 | 완료 | `final-presentation-evidence-pack.md`, 단계별 검증 문서 | 실제 발표 템플릿에 팀명·담당자 반영 |
 | FR-6.3 | 산출물 정리 | 완료 | README·docs·evaluation·Git | 최종 릴리스 태그 |
-| FR-6.4 | Trouble Shooting | 완료 | `stage*-validation.md`, `refactor-stage*.md` | README 확장 트랙 유지 |
+| FR-6.4 | Trouble Shooting | 완료 | `backend-troubleshooting.md`, `stage*-validation.md`, `refactor-stage*.md` | 운영 사례 지속 보강 |
 | FR-6.5 | 한계 공개 | 완료 | `presentation-limitations.md`, `data-gap.md` | 신규 기능 한계 추가 |
 
 ## 3. 비기능 요구사항 추적표
@@ -59,9 +59,9 @@ P3 필수 요구사항을 코드·테스트·검증 문서에 연결한다. 기�
 |---|---|---|---|
 | NFR-1 | Neo4j Community/Aura Free 동작 | 완료 | Community 기반 로컬·Docker 구성 |
 | NFR-2 | Git/GitHub 버전 관리 | 완료 | `main`, GitHub Actions |
-| NFR-3 | 모듈 소유권 | 부분 완료 | 코드 경계는 존재, 팀 담당자 이름 확정 필요 |
+| NFR-3 | 모듈 소유권 | 완료 | `module-ownership.md` 역할·모듈·교차 승인 규칙 |
 | NFR-4 | 비밀정보 비커밋 | 완료 | `.env.example`, CI secret 경계 |
-| NFR-5 | 재현 가능한 테스트·실행 | 완료 | `release_check.sh`, Compose, unit/E2E |
+| NFR-5 | 재현 가능한 테스트·실행 | 완료 | `release_check.sh`, `fresh_release_gate.sh`, Compose, unit/E2E |
 
 ## 4. 확장 트랙 문서 지도
 

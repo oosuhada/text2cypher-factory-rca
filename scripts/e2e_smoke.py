@@ -69,6 +69,28 @@ def expect_json(
     return json.loads(body), headers
 
 
+def expect_error(
+    url: str,
+    *,
+    expected_status: int,
+    method: str = "GET",
+    payload: dict[str, Any] | None = None,
+) -> tuple[dict[str, Any], dict[str, str]]:
+    try:
+        request(url, method=method, payload=payload)
+    except HTTPError as error:
+        headers = {
+            key.lower(): value for key, value in error.headers.items()
+        }
+        body = json.loads(error.read())
+        if error.code != expected_status:
+            raise RuntimeError(
+                f"HTTP {expected_status} 대신 {error.code}: {url}"
+            ) from error
+        return body, headers
+    raise RuntimeError(f"예상한 HTTP {expected_status} 오류가 없습니다: {url}")
+
+
 def check_api(api_url: str) -> None:
     live, headers = expect_json(f"{api_url}/api/v1/health/live")
     if live != {"status": "alive"}:
@@ -117,8 +139,38 @@ def check_api(api_url: str) -> None:
     feedback, _ = expect_json(f"{api_url}/api/v1/feedback/summary")
     if "decision_counts" not in feedback:
         raise RuntimeError("전문가 검증 요약 계약이 없습니다.")
+
+    draft_id = f"release-gate-{int(time.time())}"
+    draft, _ = expect_json(
+        f"{api_url}/api/v1/projects",
+        method="POST",
+        payload={
+            "project_id": draft_id,
+            "name": "Release Gate Draft",
+            "domain_type": "release-validation",
+            "dataset_name": "empty",
+        },
+    )
+    if draft["status"] != "draft":
+        raise RuntimeError(f"새 프로젝트 상태가 draft가 아닙니다: {draft}")
+    blocked, blocked_headers = expect_error(
+        f"{api_url}/api/v1/query",
+        expected_status=409,
+        method="POST",
+        payload={
+            "project_id": draft_id,
+            "question": "준비되지 않은 프로젝트를 조회해줘.",
+        },
+    )
+    if blocked.get("error", {}).get("code") != "STATE_CONFLICT":
+        raise RuntimeError(f"구조화된 readiness 오류가 없습니다: {blocked}")
+    if (
+        blocked.get("error", {}).get("request_id")
+        != blocked_headers.get("x-request-id")
+    ):
+        raise RuntimeError("오류 body와 X-Request-ID가 일치하지 않습니다.")
     print(
-        "API PASS · schema/search/query/feedback · "
+        "API PASS · schema/search/query/feedback/error-contract · "
         f"{result['row_count']} rows"
     )
 

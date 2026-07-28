@@ -60,6 +60,25 @@ class HealthResponse(BaseModel):
     checks: list[HealthCheck]
 
 
+class ErrorDetail(BaseModel):
+    code: str
+    category: Literal[
+        "request",
+        "authorization",
+        "state",
+        "dependency",
+        "internal",
+    ]
+    message: str
+    retryable: bool
+    request_id: str
+
+
+class ErrorEnvelope(BaseModel):
+    detail: Any
+    error: ErrorDetail
+
+
 class RuntimeResponse(BaseModel):
     provider: str
     model_name: str
