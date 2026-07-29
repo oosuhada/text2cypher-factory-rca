@@ -60,6 +60,18 @@ class QueryResponse(BaseModel):
     approval: dict[str, Any] = Field(default_factory=dict)
 
 
+class ToolInvokeRequest(BaseModel):
+    project_id: str = Field(min_length=3, max_length=63)
+    input: dict[str, Any] = Field(default_factory=dict)
+
+
+class ToolInvocationResponse(BaseModel):
+    invocation_id: str
+    tool_name: str
+    output: dict[str, Any]
+    trace: dict[str, Any]
+
+
 class AgentRunStateResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
 

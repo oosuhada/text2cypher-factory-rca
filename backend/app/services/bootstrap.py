@@ -39,6 +39,11 @@ from backend.app.services.project_dashboard_service import (
     ProjectDashboardService,
 )
 from backend.app.services.query_service import QueryService
+from backend.app.tools import ToolContext, ToolRegistry
+from backend.app.tools.capabilities import (
+    GraphQueryInput,
+    build_project_tool_registry,
+)
 
 
 @dataclass
@@ -52,6 +57,7 @@ class ServiceBundle:
     graph: GraphCatalogService | None = None
     feedback: FeedbackService | None = None
     checkpoint_store: RunCheckpointStore | None = None
+    tools: ToolRegistry | None = None
 
     def close(self) -> None:
         self.driver.close()
@@ -68,6 +74,34 @@ class ServiceBundle:
         routing_state: dict[str, Any] | None = None,
     ) -> dict:
         run_id = str(uuid4())
+
+        if self.tools is not None:
+            invocation = self.tools.invoke(
+                "graph_query_tool",
+                {
+                    "question": question,
+                    "routing_state": routing_state or {},
+                },
+                ToolContext(
+                    organization_id=organization_id,
+                    user_id=user_id,
+                    project_id=str(
+                        (routing_state or {}).get("selected_project_id")
+                        or self.query.agent.metadata.get("project_id", "cip-dmd")
+                    ),
+                    run_id=run_id,
+                    roles=tuple(roles),
+                    routing=routing_state or {},
+                ),
+            )
+            result = invocation.output
+            validation = dict(result.get("validation", {}))
+            validation["tool_trace"] = [
+                invocation.trace,
+                *validation.get("tool_trace", []),
+            ]
+            result["validation"] = validation
+            return result
 
         def invoke(service: Any) -> dict:
             parameters = signature(service.query).parameters
@@ -305,18 +339,60 @@ def build_service_bundle(
             audit_log_path=audit_log_path,
         )
     )
+    primary_query = QueryService(
+        agent,
+        audit_log_path=audit_log_path,
+        provider=resolved_provider,
+        usage_reader=(
+            model.usage_summary
+            if hasattr(model, "usage_summary")
+            else None
+        ),
+    )
+
+    def invoke_query_service(
+        service: QueryService,
+        payload: GraphQueryInput,
+        context: ToolContext,
+    ) -> dict[str, Any]:
+        return service.query(
+            payload.question,
+            organization_id=context.organization_id,
+            user_id=context.user_id,
+            roles=context.roles,
+            run_id=context.run_id,
+            routing_state=payload.routing_state or context.routing,
+        )
+
+    def graph_query_handler(
+        payload: GraphQueryInput,
+        context: ToolContext,
+    ) -> dict[str, Any]:
+        try:
+            return invoke_query_service(primary_query, payload, context)
+        except Exception as primary_error:
+            if fallback_query is None:
+                raise
+            fallback = invoke_query_service(fallback_query, payload, context)
+            if fallback.get("status") == "unsupported":
+                raise primary_error
+            fallback["fallback_reason"] = str(primary_error)
+            fallback["answer"] = (
+                "실시간 생성 모델 연결이 불안정해 검증된 Gold 쿼리로 "
+                "안전하게 전환했습니다. " + fallback["answer"]
+            )
+            return fallback
+
+    tools = build_project_tool_registry(
+        project_root=project_root,
+        project_id=project_id,
+        graph_query_handler=graph_query_handler,
+        audit_log_path=project_processed_root / "tool_audit.jsonl",
+        graph_timeout_seconds=agent_timeout_seconds + 5.0,
+    )
     return ServiceBundle(
         driver=driver,
-        query=QueryService(
-            agent,
-            audit_log_path=audit_log_path,
-            provider=resolved_provider,
-            usage_reader=(
-                model.usage_summary
-                if hasattr(model, "usage_summary")
-                else None
-            ),
-        ),
+        query=primary_query,
         fallback_query=fallback_query,
         dashboard=dashboard,
         graph=GraphCatalogService(driver=driver, database=database),
@@ -326,4 +402,5 @@ def build_service_bundle(
         provider=resolved_provider,
         model_name=resolved_model_name,
         checkpoint_store=checkpoint_store,
+        tools=tools,
     )

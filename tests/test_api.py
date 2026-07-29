@@ -4,9 +4,21 @@ from pathlib import Path
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
+from pydantic import BaseModel, ConfigDict
 
 from backend.app.api.main import ServiceRegistry, create_app
 from backend.app.projects import ProjectRegistry
+from backend.app.tools import ToolRegistry, ToolSpec
+
+
+class FakeToolInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    value: str
+
+
+class FakeToolOutput(BaseModel):
+    value: str
 
 
 class FakeDashboard:
@@ -166,6 +178,17 @@ class FakeBundle:
         self.query = FakeRunQuery()
         self.closed = False
         self.query_calls = []
+        self.tools = ToolRegistry()
+        self.tools.register(
+            ToolSpec(
+                name="echo_tool",
+                description="Echo a validated value.",
+                input_model=FakeToolInput,
+                output_model=FakeToolOutput,
+                handler=lambda payload, context: {"value": payload.value},
+                allowed_roles=frozenset({"Analyst"}),
+            )
+        )
 
     def query_with_fallback(self, question):
         self.query_calls.append(question)
@@ -448,6 +471,43 @@ class ApiContractTest(unittest.TestCase):
             "explicit_project",
         )
         self.assertEqual(len(self.bundle.query_calls), 1)
+
+    def test_tool_registry_list_and_invoke_contract(self):
+        listing = self.client.get(
+            "/api/v1/tools",
+            params={"project_id": "cip-dmd"},
+        )
+        self.assertEqual(listing.status_code, 200)
+        self.assertEqual(listing.json()["tools"][0]["name"], "echo_tool")
+        self.assertIn(
+            "properties",
+            listing.json()["tools"][0]["input_schema"],
+        )
+
+        denied = self.client.post(
+            "/api/v1/tools/echo_tool/invoke",
+            json={"project_id": "cip-dmd", "input": {"value": "hello"}},
+            headers={"X-User-Roles": "Viewer"},
+        )
+        self.assertEqual(denied.status_code, 403)
+        self.assertEqual(
+            denied.json()["detail"]["code"],
+            "TOOL_PERMISSION_DENIED",
+        )
+
+        invoked = self.client.post(
+            "/api/v1/tools/echo_tool/invoke",
+            json={"project_id": "cip-dmd", "input": {"value": "hello"}},
+            headers={
+                "X-Organization-ID": "factory-a",
+                "X-User-ID": "analyst-1",
+                "X-User-Roles": "Analyst",
+                "X-Run-ID": "run-tool-1",
+            },
+        )
+        self.assertEqual(invoked.status_code, 200)
+        self.assertEqual(invoked.json()["output"], {"value": "hello"})
+        self.assertEqual(invoked.json()["trace"]["run_id"], "run-tool-1")
 
     def test_query_rejects_empty_input(self):
         response = self.client.post(

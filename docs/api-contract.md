@@ -25,6 +25,8 @@
 | Neo4j 검증 | `POST /projects/{id}/connectors/neo4j/validate` | 201 | 404·422·502 |
 | Neo4j 승인 | `POST /projects/{id}/connectors/neo4j/{connector}/approve` | 200 | 404·422 |
 | 자연어 질의 | `POST /query` | 200 | 404·409·422·502 |
+| Tool 목록 | `GET /tools` | 200 | 404·502 |
+| Tool 실행 | `POST /tools/{tool_name}/invoke` | 200 | 403·404·422·502·504 |
 | 스키마 | `GET /graph/schema` | 200 | 404·422 |
 | 그래프 검색 | `GET /graph/search` | 200 | 404·422·502 |
 
@@ -77,7 +79,32 @@ draft → profiling → mapping_review → loading → validating
 - 프로젝트 선택과 질의 가능 여부는 다르다. 준비 전 workspace도 선택할
   수 있지만 `/query`는 HTTP 409로 차단된다.
 
-## 5. 호환성과 변경 규칙
+## 5. Tool 실행 계약
+
+Tool 입력·출력 schema는 `GET /tools?project_id=<id>`의 `input_schema`,
+`output_schema`와 OpenAPI 문서를 기준으로 한다. Tool 호출은
+`organization_id`, `user_id`, `project_id`, `run_id`, 역할을 포함하는 공통
+context를 사용한다.
+
+Tool 오류는 HTTP envelope의 `detail` 안에 다음 계약으로 포함된다.
+
+```json
+{
+  "code": "TOOL_PERMISSION_DENIED",
+  "category": "authorization",
+  "message": "etl_status_tool Tool을 실행할 권한이 없습니다.",
+  "retryable": false,
+  "details": {}
+}
+```
+
+- 입력 검증 실패: HTTP 422
+- 권한 실패: HTTP 403
+- Tool 없음: HTTP 404
+- Tool timeout: HTTP 504
+- 기타 Tool 실행 실패: HTTP 502
+
+## 6. 호환성과 변경 규칙
 
 - 필드 추가는 하위 호환 변경이다.
 - 기존 필드 제거·타입 변경·상태 의미 변경은 `/api/v2` 또는 명시적
