@@ -99,6 +99,14 @@ for document in \
   docs/enterprise-stage3-2-project-router.md \
   docs/enterprise-stage3-3-tool-registry.md \
   docs/enterprise-stage3-4-llamaindex-document-rag.md \
+  docs/architecture/README.md \
+  docs/architecture/vibe-coding-to-team-engineering.md \
+  docs/architecture/current-state.md \
+  docs/architecture/adr/README.md \
+  docs/architecture/adr/0001-record-architecture-decisions.md \
+  docs/architecture/adr/0002-modular-monolith-and-surface-boundaries.md \
+  docs/architecture/adr/0003-graph-and-document-evidence.md \
+  docs/architecture/adr/0004-defer-service-decomposition.md \
   evaluation/project_router.yml \
   evaluation/tool_registry_baseline.json \
   evaluation/document_rag_baseline.json \
