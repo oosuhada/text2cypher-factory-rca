@@ -6,7 +6,9 @@ const nextConfig: NextConfig = {
     ? ".next-playwright"
     : process.env.RELEASE_BUILD
       ? ".next-release"
-      : ".next",
+      : process.env.LAN_SHARE
+        ? ".next-lan"
+        : ".next",
   output: "standalone",
   async headers() {
     return [

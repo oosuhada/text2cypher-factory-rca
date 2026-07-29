@@ -33,6 +33,19 @@ class DeploymentContractTest(unittest.TestCase):
         self.assertIn("healthcheck", services["api"])
         self.assertIn("healthcheck", services["streamlit"])
 
+    def test_lan_share_script_configures_public_product_urls(self):
+        source = (PROJECT_ROOT / "scripts" / "run_lan.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('export P3_API_HOST="0.0.0.0"', source)
+        self.assertIn('export P3_WEB_HOST="0.0.0.0"', source)
+        self.assertIn("NEXT_PUBLIC_API_BASE_URL", source)
+        self.assertIn("NEXT_PUBLIC_INTERNAL_CONSOLE_URL", source)
+        self.assertIn("P3_CORS_ORIGINS", source)
+        self.assertIn("export LAN_SHARE=1", source)
+        self.assertIn("--server.address 0.0.0.0", source)
+        self.assertIn("Neo4j", (PROJECT_ROOT / "README.md").read_text(encoding="utf-8"))
+
     def test_images_use_non_root_runtime_users(self):
         python_dockerfile = (
             PROJECT_ROOT / "backend" / "Dockerfile"
