@@ -79,6 +79,28 @@ class EvaluationOutput(BaseModel):
     failures: list[dict[str, Any]] = Field(default_factory=list)
 
 
+class SearchDocsInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    query: str = Field(min_length=1, max_length=4000)
+    top_k: int = Field(default=5, ge=1, le=20)
+    current_only: bool = True
+    document_types: list[str] = Field(default_factory=list)
+
+
+class SearchDocsOutput(BaseModel):
+    project_id: str
+    query: str
+    status: str
+    answer: str
+    framework: str
+    framework_version: str
+    index_version: str
+    top_k: int
+    matches: list[dict[str, Any]] = Field(default_factory=list)
+    citations: list[dict[str, Any]] = Field(default_factory=list)
+
+
 def _metrics_path(project_root: Path, project_id: str) -> Path | None:
     candidates = [
         project_root
@@ -97,6 +119,7 @@ def build_project_tool_registry(
     project_root: Path,
     project_id: str,
     graph_query_handler: Callable[[GraphQueryInput, ToolContext], dict[str, Any]],
+    search_docs_handler: Callable[[SearchDocsInput, ToolContext], dict[str, Any]] | None,
     audit_log_path: Path,
     graph_timeout_seconds: float,
 ) -> ToolRegistry:
@@ -227,6 +250,18 @@ def build_project_tool_registry(
             timeout_seconds=5.0,
         )
     )
+    if search_docs_handler is not None:
+        registry.register(
+            ToolSpec(
+                name="search_docs_tool",
+                description="Search project documents with LlamaIndex and return source citations.",
+                input_model=SearchDocsInput,
+                output_model=SearchDocsOutput,
+                handler=search_docs_handler,
+                timeout_seconds=15.0,
+                max_retries=0,
+            )
+        )
     registry.register(
         ToolSpec(
             name="evaluation_tool",

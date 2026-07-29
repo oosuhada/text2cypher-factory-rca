@@ -60,6 +60,28 @@ class QueryResponse(BaseModel):
     approval: dict[str, Any] = Field(default_factory=dict)
 
 
+class DocumentIngestRequest(BaseModel):
+    document_id: str = Field(min_length=1, max_length=120)
+    title: str = Field(min_length=1, max_length=300)
+    version: str = Field(min_length=1, max_length=80)
+    document_type: str = Field(min_length=1, max_length=80)
+    source_filename: str = Field(min_length=1, max_length=255)
+    content: str | None = Field(default=None, max_length=2_000_000)
+    content_base64: str | None = Field(default=None, max_length=4_000_000)
+    effective_date: str | None = Field(default=None, max_length=40)
+    security_classification: str = Field(default="internal", max_length=80)
+    allowed_roles: list[str] = Field(default_factory=list, max_length=20)
+    is_current: bool = True
+
+
+class RagSearchRequest(BaseModel):
+    project_id: str = Field(min_length=3, max_length=63)
+    query: str = Field(min_length=1, max_length=4000)
+    top_k: int = Field(default=5, ge=1, le=20)
+    current_only: bool = True
+    document_types: list[str] = Field(default_factory=list, max_length=20)
+
+
 class ToolInvokeRequest(BaseModel):
     project_id: str = Field(min_length=3, max_length=63)
     input: dict[str, Any] = Field(default_factory=dict)

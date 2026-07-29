@@ -1,5 +1,5 @@
 {
-  "version": "enterprise-stage3-3-tool-registry-v1",
+  "version": "enterprise-stage3-3-tool-registry-v2",
   "required_tools": {
     "graph_query_tool": {
       "allowed_roles": [],
@@ -10,6 +10,10 @@
       "max_retries": 0
     },
     "schema_lookup_tool": {
+      "allowed_roles": [],
+      "max_retries": 0
+    },
+    "search_docs_tool": {
       "allowed_roles": [],
       "max_retries": 0
     },

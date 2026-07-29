@@ -48,6 +48,7 @@ from .schemas import (
     FeedbackRequest,
     FeedbackSummary,
     DatasetUploadRequest,
+    DocumentIngestRequest,
     ErrorEnvelope,
     GraphMappingRequest,
     Neo4jConnectorRequest,
@@ -62,6 +63,7 @@ from .schemas import (
     ProjectUpdate,
     QueryRequest,
     QueryResponse,
+    RagSearchRequest,
     RuntimeResponse,
     SubgraphResponse,
     ToolInvocationResponse,
@@ -887,6 +889,178 @@ def create_app(
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail=f"질의 처리에 실패했습니다: {error}",
             ) from error
+
+    @application.get("/api/v1/projects/{project_id}/documents")
+    def list_project_documents(
+        project_id: str,
+        request: Request,
+        include_superseded: bool = True,
+    ) -> dict[str, Any]:
+        roles = tuple(
+            role.strip()
+            for role in request.headers.get("X-User-Roles", "").split(",")
+            if role.strip()
+        )
+        try:
+            projects.require(project_id)
+            service = registry.get(project_id).document_rag
+            if service is None:
+                raise RuntimeError("문서 RAG 서비스가 구성되지 않았습니다.")
+            return {
+                "project_id": project_id,
+                "documents": service.list_documents(
+                    include_superseded=include_superseded,
+                    roles=roles,
+                    include_restricted=not set(roles).isdisjoint(
+                        {"Data Steward", "Admin"}
+                    ),
+                ),
+            }
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except RuntimeError as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+
+    @application.post("/api/v1/projects/{project_id}/documents", status_code=201)
+    def ingest_project_document(
+        project_id: str,
+        payload: DocumentIngestRequest,
+        request: Request,
+    ) -> dict[str, Any]:
+        roles = {
+            role.strip()
+            for role in request.headers.get("X-User-Roles", "").split(",")
+            if role.strip()
+        }
+        if roles.isdisjoint({"Data Steward", "Admin"}):
+            raise HTTPException(
+                status_code=403,
+                detail="문서 등록은 Data Steward 또는 Admin 권한이 필요합니다.",
+            )
+        try:
+            projects.require(project_id)
+            service = registry.get(project_id).document_rag
+            if service is None:
+                raise RuntimeError("문서 RAG 서비스가 구성되지 않았습니다.")
+            return service.ingest(
+                document_id=payload.document_id,
+                title=payload.title,
+                version=payload.version,
+                document_type=payload.document_type,
+                source_filename=payload.source_filename,
+                content=payload.content,
+                content_base64=payload.content_base64,
+                effective_date=payload.effective_date,
+                security_classification=payload.security_classification,
+                allowed_roles=payload.allowed_roles,
+                is_current=payload.is_current,
+            )
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+        except RuntimeError as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+
+    @application.post("/api/v1/projects/{project_id}/documents/index")
+    def rebuild_project_document_index(
+        project_id: str,
+        request: Request,
+    ) -> dict[str, Any]:
+        roles = {
+            role.strip()
+            for role in request.headers.get("X-User-Roles", "").split(",")
+            if role.strip()
+        }
+        if roles.isdisjoint({"Data Steward", "Admin"}):
+            raise HTTPException(status_code=403, detail="문서 재색인 권한이 없습니다.")
+        try:
+            projects.require(project_id)
+            service = registry.get(project_id).document_rag
+            if service is None:
+                raise RuntimeError("문서 RAG 서비스가 구성되지 않았습니다.")
+            return service.rebuild()
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except RuntimeError as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+
+    @application.get("/api/v1/projects/{project_id}/rag/readiness")
+    def document_rag_readiness(
+        project_id: str,
+        request: Request,
+    ) -> dict[str, Any]:
+        roles = tuple(
+            role.strip()
+            for role in request.headers.get("X-User-Roles", "").split(",")
+            if role.strip()
+        )
+        try:
+            projects.require(project_id)
+            service = registry.get(project_id).document_rag
+            if service is None:
+                raise RuntimeError("문서 RAG 서비스가 구성되지 않았습니다.")
+            return service.readiness(
+                roles=roles,
+                include_restricted=not set(roles).isdisjoint(
+                    {"Data Steward", "Admin"}
+                ),
+            )
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except RuntimeError as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+
+    @application.post("/api/v1/rag/search")
+    @application.post("/api/v1/rag/query")
+    def search_project_documents(
+        payload: RagSearchRequest,
+        request: Request,
+    ) -> dict[str, Any]:
+        try:
+            projects.require(payload.project_id)
+            bundle = registry.get(payload.project_id)
+            if bundle.tools is None:
+                raise RuntimeError("Tool Registry가 구성되지 않았습니다.")
+            roles = tuple(
+                role.strip()
+                for role in request.headers.get("X-User-Roles", "").split(",")
+                if role.strip()
+            )
+            invocation = bundle.tools.invoke(
+                "search_docs_tool",
+                {
+                    "query": payload.query,
+                    "top_k": payload.top_k,
+                    "current_only": payload.current_only,
+                    "document_types": payload.document_types,
+                },
+                ToolContext(
+                    organization_id=(
+                        request.headers.get("X-Organization-ID") or "local"
+                    ),
+                    user_id=request.headers.get("X-User-ID") or "anonymous",
+                    project_id=payload.project_id,
+                    run_id=request.headers.get("X-Run-ID") or str(uuid4()),
+                    roles=roles,
+                ),
+            )
+            return {
+                **invocation.output,
+                "tool_trace": invocation.trace,
+            }
+        except ToolError as error:
+            status_code = {
+                "TOOL_INPUT_INVALID": 422,
+                "TOOL_PERMISSION_DENIED": 403,
+                "TOOL_TIMEOUT": 504,
+                "TOOL_NOT_FOUND": 404,
+            }.get(error.code, 502)
+            raise HTTPException(status_code=status_code, detail=error.as_dict()) from error
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except RuntimeError as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
 
     @application.get("/api/v1/tools")
     def list_tools(project_id: str | None = None) -> dict[str, Any]:

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BookOpen,
   Check,
   Clipboard,
   Code2,
@@ -17,6 +18,7 @@ import type { QuerySession } from "@/components/query/use-query-session";
 const EVIDENCE_TABS = [
   { id: "table" as const, label: "결과", icon: Table2 },
   { id: "graph" as const, label: "그래프", icon: Network },
+  { id: "documents" as const, label: "문서", icon: BookOpen },
   { id: "cypher" as const, label: "Cypher", icon: Code2 },
   { id: "trace" as const, label: "검증", icon: ShieldCheck },
 ];
@@ -28,7 +30,7 @@ export function QueryEvidencePanel({ session }: { session: QuerySession }) {
       <div className="evidence-heading">
         <div>
           <strong>조회 근거</strong>
-          <span>답변과 동일한 결과표·관계 경로·안전 검증 기록</span>
+          <span>답변과 동일한 결과표·관계 경로·문서 출처·안전 검증 기록</span>
         </div>
         {response && <span className="mono">결과 {response.row_count}건</span>}
       </div>
@@ -85,6 +87,37 @@ function EvidenceContent({
             {response.evidence.relationship_count} · 드래그/스크롤로 탐색
           </p>
         </>
+      )}
+      {activeTab === "documents" && (
+        <div className="document-evidence-list">
+          {(response.evidence.documents ?? []).map((document) => (
+            <article className="document-evidence-card" key={`${document.citation_id}-${document.text}`}>
+              <div className="document-evidence-title">
+                <div>
+                  <strong>{document.title}</strong>
+                  <span>
+                    v{document.version} · {document.is_current === false ? "Superseded" : "Current"}
+                  </span>
+                </div>
+                <code>{document.citation_id}</code>
+              </div>
+              <p>{document.text}</p>
+              <div className="document-evidence-meta">
+                <span>Page {document.page_number}</span>
+                {document.section_title && <span>{document.section_title}</span>}
+                {typeof document.score === "number" && (
+                  <span>score {document.score.toFixed(3)}</span>
+                )}
+              </div>
+            </article>
+          ))}
+          {(response.evidence.documents ?? []).length === 0 && (
+            <div className="evidence-empty compact">
+              <BookOpen size={24} />
+              <p>이 답변에는 검색된 문서 근거가 없습니다.</p>
+            </div>
+          )}
+        </div>
       )}
       {activeTab === "cypher" && (
         <div className="cypher-panel">

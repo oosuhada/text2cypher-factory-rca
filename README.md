@@ -33,6 +33,7 @@ PPT 대조 후 수정 근거는 [방향 수정 기록](./docs/direction-correcti
 - [3-1 LangGraph State·Checkpoint 재설계](./docs/enterprise-stage3-1-langgraph-state-checkpoint.md)
 - [3-2 자연어 Project Router](./docs/enterprise-stage3-2-project-router.md)
 - [3-3 Tool Registry](./docs/enterprise-stage3-3-tool-registry.md)
+- [3-4 LlamaIndex 문서 RAG Tool](./docs/enterprise-stage3-4-llamaindex-document-rag.md)
 - [UX 내비게이션 재검증·수정](./docs/ux-navigation-correction-2026-07-28.md)
 - [Streamlit 리팩토링 1단계 · 공통 기반 분리](./docs/refactor-stage-common-foundation.md)
 - [Streamlit 리팩토링 2단계 · 페이지 모듈 분리](./docs/refactor-stage-page-modules.md)
@@ -106,7 +107,8 @@ Text-to-Cypher 질의까지 같은 파이프라인으로 실행할 수 있다. �
 | 제품화 2.9-5 — 실제 사용자 기준 Release Gate | **자동 Gate PASS · 수동 사용자 검토 PENDING** | 기존 사용자 동선 자동 검증 유지 · 최종 READY HOLD |
 | Agentic AI 3-1 — LangGraph State·Checkpoint | **구현·자동 검증 완료** | 시작 전 원격 tag 고정·공통 state v1·SQLite checkpoint·재시작 후 resume·migration 계약 |
 | Agentic AI 3-2 — 자연어 Project Router | **구현·자동 평가 완료** | 명시 선택 bypass·schema summary 검색·hashed semantic routing·confidence/margin gate·Top-1/Top-k 100% |
-| Agentic AI 3-3 — Tool Registry | **구현·자동 Gate 완료** | Pydantic I/O·권한·timeout·retry·오류 taxonomy·Tool audit·내장 Tool 5개 |
+| Agentic AI 3-3 — Tool Registry | **구현·자동 Gate 완료** | Pydantic I/O·권한·timeout·retry·오류 taxonomy·Tool audit·내장 Tool 6개 |
+| Agentic AI 3-4 — LlamaIndex 문서 RAG | **구현·자동 RAG Gate 완료** | 문서 ingestion·persisted vector index·citation·버전·역할 격리·React/Streamlit 근거 UI |
 
 ## 확정 데이터
 
@@ -252,6 +254,7 @@ bash scripts/run_lan.sh
 
 - React를 production build/start로 실행하고 FastAPI, Streamlit과 함께 `0.0.0.0`에 바인딩
 - 외부 모델 인증 실패로 데모가 중단되지 않도록 기본 API provider를 검증된 `gold` 모드로 실행
+- LlamaIndex 문서 RAG fixture를 프로젝트별 persisted index로 초기화
 - React가 팀원 브라우저에서도 호스트 FastAPI를 호출하도록 API 주소 설정
 - React의 Internal Console 링크를 호스트 Streamlit 주소로 설정
 - FastAPI CORS에 `http://<HOST_LAN_IP>:3000` 추가
@@ -308,7 +311,9 @@ cp .env.example .env
 - Neo4j DB 개발 도구: `http://127.0.0.1:7474`
 
 Docker Compose 제품 스택은 보안을 위해 기본적으로 loopback에만 공개한다.
-팀원 공유가 목적이면 위의 `bash scripts/run_lan.sh`를 사용한다.
+또한 문서 fixture bootstrap은 기본 비활성화되며 Data Steward/Admin이 승인된
+문서를 등록해야 한다. 팀원 공유가 목적이면 위의 `bash scripts/run_lan.sh`를
+사용한다.
 
 제품 사용자 자동 Gate는 다음 명령으로 확인한다.
 
@@ -329,7 +334,7 @@ Docker Compose 제품 스택은 보안을 위해 기본적으로 loopback에만 
 ## MVP 이후로 미룰 것
 
 - HDF5 센서 시계열 전체 적재
-- VectorDB 기반 예제 검색
+- cloud vector DB·production multilingual embedding·semantic reranker
 - 범용 GraphRAG와 다중 Agent
 - 인증된 다단계 승인, 외부 알림, PostgreSQL·pgvector·n8n 통합
 - 사용자 계정·서버 동기화 대화 기록

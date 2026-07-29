@@ -27,6 +27,10 @@
 | 자연어 질의 | `POST /query` | 200 | 404·409·422·502 |
 | Tool 목록 | `GET /tools` | 200 | 404·502 |
 | Tool 실행 | `POST /tools/{tool_name}/invoke` | 200 | 403·404·422·502·504 |
+| 문서 목록·등록 | `GET·POST /projects/{id}/documents` | 200·201 | 403·404·409·422 |
+| 문서 재색인 | `POST /projects/{id}/documents/index` | 200 | 403·404·409 |
+| RAG readiness | `GET /projects/{id}/rag/readiness` | 200 | 404·409 |
+| 문서 검색 | `POST /rag/search`, `POST /rag/query` | 200 | 403·404·409·422·502·504 |
 | 스키마 | `GET /graph/schema` | 200 | 404·422 |
 | 그래프 검색 | `GET /graph/search` | 200 | 404·422·502 |
 
@@ -104,7 +108,32 @@ Tool 오류는 HTTP envelope의 `detail` 안에 다음 계약으로 포함된다
 - Tool timeout: HTTP 504
 - 기타 Tool 실행 실패: HTTP 502
 
-## 6. 호환성과 변경 규칙
+## 6. LlamaIndex 문서 RAG 계약
+
+문서 등록은 `Data Steward` 또는 `Admin` 역할만 가능하다. Markdown, TXT와
+텍스트 레이어가 있는 PDF를 지원하며 동일 `document_id`, `version`,
+`source_sha256` 재등록은 중복 chunk를 만들지 않는다.
+
+검색 결과는 다음 필드를 포함한다.
+
+```json
+{
+  "framework": "LlamaIndex",
+  "framework_version": "0.14.23",
+  "index_version": "llamaindex-rag-v1",
+  "status": "success",
+  "matches": [],
+  "citations": []
+}
+```
+
+`current_only=true`가 기본값이다. 권한이 없거나 관련 문서를 찾지 못하면
+`status=empty`, `matches=[]`, `citations=[]`를 반환하며 출처를 추정하지 않는다.
+자연어 `/query`의 문서 전용 응답은 `cypher=""`, `rows=[]`이고 문서 근거는
+`evidence.documents`에 들어간다. Hybrid 응답은 기존 graph evidence와
+`evidence.documents`를 분리해 함께 반환한다.
+
+## 7. 호환성과 변경 규칙
 
 - 필드 추가는 하위 호환 변경이다.
 - 기존 필드 제거·타입 변경·상태 의미 변경은 `/api/v2` 또는 명시적

@@ -283,6 +283,170 @@ def render_data_intake_workflow() -> None:
                 hide_index=True,
             )
 
+def render_document_rag_workflow() -> None:
+    project_id = st.session_state.get("active_project_id", "cip-dmd")
+    role = st.session_state.get("preview_role", "Data Steward")
+    st.markdown("#### LlamaIndex 문서 RAG")
+    st.caption(
+        f"`{project_id}` 프로젝트의 매뉴얼·SOP·기준서를 버전별로 색인하고 "
+        "Query Studio의 문서 근거로 사용합니다."
+    )
+    api = FactoryGraphApiClient()
+    try:
+        readiness = api.document_rag_readiness(project_id, role=role)
+        documents = api.project_documents(project_id, role=role)["documents"]
+    except Exception as error:
+        st.error(f"문서 RAG 상태 조회 실패: {error}")
+        api.close()
+        return
+
+    metrics = st.columns(4)
+    metrics[0].metric("RAG 상태", "READY" if readiness["ready"] else "EMPTY")
+    metrics[1].metric("현재 문서", readiness["current_document_count"])
+    metrics[2].metric("전체 버전", readiness["document_count"])
+    metrics[3].metric("Index", readiness["index_version"])
+
+    if documents:
+        st.dataframe(
+            pd.DataFrame(
+                [
+                    {
+                        "document_id": item.get("document_id"),
+                        "title": item.get("title"),
+                        "version": item.get("version"),
+                        "type": item.get("document_type"),
+                        "current": item.get("is_current"),
+                        "effective_date": item.get("effective_date"),
+                        "classification": item.get("security_classification"),
+                    }
+                    for item in documents
+                ]
+            ),
+            width="stretch",
+            hide_index=True,
+        )
+    else:
+        st.info("등록된 문서가 없습니다.")
+
+    with st.expander("문서 등록·새 버전 색인"):
+        uploaded = st.file_uploader(
+            "Markdown, TXT 또는 text-layer PDF",
+            type=("md", "markdown", "txt", "pdf"),
+            key=f"rag-upload-{project_id}",
+        )
+        left, right = st.columns(2)
+        document_id = left.text_input(
+            "Document ID",
+            value="press-maintenance-manual" if project_id == "equipment-history" else "quality-sop",
+            key=f"rag-document-id-{project_id}",
+        )
+        version = right.text_input(
+            "Version", value="1.0", key=f"rag-version-{project_id}"
+        )
+        title = left.text_input(
+            "Title", value="", key=f"rag-title-{project_id}"
+        )
+        document_type = right.selectbox(
+            "Document type",
+            options=("maintenance_manual", "sop", "quality_standard", "work_instruction"),
+            key=f"rag-type-{project_id}",
+        )
+        effective_date = left.text_input(
+            "Effective date", placeholder="2026-07-29", key=f"rag-date-{project_id}"
+        )
+        allowed_roles = right.multiselect(
+            "Allowed roles (비우면 전체 조회 가능)",
+            options=("Viewer", "Analyst", "Domain Expert", "Data Steward", "Admin"),
+            key=f"rag-roles-{project_id}",
+        )
+        can_manage = role in {"Data Steward", "Admin"}
+        if not can_manage:
+            st.info("문서 등록·재색인은 Data Steward 또는 Admin 역할에서 가능합니다.")
+        if st.button(
+            "문서 색인",
+            type="primary",
+            width="stretch",
+            disabled=uploaded is None or not can_manage or not document_id or not version,
+            key=f"rag-index-{project_id}",
+        ):
+            try:
+                raw = uploaded.getvalue()
+                payload: dict[str, Any] = {
+                    "document_id": document_id,
+                    "title": title.strip() or uploaded.name,
+                    "version": version,
+                    "document_type": document_type,
+                    "source_filename": uploaded.name,
+                    "effective_date": effective_date.strip() or None,
+                    "allowed_roles": allowed_roles,
+                    "is_current": True,
+                }
+                if uploaded.name.lower().endswith(".pdf"):
+                    payload["content_base64"] = base64.b64encode(raw).decode("ascii")
+                else:
+                    payload["content"] = raw.decode("utf-8")
+                result = api.ingest_project_document(project_id, payload, role=role)
+                st.success(
+                    f"색인 완료 · {result['document_id']} v{result['version']} · "
+                    f"chunk {result.get('chunk_count', 0)}개"
+                )
+                st.rerun()
+            except Exception as error:
+                st.error(f"문서 색인 실패: {error}")
+
+        if st.button(
+            "전체 문서 재색인",
+            disabled=not can_manage,
+            key=f"rag-rebuild-{project_id}",
+        ):
+            try:
+                result = api.rebuild_document_index(project_id, role=role)
+                st.success(f"재색인 완료 · chunk {result['chunk_count']}개")
+                st.rerun()
+            except Exception as error:
+                st.error(f"재색인 실패: {error}")
+
+    st.markdown("##### Retrieval 테스트")
+    query = st.text_input(
+        "문서 질문",
+        value=(
+            "유압 펌프 교체 후 점검 절차"
+            if project_id == "equipment-history"
+            else "압력검사 실패 대응 절차"
+        ),
+        key=f"rag-search-{project_id}",
+    )
+    include_superseded = st.checkbox(
+        "폐기 버전도 검색",
+        value=False,
+        key=f"rag-search-old-{project_id}",
+    )
+    if st.button("문서 검색", key=f"rag-search-button-{project_id}"):
+        try:
+            result = api.search_documents(
+                project_id,
+                query,
+                current_only=not include_superseded,
+                role=role,
+            )
+            if result["matches"]:
+                for match in result["matches"]:
+                    with st.container(border=True):
+                        st.markdown(
+                            f"**{match['title']}** · `{match['citation_id']}`"
+                        )
+                        st.caption(
+                            f"v{match['version']} · Page {match['page_number']} · "
+                            f"score {match['score']:.3f}"
+                        )
+                        st.write(match["text"])
+            else:
+                st.info("접근 가능한 문서 근거를 찾지 못했습니다.")
+        except Exception as error:
+            st.error(f"문서 검색 실패: {error}")
+    api.close()
+
+
 def render_data_health_tab(
     services: ServiceBundle | None, snapshot: dict[str, Any] | None
 ) -> None:
@@ -326,6 +490,8 @@ def render_data_health_tab(
 
     st.divider()
     render_generic_dataset_upload()
+    st.divider()
+    render_document_rag_workflow()
     st.divider()
     render_data_intake_workflow()
 

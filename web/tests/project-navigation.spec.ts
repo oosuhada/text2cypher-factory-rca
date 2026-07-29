@@ -2,6 +2,7 @@ import { expect, type Page, test } from "@playwright/test";
 
 const API_ORIGIN = "http://127.0.0.1:8000";
 const APP_ORIGIN = "http://127.0.0.1:3100";
+const INTERNAL_CONSOLE_ORIGIN = "http://127.0.0.1:18502";
 
 const projects = [
   {
@@ -314,7 +315,7 @@ test("recommended project entry follows readiness", async ({ page }) => {
     .filter({ hasText: "Draft Project B" });
   await draftCard.getByRole("button", { name: "작업 열기" }).click();
   await expect(page).toHaveURL(
-    "http://localhost:8501/?workspace=data_sources&project_id=project-b",
+    `${INTERNAL_CONSOLE_ORIGIN}/?workspace=data_sources&project_id=project-b`,
   );
 
   await page.goto("/projects");
@@ -323,7 +324,7 @@ test("recommended project entry follows readiness", async ({ page }) => {
     .filter({ hasText: "Mapping Project C" });
   await mappingCard.getByRole("button", { name: "작업 열기" }).click();
   await expect(page).toHaveURL(
-    "http://localhost:8501/?workspace=pipeline&project_id=project-c",
+    `${INTERNAL_CONSOLE_ORIGIN}/?workspace=pipeline&project_id=project-c`,
   );
 
   await page.goto("/projects");
@@ -332,7 +333,7 @@ test("recommended project entry follows readiness", async ({ page }) => {
     .filter({ hasText: "Evaluation Project D" });
   await evaluationCard.getByRole("button", { name: "작업 열기" }).click();
   await expect(page).toHaveURL(
-    "http://localhost:8501/?workspace=dashboard&project_id=project-d",
+    `${INTERNAL_CONSOLE_ORIGIN}/?workspace=dashboard&project_id=project-d`,
   );
 
   await page.goto("/projects");

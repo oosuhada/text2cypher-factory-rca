@@ -751,7 +751,7 @@
 
 .evidence-tabs {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   border-bottom: 1px solid var(--line);
 }
 
@@ -777,6 +777,67 @@
 .evidence-content {
   min-height: 0;
   overflow: auto;
+}
+
+.document-evidence-list {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.document-evidence-card {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  background: color-mix(in srgb, var(--surface-solid) 78%, transparent);
+}
+
+.document-evidence-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.document-evidence-title strong,
+.document-evidence-title span {
+  display: block;
+}
+
+.document-evidence-title strong {
+  font-size: 0.72rem;
+}
+
+.document-evidence-title span,
+.document-evidence-title code,
+.document-evidence-meta {
+  color: var(--text-soft);
+  font-size: 0.57rem;
+}
+
+.document-evidence-title code {
+  max-width: 46%;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.document-evidence-card p {
+  margin: 12px 0;
+  color: var(--text);
+  font-size: 0.68rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.document-evidence-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+.evidence-empty.compact {
+  min-height: 280px;
 }
 
 .evidence-graph {

@@ -1,0 +1,46 @@
+{
+  "version": "enterprise-stage3-4-rag-fixtures-v1",
+  "projects": {
+    "equipment-history": [
+      {
+        "document_id": "press-maintenance-manual",
+        "title": "Press Maintenance Manual",
+        "version": "1.0",
+        "document_type": "maintenance_manual",
+        "effective_date": "2024-01-01",
+        "source_path": "evaluation/fixtures/rag/equipment-history/press-maintenance-v1.md",
+        "is_current": true
+      },
+      {
+        "document_id": "press-maintenance-manual",
+        "title": "프레스 정비 매뉴얼",
+        "version": "2.0",
+        "document_type": "maintenance_manual",
+        "effective_date": "2026-01-01",
+        "source_path": "evaluation/fixtures/rag/equipment-history/press-maintenance-v2.md",
+        "is_current": true
+      },
+      {
+        "document_id": "maintenance-sop",
+        "title": "설비 유지보수 SOP",
+        "version": "1.0",
+        "document_type": "sop",
+        "effective_date": "2026-02-01",
+        "source_path": "evaluation/fixtures/rag/equipment-history/maintenance-sop.md",
+        "is_current": true,
+        "allowed_roles": ["Analyst", "Domain Expert", "Data Steward", "Admin"]
+      }
+    ],
+    "cip-dmd": [
+      {
+        "document_id": "quality-inspection-sop",
+        "title": "제조 품질검사 SOP",
+        "version": "1.0",
+        "document_type": "quality_standard",
+        "effective_date": "2026-02-01",
+        "source_path": "evaluation/fixtures/rag/cip-dmd/quality-inspection-sop.md",
+        "is_current": true
+      }
+    ]
+  }
+}

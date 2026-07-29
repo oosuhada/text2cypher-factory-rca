@@ -1,0 +1,56 @@
+{
+  "version": "enterprise-stage3-4-llamaindex-rag-v1",
+  "framework": "LlamaIndex",
+  "framework_version": "0.14.23",
+  "index_version": "llamaindex-rag-v1",
+  "thresholds": {
+    "recall_at_5": 1.0,
+    "citation_precision": 1.0,
+    "fabricated_citation_count": 0,
+    "cross_project_leak_count": 0,
+    "unauthorized_document_leak_count": 0,
+    "superseded_current_only_count": 0
+  },
+  "retrieval_cases": [
+    {
+      "id": "maintenance-manual-current",
+      "project_id": "equipment-history",
+      "query": "유압 펌프 교체 후 압력 안정화 시험 절차",
+      "roles": ["Analyst"],
+      "expected_document_id": "press-maintenance-manual",
+      "expected_version": "2.0"
+    },
+    {
+      "id": "maintenance-sop-authorized",
+      "project_id": "equipment-history",
+      "query": "미해결 정비 이벤트 처리와 고위험 작업 허가 기준",
+      "roles": ["Analyst"],
+      "expected_document_id": "maintenance-sop",
+      "expected_version": "1.0"
+    },
+    {
+      "id": "manufacturing-quality-sop",
+      "project_id": "cip-dmd",
+      "query": "압력검사 실패 대응 절차와 상류 공정 확인 기준",
+      "roles": ["Analyst"],
+      "expected_document_id": "quality-inspection-sop",
+      "expected_version": "1.0"
+    }
+  ],
+  "security_cases": [
+    {
+      "id": "restricted-sop-viewer",
+      "project_id": "equipment-history",
+      "query": "고압 시험 승인된 기술자 작업 허가",
+      "roles": ["Viewer"],
+      "forbidden_document_id": "maintenance-sop"
+    },
+    {
+      "id": "irrelevant-no-citation",
+      "project_id": "equipment-history",
+      "query": "우주선 연료 탱크 규정",
+      "roles": ["Analyst"],
+      "expected_status": "empty"
+    }
+  ]
+}

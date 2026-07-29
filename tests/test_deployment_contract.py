@@ -34,6 +34,8 @@ class DeploymentContractTest(unittest.TestCase):
         self.assertIn("healthcheck", services["streamlit"])
         environment = services["api"]["environment"]
         self.assertIn("P3_LANGGRAPH_CHECKPOINT_BACKEND", environment)
+        self.assertIn("P3_RAG_BOOTSTRAP_FIXTURES", environment)
+        self.assertIn("P3_RAG_SIMILARITY_CUTOFF", environment)
         self.assertIn("LANGGRAPH_STRICT_MSGPACK", environment)
         self.assertEqual(
             services["api"]["volumes"],
@@ -54,6 +56,8 @@ class DeploymentContractTest(unittest.TestCase):
             'export P3_LANGGRAPH_CHECKPOINT_BACKEND="${P3_LANGGRAPH_CHECKPOINT_BACKEND:-sqlite}"',
             source,
         )
+        self.assertIn("P3_RAG_BOOTSTRAP_FIXTURES", source)
+        self.assertIn("P3_RAG_SIMILARITY_CUTOFF", source)
         self.assertIn("LANGGRAPH_STRICT_MSGPACK", source)
         self.assertIn("export LAN_SHARE=1", source)
         self.assertIn("--server.address 0.0.0.0", source)
@@ -80,6 +84,10 @@ class DeploymentContractTest(unittest.TestCase):
         )
         self.assertIn(
             "COPY --chown=factorygraph:factorygraph prompts /app/prompts",
+            python_dockerfile,
+        )
+        self.assertIn(
+            "COPY --chown=factorygraph:factorygraph evaluation /app/evaluation",
             python_dockerfile,
         )
         self.assertNotIn("COPY .env", python_dockerfile)
