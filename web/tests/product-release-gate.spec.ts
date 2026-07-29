@@ -485,6 +485,55 @@ test("keyboard entry exposes skip link and visible focus", async ({ page }) => {
   await expect(page).toHaveURL(/#main-content$/);
 });
 
+test("LAN HTTP query works without crypto.randomUUID", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window.crypto, "randomUUID", {
+      configurable: true,
+      value: undefined,
+    });
+  });
+  await mockProductApi(page);
+  await page.goto("/query?project_id=cip-dmd");
+  const question = "완제품 300002의 구성품을 보여줘.";
+  await page.getByLabel("제조 관계 질문").fill(question);
+  await page.getByRole("button", { name: "질문 전송" }).click();
+  await expect(page.getByText("자동화된 질의 결과입니다.")).toBeVisible();
+  await expect(page.getByText("crypto.randomUUID", { exact: false })).toHaveCount(0);
+  await page.getByRole("link", { name: "저장된 기록 보기" }).click();
+  await expect(page.getByRole("button", { name: question })).toBeVisible();
+});
+
+test("short mobile viewport keeps the header drawer attached to the viewport", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 404, height: 140 });
+  await mockProductApi(page);
+  await page.goto("/query?project_id=cip-dmd");
+  await page.getByRole("button", { name: "메뉴 열기" }).click();
+  const navigation = page.locator("#primary-navigation");
+  await expect(navigation).toBeVisible();
+  const geometry = await navigation.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const point = document.elementFromPoint(
+      window.innerWidth - 8,
+      window.innerHeight - 8,
+    );
+    return {
+      top: rect.top,
+      bottom: rect.bottom,
+      height: rect.height,
+      viewportHeight: window.innerHeight,
+      coversBottom: element.contains(point),
+      scrollable: element.scrollHeight > element.clientHeight,
+    };
+  });
+  expect(geometry.top).toBe(64);
+  expect(geometry.bottom).toBe(geometry.viewportHeight);
+  expect(geometry.height).toBe(geometry.viewportHeight - 64);
+  expect(geometry.coversBottom).toBe(true);
+  expect(geometry.scrollable).toBe(true);
+});
+
 test("long project name and empty registry remain usable", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await mockProductApi(page, { projects: [longProject] });

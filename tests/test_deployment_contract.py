@@ -42,6 +42,7 @@ class DeploymentContractTest(unittest.TestCase):
         self.assertIn("NEXT_PUBLIC_API_BASE_URL", source)
         self.assertIn("NEXT_PUBLIC_INTERNAL_CONSOLE_URL", source)
         self.assertIn("P3_CORS_ORIGINS", source)
+        self.assertIn('export P3_API_PROVIDER="${P3_API_PROVIDER:-gold}"', source)
         self.assertIn("export LAN_SHARE=1", source)
         self.assertIn("--server.address 0.0.0.0", source)
         web_runner = (PROJECT_ROOT / "scripts" / "run_web.sh").read_text(
