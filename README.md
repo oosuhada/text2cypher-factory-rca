@@ -31,6 +31,7 @@ PPT 대조 후 수정 근거는 [방향 수정 기록](./docs/direction-correcti
 - [2.9-4 핵심 RCA 사용자 여정 검증](./docs/enterprise-stage2-9-4-core-rca-journey.md)
 - [2.9-5 실제 사용자 기준 Product Release Gate](./docs/enterprise-stage2-9-5-product-release-gate.md)
 - [3-1 LangGraph State·Checkpoint 재설계](./docs/enterprise-stage3-1-langgraph-state-checkpoint.md)
+- [3-2 자연어 Project Router](./docs/enterprise-stage3-2-project-router.md)
 - [UX 내비게이션 재검증·수정](./docs/ux-navigation-correction-2026-07-28.md)
 - [Streamlit 리팩토링 1단계 · 공통 기반 분리](./docs/refactor-stage-common-foundation.md)
 - [Streamlit 리팩토링 2단계 · 페이지 모듈 분리](./docs/refactor-stage-page-modules.md)
@@ -103,6 +104,7 @@ Text-to-Cypher 질의까지 같은 파이프라인으로 실행할 수 있다. �
 | 제품화 2.9-4 — 핵심 RCA 사용자 여정 | **구현·자동 검증 완료** | 프로젝트 전환·추천 질문·단일 전송·Evidence·Graph·History·쓰기 차단·오류 복구 |
 | 제품화 2.9-5 — 실제 사용자 기준 Release Gate | **자동 Gate PASS · 수동 사용자 검토 PENDING** | 기존 사용자 동선 자동 검증 유지 · 최종 READY HOLD |
 | Agentic AI 3-1 — LangGraph State·Checkpoint | **구현·자동 검증 완료** | 시작 전 원격 tag 고정·공통 state v1·SQLite checkpoint·재시작 후 resume·migration 계약 |
+| Agentic AI 3-2 — 자연어 Project Router | **구현·자동 평가 완료** | 명시 선택 bypass·schema summary 검색·hashed semantic routing·confidence/margin gate·Top-1/Top-k 100% |
 
 ## 확정 데이터
 

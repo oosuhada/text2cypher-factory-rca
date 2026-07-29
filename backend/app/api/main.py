@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 
+from backend.app.agent.project_router import ProjectRouter
 from backend.app.services.bootstrap import ServiceBundle, build_service_bundle
 from neo4j import GraphDatabase, READ_ACCESS
 
@@ -290,6 +291,17 @@ def create_app(
         graph_counter=direct_graph_counts,
     )
     audit = AuditService(PROJECT_ROOT)
+    project_router = ProjectRouter(
+        projects,
+        schemas,
+        confidence_threshold=float(
+            os.getenv("P3_PROJECT_ROUTER_CONFIDENCE_THRESHOLD", "0.08")
+        ),
+        margin_threshold=float(
+            os.getenv("P3_PROJECT_ROUTER_MARGIN_THRESHOLD", "0.04")
+        ),
+        top_k=int(os.getenv("P3_PROJECT_ROUTER_TOP_K", "3")),
+    )
 
     @asynccontextmanager
     async def lifespan(application: FastAPI):
@@ -785,12 +797,50 @@ def create_app(
 
     @application.post("/api/v1/query", response_model=QueryResponse)
     def query_graph(payload: QueryRequest, request: Request) -> dict:
-        requested_project_id = (
-            payload.project_id
-            or projects.active_project_id()
-            or "cip-dmd"
-        )
         try:
+            routing_decision = project_router.route(
+                payload.question.strip(),
+                explicit_project_id=payload.project_id,
+            )
+            requested_project_id = routing_decision.selected_project_id
+            if requested_project_id is None:
+                return {
+                    "question": payload.question.strip(),
+                    "answer": (
+                        "질문이 여러 프로젝트와 비슷하거나 프로젝트 단서가 "
+                        "부족합니다. 제품·부품·품질 또는 설비·정비 같은 "
+                        "대상을 추가하거나 프로젝트를 직접 선택해 주세요."
+                    ),
+                    "status": "needs_clarification",
+                    "cypher": "",
+                    "rows": [],
+                    "row_count": 0,
+                    "metadata": {},
+                    "evidence": {
+                        "nodes": [],
+                        "relationships": [],
+                        "node_count": 0,
+                        "relationship_count": 0,
+                        "documents": [],
+                    },
+                    "validation": {
+                        "attempts": 0,
+                        "errors": ["PROJECT_ROUTING_NEEDS_CLARIFICATION"],
+                        "trace": [
+                            {
+                                "step": "route_project",
+                                "executed": False,
+                                **routing_decision.as_state(),
+                            }
+                        ],
+                        "tool_trace": [],
+                        "elapsed_ms": 0,
+                    },
+                    "usage": {},
+                    "provider": "router",
+                    "routing": routing_decision.as_state(),
+                    "project_id": None,
+                }
             projects.require(requested_project_id)
             report = readiness.inspect(requested_project_id)
             if not report["can_query"]:
@@ -818,10 +868,12 @@ def create_app(
                     ),
                     user_id=request.headers.get("X-User-ID") or "anonymous",
                     roles=roles,
+                    routing_state=routing_decision.as_state(),
                 )
             else:
                 result = bundle.query_with_fallback(payload.question.strip())
             result["project_id"] = requested_project_id
+            result["routing"] = routing_decision.as_state()
             return result
         except HTTPException:
             raise

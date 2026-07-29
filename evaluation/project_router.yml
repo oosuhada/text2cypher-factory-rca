@@ -1,0 +1,70 @@
+version: enterprise-stage3-2-router-v1
+thresholds:
+  top1_accuracy: 0.90
+  topk_accuracy: 1.0
+  clarification_accuracy: 1.0
+cases:
+  - id: cip-01
+    question: 완제품 300002의 구성품과 조립 관계를 보여줘.
+    expected_project_id: cip-dmd
+  - id: cip-02
+    question: 압력검사에 실패한 제품의 상류 공정을 찾아줘.
+    expected_project_id: cip-dmd
+  - id: cip-03
+    question: 표면거칠기 불합격 cylinder bottom의 연결 완제품은?
+    expected_project_id: cip-dmd
+  - id: cip-04
+    question: 밀링 anomaly class 2가 발생한 부품을 보여줘.
+    expected_project_id: cip-dmd
+  - id: cip-05
+    question: piston rod가 어떤 공정을 거쳤는지 알려줘.
+    expected_project_id: cip-dmd
+  - id: cip-06
+    question: 제품 genealogy와 품질검사 결과를 같이 확인해줘.
+    expected_project_id: cip-dmd
+  - id: cip-07
+    question: Kasto SBA 2에서 처리된 공정 실행과 이상 유형을 보여줘.
+    expected_project_id: cip-dmd
+  - id: cip-08
+    question: 재작업된 부품과 관련 품질 측정값을 찾아줘.
+    expected_project_id: cip-dmd
+  - id: maintenance-01
+    question: EQ-PRESS-01의 정비 이력을 날짜순으로 보여줘.
+    expected_project_id: equipment-history
+  - id: maintenance-02
+    question: 미해결 유지보수 이벤트와 담당 기술자를 알려줘.
+    expected_project_id: equipment-history
+  - id: maintenance-03
+    question: 설비별 총 다운타임과 정비 비용을 집계해줘.
+    expected_project_id: equipment-history
+  - id: maintenance-04
+    question: replacement 유형의 수리 기록을 보여줘.
+    expected_project_id: equipment-history
+  - id: maintenance-05
+    question: press 장비의 inspection 내역을 확인해줘.
+    expected_project_id: equipment-history
+  - id: maintenance-06
+    question: 비용이 1000달러 이상인 유지보수 작업은?
+    expected_project_id: equipment-history
+  - id: maintenance-07
+    question: 기술자별 repair 수행 건수를 알려줘.
+    expected_project_id: equipment-history
+  - id: maintenance-08
+    question: 교체 작업 이후 해결되지 않은 정비 이벤트를 찾아줘.
+    expected_project_id: equipment-history
+  - id: ambiguous-01
+    question: 최근 문제가 무엇인지 알려줘.
+    expected_project_id: null
+    expected_status: needs_clarification
+  - id: ambiguous-02
+    question: 전체 현황을 요약해줘.
+    expected_project_id: null
+    expected_status: needs_clarification
+  - id: ambiguous-03
+    question: 중요한 항목을 보여줘.
+    expected_project_id: null
+    expected_status: needs_clarification
+  - id: ambiguous-04
+    question: 지난달 이상한 점을 찾아줘.
+    expected_project_id: null
+    expected_status: needs_clarification

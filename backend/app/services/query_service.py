@@ -37,6 +37,7 @@ class QueryService:
         user_id: str = "anonymous",
         roles: tuple[str, ...] | list[str] = (),
         run_id: str | None = None,
+        routing_state: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         resolved_run_id = run_id or str(uuid4())
         before_usage = self.usage_reader() if self.usage_reader else {}
@@ -57,6 +58,7 @@ class QueryService:
                 organization_id=organization_id,
                 user_id=user_id,
                 roles=roles,
+                routing_state=routing_state,
             )
             if accepts_context
             else self.agent.invoke(question)
@@ -141,6 +143,13 @@ class QueryService:
             "error_count": len(validation.get("errors", [])),
             "execution_verified": validation.get(
                 "execution_verified", False
+            ),
+            "routing_status": result.get("routing", {}).get("status"),
+            "routing_confidence": result.get("routing", {}).get(
+                "confidence"
+            ),
+            "routed_project_id": result.get("routing", {}).get(
+                "selected_project_id"
             ),
             **result.get("usage", {}),
         }

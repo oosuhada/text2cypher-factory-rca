@@ -16,7 +16,8 @@
 | P3 백엔드·데이터·평가 | `READY` |
 | P3 최종 사용자 서비스 | `AUTOMATION PASS — MANUAL USER REVIEW PENDING` |
 | 3-1 LangGraph State·Checkpoint foundation | `IMPLEMENTED · AUTOMATION PASS` |
-| 3-2 이후 Agentic AI 기본 여정 병합 | `HOLD` |
+| 3-2 자연어 Project Router | `IMPLEMENTED · EVALUATION PASS` |
+| 3-3 이후 Agentic AI 기본 여정 병합 | `HOLD` |
 
 각 세부 단계는 다음 Gate를 통과한 뒤 다음 단계로 이동한다.
 
@@ -890,7 +891,7 @@ transport
 
 ## 3단계 — 프로젝트 4 차용 Agentic AI 버전
 
-진입 상태: **3-1 FOUNDATION COMPLETE · 3-2 이후 HOLD**
+진입 상태: **3-1·3-2 COMPLETE · 3-3 이후 HOLD**
 
 ### 3-1. LangGraph State와 Checkpoint 재설계
 
@@ -922,6 +923,17 @@ transport
 - 상태 schema version migration 테스트
 
 ### 3-2. 자연어 프로젝트 Router
+
+상태: **구현·자동 평가 완료**
+
+상세 기록:
+
+- [3-2 자연어 Project Router](./enterprise-stage3-2-project-router.md)
+- 명시적 `project_id` bypass: PASS
+- 미지정 질문 자동 라우팅: PASS
+- 낮은 confidence·margin clarification: PASS
+- 다중 도메인 평가 20건 Top-1·Top-k·clarification: 100%
+- 모호한 질문의 DB 실행: 0회
 
 목표:
 
