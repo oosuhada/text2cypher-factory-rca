@@ -14,6 +14,7 @@ QueryStatus = Literal[
     "failed",
     "needs_clarification",
     "unsupported",
+    "paused",
 ]
 
 
@@ -31,7 +32,7 @@ class QueryRequest(BaseModel):
 
 
 class QueryResponse(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
 
     question: str
     answer: str
@@ -46,6 +47,26 @@ class QueryResponse(BaseModel):
     caveat: str | None = None
     provider: str = "unknown"
     fallback_reason: str | None = None
+    run_id: str | None = None
+    thread_id: str | None = None
+    state_schema_version: int | None = None
+    organization: dict[str, Any] = Field(default_factory=dict)
+    user: dict[str, Any] = Field(default_factory=dict)
+    project: dict[str, Any] = Field(default_factory=dict)
+    run: dict[str, Any] = Field(default_factory=dict)
+    routing: dict[str, Any] = Field(default_factory=dict)
+    agent_schema: dict[str, Any] = Field(default_factory=dict, alias="schema")
+    recommendation: dict[str, Any] = Field(default_factory=dict)
+    approval: dict[str, Any] = Field(default_factory=dict)
+
+
+class AgentRunStateResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    state_schema_version: int
+    status: str
+    run: dict[str, Any]
+    checkpoint: dict[str, Any] = Field(default_factory=dict)
 
 
 class HealthCheck(BaseModel):

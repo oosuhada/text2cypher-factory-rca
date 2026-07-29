@@ -32,6 +32,13 @@ class DeploymentContractTest(unittest.TestCase):
         )
         self.assertIn("healthcheck", services["api"])
         self.assertIn("healthcheck", services["streamlit"])
+        environment = services["api"]["environment"]
+        self.assertIn("P3_LANGGRAPH_CHECKPOINT_BACKEND", environment)
+        self.assertIn("LANGGRAPH_STRICT_MSGPACK", environment)
+        self.assertEqual(
+            services["api"]["volumes"],
+            ["p3_processed:/app/data/processed"],
+        )
 
     def test_lan_share_script_configures_public_product_urls(self):
         source = (PROJECT_ROOT / "scripts" / "run_lan.sh").read_text(
@@ -43,6 +50,11 @@ class DeploymentContractTest(unittest.TestCase):
         self.assertIn("NEXT_PUBLIC_INTERNAL_CONSOLE_URL", source)
         self.assertIn("P3_CORS_ORIGINS", source)
         self.assertIn('export P3_API_PROVIDER="${P3_API_PROVIDER:-gold}"', source)
+        self.assertIn(
+            'export P3_LANGGRAPH_CHECKPOINT_BACKEND="${P3_LANGGRAPH_CHECKPOINT_BACKEND:-sqlite}"',
+            source,
+        )
+        self.assertIn("LANGGRAPH_STRICT_MSGPACK", source)
         self.assertIn("export LAN_SHARE=1", source)
         self.assertIn("--server.address 0.0.0.0", source)
         web_runner = (PROJECT_ROOT / "scripts" / "run_web.sh").read_text(

@@ -41,6 +41,7 @@ from backend.app.services.graph_service import node_search_contract
 from backend.app.etl.cli import password_from_keychain
 
 from .schemas import (
+    AgentRunStateResponse,
     FeedbackRecord,
     FeedbackRequest,
     FeedbackSummary,
@@ -783,7 +784,7 @@ def create_app(
             ) from error
 
     @application.post("/api/v1/query", response_model=QueryResponse)
-    def query_graph(payload: QueryRequest) -> dict:
+    def query_graph(payload: QueryRequest, request: Request) -> dict:
         requested_project_id = (
             payload.project_id
             or projects.active_project_id()
@@ -801,7 +802,25 @@ def create_app(
                     ),
                 )
             bundle = registry.get(requested_project_id)
-            result = bundle.query_with_fallback(payload.question.strip())
+            roles = tuple(
+                role.strip()
+                for role in request.headers.get("X-User-Roles", "").split(",")
+                if role.strip()
+            )
+            query_parameters = signature(
+                bundle.query_with_fallback
+            ).parameters
+            if "organization_id" in query_parameters:
+                result = bundle.query_with_fallback(
+                    payload.question.strip(),
+                    organization_id=(
+                        request.headers.get("X-Organization-ID") or "local"
+                    ),
+                    user_id=request.headers.get("X-User-ID") or "anonymous",
+                    roles=roles,
+                )
+            else:
+                result = bundle.query_with_fallback(payload.question.strip())
             result["project_id"] = requested_project_id
             return result
         except HTTPException:
@@ -812,6 +831,49 @@ def create_app(
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail=f"질의 처리에 실패했습니다: {error}",
+            ) from error
+
+    @application.get(
+        "/api/v1/agent/runs/{run_id}",
+        response_model=AgentRunStateResponse,
+    )
+    def agent_run_state(
+        run_id: str,
+        project_id: str | None = None,
+    ) -> dict[str, Any]:
+        resolved_project_id = (
+            project_id or projects.active_project_id() or "cip-dmd"
+        )
+        try:
+            projects.require(resolved_project_id)
+            return registry.get(resolved_project_id).query.run_state(run_id)
+        except (KeyError, ValueError) as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except RuntimeError as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+
+    @application.post(
+        "/api/v1/agent/runs/{run_id}/resume",
+        response_model=QueryResponse,
+    )
+    def resume_agent_run(
+        run_id: str,
+        project_id: str | None = None,
+    ) -> dict[str, Any]:
+        resolved_project_id = (
+            project_id or projects.active_project_id() or "cip-dmd"
+        )
+        try:
+            projects.require(resolved_project_id)
+            return registry.get(resolved_project_id).query.resume(run_id)
+        except (KeyError, ValueError) as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except RuntimeError as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        except Exception as error:
+            raise HTTPException(
+                status_code=502,
+                detail=f"LangGraph run 재개 실패: {error}",
             ) from error
 
     @application.post(

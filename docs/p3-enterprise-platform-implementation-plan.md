@@ -15,7 +15,8 @@
 |---|---|
 | P3 백엔드·데이터·평가 | `READY` |
 | P3 최종 사용자 서비스 | `AUTOMATION PASS — MANUAL USER REVIEW PENDING` |
-| 3단계 Agentic AI 기본 여정 병합 | `HOLD` |
+| 3-1 LangGraph State·Checkpoint foundation | `IMPLEMENTED · AUTOMATION PASS` |
+| 3-2 이후 Agentic AI 기본 여정 병합 | `HOLD` |
 
 각 세부 단계는 다음 Gate를 통과한 뒤 다음 단계로 이동한다.
 
@@ -32,8 +33,11 @@
 부족한 부분만 보강한다. 다만 사용자에게 노출할 이유가 없는 개발·평가 기능은
 보존을 우선하지 않고 내부 콘솔로 이동하거나 배포 프로필에서 제거한다.
 
-3단계는 2.9 전체 Gate가 통과된 뒤 시작한다. 2.9 진행 중에는 LangGraph Router,
-문서 RAG, 권고, HITL, 알림 같은 새 기능을 기본 사용자 여정에 추가하지 않는다.
+원칙적으로 3단계는 2.9 전체 Gate가 통과된 뒤 시작한다. 다만 사용자의 명시적
+결정으로 `p3-stage2-9-pre-stage3-v1` 복원 tag를 원격에 먼저 고정한 뒤,
+기존 제품 동선을 바꾸지 않는 3-1 공통 state·checkpoint foundation만 선행했다.
+2.9 수동 검토가 끝나기 전에는 Router, 문서 RAG, 권고, 실제 HITL, 알림을
+기본 사용자 여정에 추가하지 않는다.
 
 ---
 
@@ -879,15 +883,27 @@ transport
 - 필수 자동 검사: **PASS**
 - 실제 사용자 1인 이상 무설명 검토: **PENDING**
 - P3 최종 사용자 서비스: **NOT READY — MANUAL USER REVIEW PENDING**
-- 3-1 진입: **HOLD**
+- 3-1 foundation: **IMPLEMENTED · AUTOMATIC VALIDATION PASS**
+- 3-2 이후 진입: **HOLD**
 
 ---
 
 ## 3단계 — 프로젝트 4 차용 Agentic AI 버전
 
-진입 상태: **HOLD — 2.9-5 최종 Gate 통과 필요**
+진입 상태: **3-1 FOUNDATION COMPLETE · 3-2 이후 HOLD**
 
 ### 3-1. LangGraph State와 Checkpoint 재설계
+
+상태: **구현·자동 검증 완료**
+
+상세 기록:
+
+- [3-1 LangGraph State·Checkpoint 재설계](./enterprise-stage3-1-langgraph-state-checkpoint.md)
+- 시작 전 복원 tag: `p3-stage2-9-pre-stage3-v1`
+- 공통 state schema: `v1`
+- 로컬·LAN checkpointer: 프로젝트별 SQLite
+- 재시작 후 정적 interrupt run resume: PASS
+- legacy state migration·future version rejection: PASS
 
 목표:
 

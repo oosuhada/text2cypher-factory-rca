@@ -110,6 +110,51 @@ class FakeProjectGraphLoader:
         }
 
 
+class FakeRunQuery:
+    def run_state(self, run_id):
+        return {
+            "state_schema_version": 1,
+            "status": "paused",
+            "run": {
+                "run_id": run_id,
+                "thread_id": f"{run_id}:text2cypher:gold",
+                "status": "paused",
+            },
+            "checkpoint": {
+                "next": ["execute_cypher"],
+                "checkpoint_id": "checkpoint-1",
+            },
+        }
+
+    def resume(self, run_id):
+        return {
+            "question": "완제품 300002를 보여줘.",
+            "answer": "조회 결과 1행입니다.",
+            "status": "success",
+            "cypher": "MATCH (part:Part) RETURN part LIMIT 1",
+            "rows": [{"part_id": "300002"}],
+            "row_count": 1,
+            "metadata": {"project_id": "cip-dmd"},
+            "evidence": {
+                "nodes": [],
+                "relationships": [],
+                "node_count": 0,
+                "relationship_count": 0,
+            },
+            "validation": {
+                "attempts": 1,
+                "errors": [],
+                "trace": [],
+                "elapsed_ms": 1,
+            },
+            "usage": {},
+            "caveat": None,
+            "provider": "gold",
+            "run_id": run_id,
+            "thread_id": f"{run_id}:text2cypher:gold",
+        }
+
+
 class FakeBundle:
     provider = "gold"
     model_name = "gold-lookup"
@@ -118,6 +163,7 @@ class FakeBundle:
         self.dashboard = FakeDashboard()
         self.graph = FakeGraph()
         self.feedback = FakeFeedback()
+        self.query = FakeRunQuery()
         self.closed = False
 
     def query_with_fallback(self, question):
@@ -339,6 +385,27 @@ class ApiContractTest(unittest.TestCase):
         self.assertEqual(body["row_count"], 1)
         self.assertTrue(body["cypher"].startswith("MATCH"))
         self.assertIn("evidence", body)
+
+    def test_agent_run_state_and_resume_contract(self):
+        state_response = self.client.get(
+            "/api/v1/agent/runs/run-1",
+            params={"project_id": "cip-dmd"},
+        )
+        self.assertEqual(state_response.status_code, 200)
+        self.assertEqual(state_response.json()["state_schema_version"], 1)
+        self.assertEqual(state_response.json()["status"], "paused")
+        self.assertEqual(
+            state_response.json()["checkpoint"]["next"],
+            ["execute_cypher"],
+        )
+
+        resumed = self.client.post(
+            "/api/v1/agent/runs/run-1/resume",
+            params={"project_id": "cip-dmd"},
+        )
+        self.assertEqual(resumed.status_code, 200)
+        self.assertEqual(resumed.json()["status"], "success")
+        self.assertEqual(resumed.json()["run_id"], "run-1")
 
     def test_query_rejects_empty_input(self):
         response = self.client.post(

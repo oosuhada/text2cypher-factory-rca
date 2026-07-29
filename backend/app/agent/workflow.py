@@ -5,9 +5,11 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 import re
-from time import perf_counter
+from time import perf_counter, time
 from typing import Any, Callable, Literal
+from uuid import uuid4
 
+from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
 
 from backend.app.security.read_only import (
@@ -16,12 +18,19 @@ from backend.app.security.read_only import (
     validate_read_only,
 )
 
+from .checkpoints import checkpoint_config
 from .examples import GoldExampleStore
 from .graph import ReadGraph
 from .model import CypherModel, GoldCypherModel, normalize_model_cypher
 from .schema import SCHEMA_CONTEXT
 from .semantic_validation import validate_domain_semantics
-from .state import CypherState
+from .state import (
+    CypherState,
+    RunIdentity,
+    initial_state_sections,
+    migrate_agent_state,
+    utc_now,
+)
 
 
 def _event(step: str, **details: Any) -> list[dict[str, Any]]:
@@ -60,15 +69,58 @@ def create_text2cypher_agent(
     semantic_validator: Callable[[str, str], list[str]] = validate_domain_semantics,
     project_id: str = "cip-dmd",
     few_shot_count: int = 6,
+    checkpointer: BaseCheckpointSaver[Any] | None = None,
+    interrupt_before: list[str] | None = None,
 ):
     if max_attempts < 1:
         raise ValueError("max_attempts must be positive")
 
     def deadline_error(state: CypherState) -> str | None:
-        deadline = state.get("deadline_monotonic")
-        if deadline is not None and perf_counter() >= deadline:
+        deadline = state.get("deadline_at_epoch")
+        if deadline is not None and time() >= deadline:
             return "PIPELINE_TIMEOUT: Text-to-Cypher processing deadline exceeded."
         return None
+
+    def guard_question(state: CypherState) -> dict[str, Any]:
+        question = state.get("question", "").strip()
+        if detect_ambiguous_request(question):
+            return {
+                "errors": [
+                    "AMBIGUOUS_REQUEST: Specify an entity ID, condition, "
+                    "time range, or business metric."
+                ],
+                "status": "needs_clarification",
+                "next_action": "end",
+                "trace": _event(
+                    "guard_question",
+                    needs_clarification=True,
+                ),
+            }
+        if detect_write_request(question):
+            return {
+                "errors": [
+                    "WRITE_REQUEST: Data modification requests are blocked."
+                ],
+                "status": "blocked",
+                "next_action": "end",
+                "trace": _event("guard_question", blocked=True),
+            }
+        if isinstance(model, GoldCypherModel) and not model.supports(question):
+            return {
+                "errors": [
+                    "GOLD_UNSUPPORTED: Gold demo only supports registered "
+                    "example questions."
+                ],
+                "status": "unsupported",
+                "next_action": "end",
+                "trace": _event("guard_question", unsupported=True),
+            }
+        return {
+            "errors": [],
+            "status": "running",
+            "next_action": "generate",
+            "trace": _event("guard_question", passed=True),
+        }
 
     def generate_cypher(state: CypherState) -> dict[str, Any]:
         if error := deadline_error(state):
@@ -316,46 +368,92 @@ def create_text2cypher_agent(
             ),
         }
 
+    def finalize_run(state: CypherState) -> dict[str, Any]:
+        status = state.get("status", "failed")
+        run = {
+            **state.get("run", {}),
+            "status": status,
+            "updated_at": utc_now(),
+        }
+        graph_evidence = {
+            **state.get("evidence", {}).get("graph", {}),
+            "row_count": len(state.get("records", [])),
+            "execution_verified": bool(
+                state.get("validated_statement_sha256")
+                and status in {"success", "empty"}
+            ),
+        }
+        tool_trace = [
+            {"tool": "graph_query_tool", **event}
+            for event in state.get("trace", [])
+        ]
+        return {
+            "run": run,
+            "tool_trace": tool_trace,
+            "evidence": {
+                "graph": graph_evidence,
+                "documents": state.get("evidence", {}).get("documents", []),
+            },
+            "next_action": "end",
+        }
+
+    def route_after_guard(
+        state: CypherState,
+    ) -> Literal["generate_cypher", "finalize_run"]:
+        return (
+            "generate_cypher"
+            if state.get("next_action") == "generate"
+            else "finalize_run"
+        )
+
     def route_after_generation(
         state: CypherState,
-    ) -> Literal["validate_cypher", "__end__"]:
+    ) -> Literal["validate_cypher", "finalize_run"]:
         return (
             "validate_cypher"
             if state.get("next_action") == "validate"
-            else "__end__"
+            else "finalize_run"
         )
 
     def route_after_correction(
         state: CypherState,
-    ) -> Literal["validate_cypher", "__end__"]:
+    ) -> Literal["validate_cypher", "finalize_run"]:
         return (
             "validate_cypher"
             if state.get("next_action") == "validate"
-            else "__end__"
+            else "finalize_run"
         )
 
     def route_after_validation(
         state: CypherState,
-    ) -> Literal["correct_cypher", "execute_cypher", "__end__"]:
+    ) -> Literal["correct_cypher", "execute_cypher", "finalize_run"]:
         return {
             "correct": "correct_cypher",
             "execute": "execute_cypher",
-            "end": "__end__",
-        }.get(state.get("next_action", "end"), "__end__")
+            "end": "finalize_run",
+        }.get(state.get("next_action", "end"), "finalize_run")
 
     builder = StateGraph(CypherState)
+    builder.add_node("guard_question", guard_question)
     builder.add_node("generate_cypher", generate_cypher)
     builder.add_node("validate_cypher", validate_cypher)
     builder.add_node("correct_cypher", correct_cypher)
     builder.add_node("execute_cypher", execute_cypher)
-    builder.add_edge(START, "generate_cypher")
+    builder.add_node("finalize_run", finalize_run)
+    builder.add_edge(START, "guard_question")
+    builder.add_conditional_edges("guard_question", route_after_guard)
     builder.add_conditional_edges("generate_cypher", route_after_generation)
     builder.add_conditional_edges(
         "validate_cypher", route_after_validation
     )
     builder.add_conditional_edges("correct_cypher", route_after_correction)
-    builder.add_edge("execute_cypher", END)
-    return builder.compile()
+    builder.add_edge("execute_cypher", "finalize_run")
+    builder.add_edge("finalize_run", END)
+    return builder.compile(
+        checkpointer=checkpointer,
+        interrupt_before=interrupt_before,
+        name="factorygraph-text2cypher",
+    )
 
 
 class TextToCypherAgent:
@@ -371,12 +469,18 @@ class TextToCypherAgent:
         few_shot_count: int = 6,
         timeout_seconds: float = 30.0,
         metadata: dict[str, Any] | None = None,
+        checkpointer: BaseCheckpointSaver[Any] | None = None,
+        checkpoint_namespace: str = "text2cypher",
+        interrupt_before: list[str] | None = None,
     ):
         if timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be positive")
         self.max_attempts = max_attempts
         self.model = model
         self.timeout_seconds = timeout_seconds
+        self.project_id = project_id
+        self.checkpointer = checkpointer
+        self.checkpoint_namespace = checkpoint_namespace
         self.metadata = {
             "project_id": project_id,
             **(metadata or {}),
@@ -390,70 +494,141 @@ class TextToCypherAgent:
             semantic_validator=semantic_validator,
             project_id=project_id,
             few_shot_count=few_shot_count,
+            checkpointer=checkpointer,
+            interrupt_before=interrupt_before,
         )
 
-    def invoke(self, question: str) -> CypherState:
-        started = perf_counter()
-        normalized_question = question.strip()
-        base: CypherState = {
-            "question": normalized_question,
+    def _identity(
+        self,
+        *,
+        run_id: str | None,
+        thread_id: str | None,
+        organization_id: str,
+        user_id: str,
+        roles: tuple[str, ...] | list[str],
+    ) -> RunIdentity:
+        resolved_run_id = run_id or str(uuid4())
+        return RunIdentity(
+            organization_id=organization_id,
+            user_id=user_id,
+            project_id=self.project_id,
+            run_id=resolved_run_id,
+            thread_id=thread_id or resolved_run_id,
+            checkpoint_namespace=self.checkpoint_namespace,
+            roles=tuple(roles),
+        )
+
+    def _base_state(
+        self,
+        question: str,
+        identity: RunIdentity,
+    ) -> CypherState:
+        return {
+            **initial_state_sections(identity, self.metadata),
+            "question": question,
             "statement": "",
             "errors": [],
             "attempts": 0,
             "max_attempts": self.max_attempts,
             "records": [],
             "status": "running",
-            "next_action": "end",
+            "next_action": "generate",
             "trace": [],
             "statement_history": [],
-            "deadline_monotonic": started + self.timeout_seconds,
+            "deadline_at_epoch": time() + self.timeout_seconds,
             "validated_statement_sha256": "",
-            "metadata": self.metadata,
         }
-        if detect_ambiguous_request(normalized_question):
-            return {
-                **base,
-                "errors": [
-                    "AMBIGUOUS_REQUEST: Specify an entity ID, condition, "
-                    "time range, or business metric."
-                ],
-                "status": "needs_clarification",
-                "trace": [
-                    {
-                        "step": "guard_question",
-                        "needs_clarification": True,
-                    }
-                ],
-                "elapsed_ms": int((perf_counter() - started) * 1000),
-            }
-        if detect_write_request(question):
-            return {
-                **base,
-                "errors": ["WRITE_REQUEST: Data modification requests are blocked."],
-                "status": "blocked",
-                "trace": [{"step": "guard_question", "blocked": True}],
-                "elapsed_ms": int((perf_counter() - started) * 1000),
-            }
-        if isinstance(self.model, GoldCypherModel) and not self.model.supports(
-            normalized_question
-        ):
-            return {
-                **base,
-                "errors": [
-                    "GOLD_UNSUPPORTED: Gold demo only supports registered "
-                    "example questions."
-                ],
-                "status": "unsupported",
-                "trace": [
-                    {
-                        "step": "guard_question",
-                        "unsupported": True,
-                    }
-                ],
-                "elapsed_ms": int((perf_counter() - started) * 1000),
-            }
-        result: CypherState = self.workflow.invoke(
-            base
+
+    def invoke(
+        self,
+        question: str,
+        *,
+        run_id: str | None = None,
+        thread_id: str | None = None,
+        organization_id: str = "local",
+        user_id: str = "anonymous",
+        roles: tuple[str, ...] | list[str] = (),
+    ) -> CypherState:
+        started = perf_counter()
+        normalized_question = question.strip()
+        identity = self._identity(
+            run_id=run_id,
+            thread_id=thread_id,
+            organization_id=organization_id,
+            user_id=user_id,
+            roles=roles,
         )
-        result["elapsed_ms"] = int((perf_counter() - started) * 1000)
-        return result
+        config = checkpoint_config(identity) if self.checkpointer else None
+        result = self.workflow.invoke(
+            self._base_state(normalized_question, identity),
+            config=config,
+        )
+        migrated = migrate_agent_state(result)
+        migrated["elapsed_ms"] = int((perf_counter() - started) * 1000)
+        if config is not None:
+            snapshot = self.workflow.get_state(config)
+            if snapshot.next:
+                migrated["status"] = "paused"
+                migrated["run"] = {
+                    **migrated.get("run", {}),
+                    "status": "paused",
+                    "updated_at": utc_now(),
+                }
+        return migrated
+
+    def resume(self, thread_id: str) -> CypherState:
+        if self.checkpointer is None:
+            raise RuntimeError("This agent has no persistent checkpointer.")
+        identity = self._identity(
+            run_id=thread_id,
+            thread_id=thread_id,
+            organization_id="local",
+            user_id="anonymous",
+            roles=(),
+        )
+        config = checkpoint_config(identity)
+        snapshot = self.workflow.get_state(config)
+        if not snapshot.values:
+            raise KeyError(f"LangGraph run을 찾을 수 없습니다: {thread_id}")
+        migrated = migrate_agent_state(dict(snapshot.values))
+        if not snapshot.next:
+            return migrated
+        self.workflow.update_state(
+            config,
+            {
+                "state_schema_version": migrated["state_schema_version"],
+                "deadline_at_epoch": time() + self.timeout_seconds,
+                "run": {
+                    **migrated.get("run", {}),
+                    "status": "running",
+                    "updated_at": utc_now(),
+                },
+            },
+        )
+        started = perf_counter()
+        result = self.workflow.invoke(None, config=config)
+        resumed = migrate_agent_state(result)
+        resumed["elapsed_ms"] = int((perf_counter() - started) * 1000)
+        return resumed
+
+    def state(self, thread_id: str) -> dict[str, Any]:
+        if self.checkpointer is None:
+            raise RuntimeError("This agent has no persistent checkpointer.")
+        identity = self._identity(
+            run_id=thread_id,
+            thread_id=thread_id,
+            organization_id="local",
+            user_id="anonymous",
+            roles=(),
+        )
+        snapshot = self.workflow.get_state(checkpoint_config(identity))
+        if not snapshot.values:
+            raise KeyError(f"LangGraph run을 찾을 수 없습니다: {thread_id}")
+        state = dict(migrate_agent_state(dict(snapshot.values)))
+        state["checkpoint"] = {
+            "next": list(snapshot.next),
+            "checkpoint_id": snapshot.config.get("configurable", {}).get(
+                "checkpoint_id"
+            ),
+        }
+        return state

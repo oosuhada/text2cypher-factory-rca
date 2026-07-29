@@ -436,6 +436,7 @@ def format_agent_result(state: CypherState) -> dict[str, Any]:
         "prompt_version": metadata.get("prompt_version"),
         "verified_statement_sha256": verified_hash or None,
     }
+    evidence["documents"] = state.get("evidence", {}).get("documents", [])
     return {
         "question": state.get("question", ""),
         "answer": _answer_for(state),
@@ -449,11 +450,21 @@ def format_agent_result(state: CypherState) -> dict[str, Any]:
             "attempts": state.get("attempts", 0),
             "errors": state.get("errors", []),
             "trace": trace,
+            "tool_trace": state.get("tool_trace", []),
             "statement_history": state.get("statement_history", []),
             "elapsed_ms": state.get("elapsed_ms", 0),
             "verified_statement_sha256": verified_hash or None,
             "execution_verified": execution_verified,
         },
+        "state_schema_version": state.get("state_schema_version"),
+        "organization": state.get("organization", {}),
+        "user": state.get("user", {}),
+        "project": state.get("project", {}),
+        "run": state.get("run", {}),
+        "routing": state.get("routing", {}),
+        "schema": state.get("schema", {}),
+        "recommendation": state.get("recommendation", {}),
+        "approval": state.get("approval", {}),
         "caveat": (
             "연결 관계와 집계를 기반으로 한 검토 후보이며 "
             "물리적 인과관계를 확정하지 않습니다."

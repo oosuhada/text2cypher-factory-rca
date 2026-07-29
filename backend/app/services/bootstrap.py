@@ -3,12 +3,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from inspect import Parameter, signature
 import os
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 from neo4j import Driver, GraphDatabase
 
+from backend.app.agent.checkpoints import (
+    RunCheckpointStore,
+    build_checkpoint_store,
+)
 from backend.app.agent.examples import GoldExampleStore
 from backend.app.agent.graph import Neo4jReadGraph
 from backend.app.agent.model import (
@@ -45,17 +51,48 @@ class ServiceBundle:
     model_name: str
     graph: GraphCatalogService | None = None
     feedback: FeedbackService | None = None
+    checkpoint_store: RunCheckpointStore | None = None
 
     def close(self) -> None:
         self.driver.close()
+        if self.checkpoint_store is not None:
+            self.checkpoint_store.close()
 
-    def query_with_fallback(self, question: str) -> dict:
+    def query_with_fallback(
+        self,
+        question: str,
+        *,
+        organization_id: str = "local",
+        user_id: str = "anonymous",
+        roles: tuple[str, ...] | list[str] = (),
+    ) -> dict:
+        run_id = str(uuid4())
+
+        def invoke(service: Any) -> dict:
+            parameters = signature(service.query).parameters
+            accepts_context = (
+                "organization_id" in parameters
+                or any(
+                    parameter.kind is Parameter.VAR_KEYWORD
+                    for parameter in parameters.values()
+                )
+            )
+            if not accepts_context:
+                return service.query(question)
+            return service.query(
+                question,
+                organization_id=organization_id,
+                user_id=user_id,
+                roles=roles,
+                run_id=run_id,
+            )
+
         try:
-            return self.query.query(question)
+            return invoke(self.query)
         except Exception as primary_error:
             if self.fallback_query is None:
                 raise
-            fallback = self.fallback_query.query(question)
+            fallback = invoke(self.fallback_query)
             if fallback.get("status") == "unsupported":
                 raise primary_error
             fallback["fallback_reason"] = str(primary_error)
@@ -200,6 +237,16 @@ def build_service_bundle(
         agent_max_attempts = 3
         agent_timeout_seconds = 30.0
         few_shot_count = 6
+    processed_root = project_root / "data" / "processed"
+    try:
+        checkpoint_store = build_checkpoint_store(project_root, project_id)
+    except Exception:
+        driver.close()
+        raise
+    agent_metadata = {
+        **agent_metadata,
+        "checkpoint_backend": checkpoint_store.backend,
+    }
     agent = TextToCypherAgent(
         model=model,
         graph=primary_graph,
@@ -211,8 +258,9 @@ def build_service_bundle(
         few_shot_count=few_shot_count,
         timeout_seconds=agent_timeout_seconds,
         metadata=agent_metadata,
+        checkpointer=checkpoint_store.saver,
+        checkpoint_namespace=f"text2cypher:{resolved_provider}",
     )
-    processed_root = project_root / "data" / "processed"
     project_processed_root = (
         processed_root
         if project_id == "cip-dmd"
@@ -233,6 +281,8 @@ def build_service_bundle(
                 few_shot_count=few_shot_count,
                 timeout_seconds=agent_timeout_seconds,
                 metadata=agent_metadata,
+                checkpointer=checkpoint_store.saver,
+                checkpoint_namespace="text2cypher:gold-fallback",
             ),
             audit_log_path=audit_log_path,
             provider="gold-fallback",
@@ -273,4 +323,5 @@ def build_service_bundle(
         ),
         provider=resolved_provider,
         model_name=resolved_model_name,
+        checkpoint_store=checkpoint_store,
     )
