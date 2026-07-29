@@ -25,6 +25,8 @@ data/processed/projects/
 web/.env.local
 web/next-env.d.ts
 web/.next/
+web/.next-playwright/
+web/.next-release/
 web/node_modules/
 web/playwright-report/
 web/test-results/

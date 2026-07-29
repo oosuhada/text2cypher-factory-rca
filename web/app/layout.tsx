@@ -62,8 +62,13 @@ export default function RootLayout({
     >
       <body className={`${geist.variable} ${geistMono.variable}`}>
         <ProjectProvider>
+          <a className="skip-link" href="#main-content">
+            본문으로 건너뛰기
+          </a>
           <SiteHeader />
-          <main>{children}</main>
+          <main id="main-content" tabIndex={-1}>
+            {children}
+          </main>
           <SiteFooter />
         </ProjectProvider>
       </body>

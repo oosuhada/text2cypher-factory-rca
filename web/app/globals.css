@@ -39,11 +39,13 @@
 }
 
 html {
+  overflow-x: hidden;
   background: var(--bg);
   scroll-behavior: smooth;
 }
 
 body {
+  min-width: 0;
   min-height: 100vh;
   margin: 0;
   color: var(--text);
@@ -69,6 +71,28 @@ select {
 button,
 a {
   -webkit-tap-highlight-color: transparent;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 1000;
+  top: 12px;
+  left: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  color: var(--surface-solid);
+  background: var(--brand-strong);
+  transform: translateY(-160%);
+  transition: transform 120ms ease;
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 88%, white);
+  outline-offset: 3px;
 }
 
 ::selection {

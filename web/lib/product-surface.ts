@@ -1,6 +1,6 @@
 export const PRODUCT_NAVIGATION = [
   { href: "/projects", label: "Projects", icon: "projects" },
-  { href: "/query", label: "Query", icon: "query" },
+  { href: "/query", label: "Query Studio", icon: "query" },
   { href: "/graph", label: "Evidence / Graph", icon: "graph" },
   { href: "/history", label: "History", icon: "history" },
 ] as const;

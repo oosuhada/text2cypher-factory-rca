@@ -14,7 +14,7 @@
 | 범위 | 판정 |
 |---|---|
 | P3 백엔드·데이터·평가 | `READY` |
-| P3 최종 사용자 서비스 | `NOT READY — PRODUCTIZATION GATE REOPENED` |
+| P3 최종 사용자 서비스 | `AUTOMATION PASS — MANUAL USER REVIEW PENDING` |
 | 3단계 Agentic AI 기본 여정 병합 | `HOLD` |
 
 각 세부 단계는 다음 Gate를 통과한 뒤 다음 단계로 이동한다.
@@ -519,7 +519,7 @@
 
 ## 2.9단계 — P3 사용자 서비스 제품화·완성
 
-상태: **작업 예정 — 3단계 진입 차단 Gate**
+상태: **자동 Gate PASS · 실제 사용자 수동 검토 PENDING — 3단계 진입 HOLD**
 
 ### 2.9 추진 배경
 
@@ -809,7 +809,11 @@ transport
 
 ### 2.9-5. 실제 사용자 기준 Release Gate
 
-상태: **다음 진행 단계**
+상태: **자동 Gate 구현·검증 완료 · 실제 사용자 무설명 수행 검토 PENDING**
+
+검증 기록:
+
+- [`enterprise-stage2-9-5-product-release-gate.md`](./enterprise-stage2-9-5-product-release-gate.md)
 
 목적:
 
@@ -869,6 +873,13 @@ transport
 - 기존 `refactor-final-audit-and-phase3-readiness.md`의 준비도 판정을
   새 2.9 결과로 대체
 - 이 Gate가 통과된 커밋·태그 이후에만 3-1 작업 시작
+
+현재 판정:
+
+- 필수 자동 검사: **PASS**
+- 실제 사용자 1인 이상 무설명 검토: **PENDING**
+- P3 최종 사용자 서비스: **NOT READY — MANUAL USER REVIEW PENDING**
+- 3-1 진입: **HOLD**
 
 ---
 

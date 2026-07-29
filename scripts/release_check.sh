@@ -8,38 +8,45 @@ if [[ ! -x ".venv/bin/python" ]]; then
   echo "Missing .venv. Install backend/requirements.txt first." >&2
   exit 1
 fi
-if ! command -v pnpm >/dev/null 2>&1; then
-  echo "pnpm is required for the web release check." >&2
+if command -v pnpm >/dev/null 2>&1; then
+  PNPM=(pnpm)
+elif command -v corepack >/dev/null 2>&1; then
+  PNPM=(corepack pnpm)
+else
+  echo "pnpm or corepack is required for the web release check." >&2
   exit 1
 fi
 
-echo "[1/9] Python regression suite"
+echo "[1/10] Python regression suite"
 .venv/bin/python -m unittest discover -s tests -v
 
-echo "[2/9] Backend API·traceability·secret contract"
+echo "[2/10] Backend API·traceability·secret contract"
 .venv/bin/python scripts/release_gate.py --json
 
-echo "[3/9] Enterprise UI quality·visual baseline"
+echo "[3/10] Enterprise UI quality·visual baseline"
 .venv/bin/python scripts/ui_quality_gate.py
 
-echo "[4/9] Cross-surface architecture·critical UX contract"
+echo "[4/10] Cross-surface architecture·critical UX contract"
 .venv/bin/python scripts/cross_surface_release_gate.py
 
-echo "[5/9] Next.js lint and production build"
+echo "[5/10] Product-user release contract"
+.venv/bin/python scripts/product_user_release_gate.py --json
+
+echo "[6/10] Next.js lint and production build"
 (
   cd web
-  pnpm install --frozen-lockfile
-  pnpm lint
-  pnpm build
+  "${PNPM[@]}" install --frozen-lockfile
+  "${PNPM[@]}" lint
+  RELEASE_BUILD=1 "${PNPM[@]}" build
 )
 
-echo "[6/9] React browser journey regression"
+echo "[7/10] React browser journey regression"
 (
   cd web
-  pnpm test:e2e
+  "${PNPM[@]}" test:e2e
 )
 
-echo "[7/9] Script syntax"
+echo "[8/10] Script syntax"
 for script in scripts/*.sh infra/*.sh; do
   bash -n "$script"
 done
@@ -47,8 +54,9 @@ done
 .venv/bin/python -m py_compile scripts/release_gate.py
 .venv/bin/python -m py_compile scripts/ui_quality_gate.py
 .venv/bin/python -m py_compile scripts/cross_surface_release_gate.py
+.venv/bin/python -m py_compile scripts/product_user_release_gate.py
 
-echo "[8/9] Container contract"
+echo "[9/10] Container contract"
 if command -v docker >/dev/null 2>&1; then
   docker compose \
     --env-file "${P3_ENV_FILE:-.env}" \
@@ -58,7 +66,7 @@ else
   echo "Docker CLI not installed; compose validation deferred to CI."
 fi
 
-echo "[9/9] Release documentation"
+echo "[10/10] Release documentation"
 for document in \
   docs/api-contract.md \
   docs/backend-lineage.md \
@@ -67,6 +75,8 @@ for document in \
   docs/final-presentation-evidence-pack.md \
   docs/refactor-stage5-final-release-gate.md \
   docs/refactor-final-audit-and-phase3-readiness.md \
+  docs/enterprise-stage2-9-5-product-release-gate.md \
+  evaluation/product_user_release_baseline.json \
   release/backend-v1.yml; do
   test -s "$document"
 done

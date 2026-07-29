@@ -13,10 +13,19 @@ export default defineConfig({
     screenshot: "only-on-failure",
     ...devices["Desktop Chrome"],
   },
-  webServer: {
-    command: "pnpm exec next dev -H 127.0.0.1 -p 3100",
-    url: "http://127.0.0.1:3100",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  webServer: [
+    {
+      command: "PLAYWRIGHT=1 corepack pnpm exec next dev -H 127.0.0.1 -p 3100",
+      url: "http://127.0.0.1:3100",
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+    },
+    {
+      command:
+        "P3_UI_MODE=demo P3_UI_ROLE='Data Steward' ../.venv/bin/streamlit run ../frontend/streamlit_app.py --server.address 127.0.0.1 --server.port 8501 --server.headless true",
+      url: "http://127.0.0.1:8501",
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+    },
+  ],
 });
