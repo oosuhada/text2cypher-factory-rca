@@ -44,6 +44,12 @@ class DeploymentContractTest(unittest.TestCase):
         self.assertIn("P3_CORS_ORIGINS", source)
         self.assertIn("export LAN_SHARE=1", source)
         self.assertIn("--server.address 0.0.0.0", source)
+        web_runner = (PROJECT_ROOT / "scripts" / "run_web.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('if [[ "${LAN_SHARE:-0}" == "1" ]]', web_runner)
+        self.assertIn('"${PNPM[@]}" build', web_runner)
+        self.assertIn('"${PNPM[@]}" start', web_runner)
         self.assertIn("Neo4j", (PROJECT_ROOT / "README.md").read_text(encoding="utf-8"))
 
     def test_images_use_non_root_runtime_users(self):

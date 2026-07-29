@@ -241,8 +241,10 @@ bash scripts/run_lan.sh
 ```
 
 이 스크립트는 호스트의 LAN IP를 자동 감지하고 다음 항목을 함께 설정한다.
+첫 실행에서는 LAN 주소가 React 번들에 정확히 반영되도록 production build를
+수행하므로 제품 UI가 열리기까지 몇 초 더 걸릴 수 있다.
 
-- React, FastAPI, Streamlit을 `0.0.0.0`에 바인딩
+- React를 production build/start로 실행하고 FastAPI, Streamlit과 함께 `0.0.0.0`에 바인딩
 - React가 팀원 브라우저에서도 호스트 FastAPI를 호출하도록 API 주소 설정
 - React의 Internal Console 링크를 호스트 Streamlit 주소로 설정
 - FastAPI CORS에 `http://<HOST_LAN_IP>:3000` 추가
