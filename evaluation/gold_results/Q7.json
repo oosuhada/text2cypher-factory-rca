@@ -1,0 +1,34 @@
+{
+  "question_id": "Q7",
+  "category": "anomaly_by_equipment",
+  "question": "이상 유형별로 어떤 장비에서 몇 건 발생했는지 보여줘.",
+  "expected_status": "success",
+  "row_count": 4,
+  "rows_sha256": "bc3ef7811a275d71047d8bd95e325437ce0ff63f0886d14335bc8b14dbc2ff18",
+  "normalized_rows": [
+    {
+      "anomaly_code": "1",
+      "anomaly_name": "Misaligned raw cutting material",
+      "equipment": "DMC 50H",
+      "run_count": 98
+    },
+    {
+      "anomaly_code": "1",
+      "anomaly_name": "Misaligned raw cutting material",
+      "equipment": "Kasto SBA 2",
+      "run_count": 81
+    },
+    {
+      "anomaly_code": "2",
+      "anomaly_name": "Uneven milling-jig clamping",
+      "equipment": "DMC 50H",
+      "run_count": 39
+    },
+    {
+      "anomaly_code": "3",
+      "anomaly_name": "Miscellaneous process error",
+      "equipment": "DMC 50H",
+      "run_count": 11
+    }
+  ]
+}

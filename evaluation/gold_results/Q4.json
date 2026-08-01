@@ -1,0 +1,306 @@
+{
+  "question_id": "Q4",
+  "category": "reverse_impact_from_process_anomaly",
+  "question": "밀링 anomaly class 2가 발생한 cylinder bottom과 조립된 완제품의 최종 QC 결과를 보여줘.",
+  "expected_status": "success",
+  "row_count": 37,
+  "rows_sha256": "95d5507eedb17784599fdfb9ec36f0c9f61a593e3a5aea05f9bb820916eec359",
+  "normalized_rows": [
+    {
+      "bottom_id": "109001",
+      "cylinder_id": "300039",
+      "pressure_qc_pass": true,
+      "pressure_value": "13070.167",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "109002",
+      "cylinder_id": "300086",
+      "pressure_qc_pass": true,
+      "pressure_value": "13336.833",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "109003",
+      "cylinder_id": "300093",
+      "pressure_qc_pass": true,
+      "pressure_value": "12825.667",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "110301",
+      "cylinder_id": "300053",
+      "pressure_qc_pass": true,
+      "pressure_value": "7799.667",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "110302",
+      "cylinder_id": "300136",
+      "pressure_qc_pass": true,
+      "pressure_value": "12787.167",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "110402",
+      "cylinder_id": "300047",
+      "pressure_qc_pass": true,
+      "pressure_value": "13457.167",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "110403",
+      "cylinder_id": "300088",
+      "pressure_qc_pass": true,
+      "pressure_value": "13711",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "110503",
+      "cylinder_id": "300084",
+      "pressure_qc_pass": true,
+      "pressure_value": "11885.667",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "110504",
+      "cylinder_id": "300087",
+      "pressure_qc_pass": true,
+      "pressure_value": "12813.5",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "110602",
+      "cylinder_id": "300099",
+      "pressure_qc_pass": true,
+      "pressure_value": "13088",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "110604",
+      "cylinder_id": "300097",
+      "pressure_qc_pass": true,
+      "pressure_value": "13082.5",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "110901",
+      "cylinder_id": "300100",
+      "pressure_qc_pass": true,
+      "pressure_value": "13403.833",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "110902",
+      "cylinder_id": "300056",
+      "pressure_qc_pass": true,
+      "pressure_value": "12913.667",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "110903",
+      "cylinder_id": "300095",
+      "pressure_qc_pass": true,
+      "pressure_value": "12413.833",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "111001",
+      "cylinder_id": "300058",
+      "pressure_qc_pass": true,
+      "pressure_value": "13036",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "111002",
+      "cylinder_id": "300045",
+      "pressure_qc_pass": true,
+      "pressure_value": "13240.833",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "111003",
+      "cylinder_id": "300116",
+      "pressure_qc_pass": true,
+      "pressure_value": "12945.167",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "111203",
+      "cylinder_id": "300048",
+      "pressure_qc_pass": false,
+      "pressure_value": "7461.167",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "111404",
+      "cylinder_id": "300041",
+      "pressure_qc_pass": true,
+      "pressure_value": "13475",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "111704",
+      "cylinder_id": "300089",
+      "pressure_qc_pass": true,
+      "pressure_value": "13397",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "111802",
+      "cylinder_id": "300043",
+      "pressure_qc_pass": true,
+      "pressure_value": "8791.167",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "112502",
+      "cylinder_id": "300051",
+      "pressure_qc_pass": true,
+      "pressure_value": "13017",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "112503",
+      "cylinder_id": "300090",
+      "pressure_qc_pass": true,
+      "pressure_value": "12928.167",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "112504",
+      "cylinder_id": "300037",
+      "pressure_qc_pass": true,
+      "pressure_value": "13407.5",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "112601",
+      "cylinder_id": "300035",
+      "pressure_qc_pass": true,
+      "pressure_value": "13764",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "112602",
+      "cylinder_id": "300049",
+      "pressure_qc_pass": true,
+      "pressure_value": "13098.833",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "112603",
+      "cylinder_id": "300046",
+      "pressure_qc_pass": true,
+      "pressure_value": "13062.667",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "112604",
+      "cylinder_id": "300083",
+      "pressure_qc_pass": true,
+      "pressure_value": "12721.167",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "112701",
+      "cylinder_id": "300092",
+      "pressure_qc_pass": true,
+      "pressure_value": "12248.167",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "112702",
+      "cylinder_id": "300079",
+      "pressure_qc_pass": true,
+      "pressure_value": "13023.833",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "112703",
+      "cylinder_id": "300091",
+      "pressure_qc_pass": true,
+      "pressure_value": "13673.333",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "114001",
+      "cylinder_id": "300098",
+      "pressure_qc_pass": true,
+      "pressure_value": "13479",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "114402",
+      "cylinder_id": "300060",
+      "pressure_qc_pass": true,
+      "pressure_value": "8636",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "114404",
+      "cylinder_id": "300102",
+      "pressure_qc_pass": true,
+      "pressure_value": "9043.833",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "114704",
+      "cylinder_id": "300132",
+      "pressure_qc_pass": true,
+      "pressure_value": "13416.333",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "114902",
+      "cylinder_id": "300094",
+      "pressure_qc_pass": true,
+      "pressure_value": "13537.667",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    },
+    {
+      "bottom_id": "122601",
+      "cylinder_id": "300082",
+      "pressure_qc_pass": true,
+      "pressure_value": "13214.167",
+      "rework_qc_pass": true,
+      "rework_value": "n"
+    }
+  ]
+}

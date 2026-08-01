@@ -1,0 +1,34 @@
+{
+  "question_id": "Q13",
+  "category": "anomaly_taxonomy_summary",
+  "question": "정상과 이상 유형별 전체 공정 실행 건수를 보여줘.",
+  "expected_status": "success",
+  "row_count": 4,
+  "rows_sha256": "3636322a10e01df3e059744def4cc1f82d964d1bd0d0acfe3102bcb9faef1906",
+  "normalized_rows": [
+    {
+      "anomaly_code": "0",
+      "anomaly_name": "Normal process",
+      "is_normal": true,
+      "run_count": 2529
+    },
+    {
+      "anomaly_code": "1",
+      "anomaly_name": "Misaligned raw cutting material",
+      "is_normal": false,
+      "run_count": 179
+    },
+    {
+      "anomaly_code": "2",
+      "anomaly_name": "Uneven milling-jig clamping",
+      "is_normal": false,
+      "run_count": 39
+    },
+    {
+      "anomaly_code": "3",
+      "anomaly_name": "Miscellaneous process error",
+      "is_normal": false,
+      "run_count": 11
+    }
+  ]
+}

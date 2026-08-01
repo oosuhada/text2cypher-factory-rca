@@ -1,0 +1,40 @@
+{
+  "question_id": "Q10",
+  "category": "reworked_part_quality",
+  "question": "재작업 piston rod 중 품질 불합격이 있는 부품을 보여줘.",
+  "expected_status": "success",
+  "row_count": 3,
+  "rows_sha256": "07df99e37086543f1173717b87f666e407427cf4cd9e72be00d12407520cb96f",
+  "normalized_rows": [
+    {
+      "failures": [
+        {
+          "feature": "coaxiality",
+          "measurement_id": "209203:cnc_lathe:coaxiality:0",
+          "value": "50.9"
+        }
+      ],
+      "rod_id": "209203"
+    },
+    {
+      "failures": [
+        {
+          "feature": "coaxiality",
+          "measurement_id": "210103:cnc_lathe:coaxiality:0",
+          "value": "53.7"
+        }
+      ],
+      "rod_id": "210103"
+    },
+    {
+      "failures": [
+        {
+          "feature": "coaxiality",
+          "measurement_id": "211001:cnc_lathe:coaxiality:0",
+          "value": "54.9"
+        }
+      ],
+      "rod_id": "211001"
+    }
+  ]
+}

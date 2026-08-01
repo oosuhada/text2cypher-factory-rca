@@ -1,0 +1,9 @@
+{
+  "question_id": "Q5",
+  "category": "nonexistent_entity",
+  "question": "완제품 399999의 구성품과 품질검사 결과를 보여줘.",
+  "expected_status": "empty",
+  "row_count": 0,
+  "rows_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "normalized_rows": []
+}

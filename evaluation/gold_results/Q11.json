@@ -1,0 +1,18 @@
+{
+  "question_id": "Q11",
+  "category": "unassembled_components",
+  "question": "완제품에 조립되지 않은 cylinder bottom과 piston rod 수를 보여줘.",
+  "expected_status": "success",
+  "row_count": 2,
+  "rows_sha256": "2c8c5a20f58aa013bbdb9be339972f5f0904cd1549e321870ed21fbd5e4bae8d",
+  "normalized_rows": [
+    {
+      "component_count": 182,
+      "component_type": "PistonRod"
+    },
+    {
+      "component_count": 183,
+      "component_type": "CylinderBottom"
+    }
+  ]
+}

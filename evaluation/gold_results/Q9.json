@@ -1,0 +1,18 @@
+{
+  "question_id": "Q9",
+  "category": "final_failure_upstream_anomaly",
+  "question": "압력검사 실패 완제품에 연결된 cylinder bottom의 밀링 이상 유형 분포를 보여줘.",
+  "expected_status": "success",
+  "row_count": 2,
+  "rows_sha256": "fbc3930801e3009a78d7c24eff7445676421b40f96d7beb09aef414b65ffe9ac",
+  "normalized_rows": [
+    {
+      "anomaly_code": "0",
+      "cylinder_count": 18
+    },
+    {
+      "anomaly_code": "2",
+      "cylinder_count": 1
+    }
+  ]
+}

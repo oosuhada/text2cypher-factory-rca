@@ -1,0 +1,15 @@
+{
+  "question_id": "Q15",
+  "category": "genealogy_completeness",
+  "question": "구성품 두 개가 모두 연결된 완제품 수와 전체 완제품 대비 비율을 보여줘.",
+  "expected_status": "success",
+  "row_count": 1,
+  "rows_sha256": "812e9f9103dbdfdf3324b4eb792b651c7d7796df878b1c88e228bfaaa2374c33",
+  "normalized_rows": [
+    {
+      "complete_genealogy_count": 767,
+      "complete_genealogy_rate": 0.9564,
+      "total_cylinders": 802
+    }
+  ]
+}

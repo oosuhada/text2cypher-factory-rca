@@ -1,0 +1,20 @@
+{
+  "question_id": "Q12",
+  "category": "equipment_process_duration",
+  "question": "시간 기록이 있는 장비별 평균 공정 시간을 보여줘.",
+  "expected_status": "success",
+  "row_count": 2,
+  "rows_sha256": "2c352a6ed84a0532825bda265b04973a2f36c433d61dfbb8b5a54f6197a8bab0",
+  "normalized_rows": [
+    {
+      "average_seconds": 14132.83,
+      "equipment": "DMC 50H",
+      "timed_run_count": 846
+    },
+    {
+      "average_seconds": 89.01,
+      "equipment": "Kasto SBA 2",
+      "timed_run_count": 984
+    }
+  ]
+}
