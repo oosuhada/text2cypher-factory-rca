@@ -1,0 +1,121 @@
+{
+  "dataset": "CiP-DMD",
+  "records": {
+    "cylinders_all": 803,
+    "cylinders_valid": 802,
+    "cylinder_bottoms": 985,
+    "piston_rods": 898,
+    "reworked_piston_rods": 52
+  },
+  "integrity": {
+    "placeholder_cylinders_excluded": 1,
+    "cylinders_with_bottom_reference": 801,
+    "cylinders_with_rod_reference": 768,
+    "complete_genealogies": 767,
+    "complete_genealogy_rate": 0.956359
+  },
+  "process_counts": {
+    "saw": 985,
+    "cnc_milling_machine": 847,
+    "cnc_lathe": 928
+  },
+  "anomaly_by_process": {
+    "saw": {
+      "0": 904,
+      "1": 81
+    },
+    "cnc_milling_machine": {
+      "0": 699,
+      "1": 98,
+      "3": 11,
+      "2": 39
+    },
+    "cnc_lathe": {
+      "0": 928
+    }
+  },
+  "quality_counts": {
+    "rework": 801,
+    "pressure": 801,
+    "weight": 985,
+    "surface_roughness": 845,
+    "parallelism": 845,
+    "groove_depth": 845,
+    "groove_diameter": 845,
+    "coaxiality": 536,
+    "diameter": 536,
+    "length": 536
+  },
+  "quality_failures": {
+    "pressure": 19,
+    "rework": 52,
+    "parallelism": 70,
+    "surface_roughness": 190,
+    "groove_diameter": 22,
+    "groove_depth": 15,
+    "coaxiality": 65,
+    "diameter": 9,
+    "length": 1
+  },
+  "scope_validation": {
+    "pressure_failed_cylinders": {
+      "count": 19,
+      "sample_ids": [
+        "300048",
+        "300076",
+        "300110",
+        "300144",
+        "300145"
+      ],
+      "complete_genealogy_count": 19
+    },
+    "rework_failed_cylinders": {
+      "count": 52,
+      "sample_ids": [
+        "300313",
+        "300315",
+        "300316",
+        "300317",
+        "300332"
+      ]
+    },
+    "surface_roughness_failed_bottoms": {
+      "count": 190,
+      "sample_ids": [
+        "100701",
+        "101101",
+        "101103",
+        "101104",
+        "101201"
+      ],
+      "milling_anomaly_distribution": {
+        "0": 102,
+        "3": 3,
+        "2": 6,
+        "1": 79
+      }
+    },
+    "milling_anomaly_2_bottoms": {
+      "count": 39,
+      "sample_ids": [
+        "109001",
+        "109002",
+        "109003",
+        "110001",
+        "110301"
+      ],
+      "linked_assembly_count": 37,
+      "linked_pressure_qc": {
+        "True": 36,
+        "False": 1
+      }
+    },
+    "complete_genealogy_samples": [
+      "300002",
+      "300003",
+      "300004",
+      "300005",
+      "300006"
+    ]
+  }
+}
