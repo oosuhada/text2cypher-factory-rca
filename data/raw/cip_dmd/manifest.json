@@ -1,0 +1,86 @@
+{
+  "dataset": "CiP-DMD",
+  "source_record": "https://zenodo.org/records/10118474",
+  "subset_policy": "metadata, quality tables, production logs; no HDF5 signals",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 7791,
+      "sha256": "206735b7b775ebfbe2c42026cd04ff7d770df3a150e0409d532bd93c997afa65",
+      "source": "https://cloud.ptw-darmstadt.de/public.php/webdav/README.md"
+    },
+    {
+      "path": "dataset_structure.png",
+      "bytes": 73608,
+      "sha256": "505ac8e3881ba48c66dd6837bad0d4c6f61913a3a4d183a60e29f3aa7f828e49",
+      "source": "https://cloud.ptw-darmstadt.de/public.php/webdav/dataset_structure.png"
+    },
+    {
+      "path": "cylinder/meta_data.json",
+      "bytes": 547886,
+      "sha256": "8020254a651ee0c25ab7b8409e8abb72b6f7ecc09994833737477db3d2d431a6",
+      "source": "https://cloud.ptw-darmstadt.de/public.php/webdav/cylinder/meta_data.json"
+    },
+    {
+      "path": "cylinder/assembly/quality_data/quality_data.csv",
+      "bytes": 20719,
+      "sha256": "7d89a69843cc6572bb754c1f3a3b790e951dfe9b073310d665b61e72f6a4c7fb",
+      "source": "https://cloud.ptw-darmstadt.de/public.php/webdav/cylinder/assembly/quality_data/quality_data.csv"
+    },
+    {
+      "path": "cylinder_bottom/meta_data.json",
+      "bytes": 2515712,
+      "sha256": "53df1cfa585244394fd262b8d683cf997e52f642945854868e0ca0d7cbe075dc",
+      "source": "https://cloud.ptw-darmstadt.de/public.php/webdav/cylinder_bottom/meta_data.json"
+    },
+    {
+      "path": "cylinder_bottom/saw/quality_data/quality_data.csv",
+      "bytes": 21584,
+      "sha256": "77e3c3d4c2a2d3852c1ee2b19dcfafc4cc393448031c1767d100392a6c2dbdda",
+      "source": "https://cloud.ptw-darmstadt.de/public.php/webdav/cylinder_bottom/saw/quality_data/quality_data.csv"
+    },
+    {
+      "path": "cylinder_bottom/cnc_milling_machine/quality_data/quality_data.csv",
+      "bytes": 28467,
+      "sha256": "54e400aa117d43a305c5e41bb0873e4ea444054fdc7de77b4096a6c761d8ea88",
+      "source": "https://cloud.ptw-darmstadt.de/public.php/webdav/cylinder_bottom/cnc_milling_machine/quality_data/quality_data.csv"
+    },
+    {
+      "path": "piston_rod/meta_data.json",
+      "bytes": 583279,
+      "sha256": "c9e4470de410ad9c13431e7504f382e220b7903c4cf52b89be46cc08e6f2d9ea",
+      "source": "https://cloud.ptw-darmstadt.de/public.php/webdav/piston_rod/meta_data.json"
+    },
+    {
+      "path": "piston_rod/reworked_piston_rods_meta_data.json",
+      "bytes": 46080,
+      "sha256": "59b7d6666b279810cba2b66dbeddc015203847869233a2ed42cb97d00daa0d35",
+      "source": "https://cloud.ptw-darmstadt.de/public.php/webdav/piston_rod/reworked_piston_rods_meta_data.json"
+    },
+    {
+      "path": "piston_rod/cnc_lathe/quality_data/quality_data.csv",
+      "bytes": 18455,
+      "sha256": "4a07fd84dc7f383b24758d24099e1725b684654483ec73d00a27efc5b20890da",
+      "source": "https://cloud.ptw-darmstadt.de/public.php/webdav/piston_rod/cnc_lathe/quality_data/quality_data.csv"
+    },
+    {
+      "path": "production_logs/production_log_milling.xlsx",
+      "bytes": 11291,
+      "sha256": "0d26ca5fe6061438269ba5a6cbb2d4f472fb642d60283e3e9201ea2838283214",
+      "source": "https://cloud.ptw-darmstadt.de/public.php/webdav/production_logs/production_log_milling.xlsx"
+    },
+    {
+      "path": "production_logs/production_log_sawing.xlsx",
+      "bytes": 10182,
+      "sha256": "ae9ab7d96808f69e7eff938655efb96fdc205eb3abe672e230c2d314ee02e5b0",
+      "source": "https://cloud.ptw-darmstadt.de/public.php/webdav/production_logs/production_log_sawing.xlsx"
+    },
+    {
+      "path": "production_logs/production_log_turning.xlsx",
+      "bytes": 10370,
+      "sha256": "6fbf122432c65b119080a8241bfbbc925ad204e46cf819d12e0dbd2451742f80",
+      "source": "https://cloud.ptw-darmstadt.de/public.php/webdav/production_logs/production_log_turning.xlsx"
+    }
+  ],
+  "total_bytes": 3895424
+}

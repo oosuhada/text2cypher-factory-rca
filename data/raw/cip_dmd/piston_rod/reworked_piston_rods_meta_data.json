@@ -1,0 +1,1665 @@
+[
+    {
+        "part_type": "piston_rod",
+        "part_id": "209004",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "27.4",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.004",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.64",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "209103",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "42.5",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.619",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "209201",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "27.7",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.009",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.666",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "209203",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "50.9",
+                        "qc_pass": false
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.484",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "209604",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "19.9",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.006",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.716",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "209704",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "43.2",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.012",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.681",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "209903",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "15.9",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.006",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.641",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "210001",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "21.9",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.011",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.702",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "210003",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "30.4",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.008",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.635",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "210102",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "31.2",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.009",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.659",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "210103",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "53.7",
+                        "qc_pass": false
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.009",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.665",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "210201",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "10.1",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.006",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.672",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "210202",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "29.8",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.003",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.637",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "210203",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "30.2",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.007",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.648",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "210204",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "36.2",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.002",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.65",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "210301",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "42.5",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.005",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.665",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "210304",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "33.7",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "-0.002",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.611",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "210404",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "24.3",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "-0.002",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.613",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "210502",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "22.6",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.631",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "210504",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "35.9",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.002",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.617",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "210604",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "36.8",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.001",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.625",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "210701",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "24.6",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.005",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.611",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "210803",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "32.9",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.002",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.705",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "210804",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "43.7",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.003",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.638",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "210901",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "31.9",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.005",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.647",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "210902",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "9.64",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.009",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.632",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "210903",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "21.7",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.006",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.645",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "210904",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "46.4",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.007",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.677",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "211001",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "54.9",
+                        "qc_pass": false
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.013",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.698",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "211002",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "40",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.008",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.622",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "211003",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "32.2",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.007",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.644",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "211004",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "33.7",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.006",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.623",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "211102",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "44.2",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "-0.015",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.6",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "211103",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "48.1",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "-0.007",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.629",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "211104",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "48.6",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "-0.005",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.685",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "211202",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "23",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "-0.001",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.732",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "211204",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "11.1",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.005",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.685",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "211301",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "17.4",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.008",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.631",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "211302",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "40.1",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "-0.003",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.7",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "211303",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "24.3",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.003",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.607",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "211401",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "18.5",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "-0.007",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.609",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "211404",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "20.2",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "-0.005",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.612",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "211501",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "38.6",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.014",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.602",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "211502",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "38.3",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.01",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.631",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "211601",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "37.7",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.017",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.638",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "211602",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "45.9",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.01",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.609",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "211604",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": [
+            {
+                "process": "cnc_lathe",
+                "measurements": [
+                    {
+                        "feature": "coaxiality",
+                        "value": "35",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "diameter",
+                        "value": "0.01",
+                        "qc_pass": true
+                    },
+                    {
+                        "feature": "length",
+                        "value": "163.606",
+                        "qc_pass": true
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "214102",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": []
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "214104",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": []
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "214702",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": []
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "214704",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": []
+    },
+    {
+        "part_type": "piston_rod",
+        "part_id": "220202",
+        "component_ids": [],
+        "process_data": [
+            {
+                "data_paths": [],
+                "name": "cnc_lathe",
+                "anomaly": 0
+            }
+        ],
+        "quality_data": []
+    }
+]
