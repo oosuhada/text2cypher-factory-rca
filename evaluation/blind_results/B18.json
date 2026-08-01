@@ -1,0 +1,9 @@
+{
+  "question_id": "B18",
+  "category": "nonexistent_entity",
+  "question": "존재하지 않는 장비 ZZZ-999의 공정 실행 내역을 보여줘.",
+  "expected_status": "empty",
+  "row_count": 0,
+  "rows_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "normalized_rows": []
+}

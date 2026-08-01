@@ -1,0 +1,45 @@
+{
+  "question_id": "B10",
+  "category": "entity_quality_path",
+  "question": "부품 103504의 품질 측정 항목과 값을 보여줘.",
+  "expected_status": "success",
+  "row_count": 5,
+  "rows_sha256": "e686b35adaf022c932cbf1ddc2b637b82a62996d5a8e5e8f58836ebbf1ca9b36",
+  "normalized_rows": [
+    {
+      "feature": "groove_depth",
+      "measurement_id": "103504:cnc_milling_machine:groove_depth:0",
+      "process_name": "cnc_milling_machine",
+      "qc_pass": true,
+      "value": "0.804"
+    },
+    {
+      "feature": "groove_diameter",
+      "measurement_id": "103504:cnc_milling_machine:groove_diameter:0",
+      "process_name": "cnc_milling_machine",
+      "qc_pass": true,
+      "value": "-0.036"
+    },
+    {
+      "feature": "parallelism",
+      "measurement_id": "103504:cnc_milling_machine:parallelism:0",
+      "process_name": "cnc_milling_machine",
+      "qc_pass": true,
+      "value": "0.0335"
+    },
+    {
+      "feature": "surface_roughness",
+      "measurement_id": "103504:cnc_milling_machine:surface_roughness:0",
+      "process_name": "cnc_milling_machine",
+      "qc_pass": true,
+      "value": "2.364"
+    },
+    {
+      "feature": "weight",
+      "measurement_id": "103504:saw:weight:0",
+      "process_name": "saw",
+      "qc_pass": true,
+      "value": "0.530674095"
+    }
+  ]
+}

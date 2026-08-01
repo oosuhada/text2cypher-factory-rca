@@ -1,0 +1,22 @@
+{
+  "question_id": "B03",
+  "category": "aggregate",
+  "question": "공정 종류별 ProcessRun 수를 집계해줘.",
+  "expected_status": "success",
+  "row_count": 3,
+  "rows_sha256": "4ecf0cac9dd15f3708bc5c11f233acaa99ba92b7e0b66a61cee0a62e1a18cd4e",
+  "normalized_rows": [
+    {
+      "process_name": "cnc_lathe",
+      "run_count": 928
+    },
+    {
+      "process_name": "cnc_milling_machine",
+      "run_count": 846
+    },
+    {
+      "process_name": "saw",
+      "run_count": 984
+    }
+  ]
+}

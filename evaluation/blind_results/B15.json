@@ -1,0 +1,22 @@
+{
+  "question_id": "B15",
+  "category": "common_cause_candidate",
+  "question": "압력 불합격 완제품의 구성품들이 공통으로 거친 장비별 완제품 수를 집계해줘.",
+  "expected_status": "success",
+  "row_count": 3,
+  "rows_sha256": "cf79eb2a349491f2dd4c41e454c74e83f1dd31cf114254a2122db13c55180365",
+  "normalized_rows": [
+    {
+      "cylinder_count": 17,
+      "equipment": "Index C65"
+    },
+    {
+      "cylinder_count": 19,
+      "equipment": "DMC 50H"
+    },
+    {
+      "cylinder_count": 19,
+      "equipment": "Kasto SBA 2"
+    }
+  ]
+}

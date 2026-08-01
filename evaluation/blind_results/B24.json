@@ -1,0 +1,13 @@
+{
+  "question_id": "B24",
+  "category": "multi_hop_filter",
+  "question": "압력검사에 합격했고 cylinder bottom 밀링 anomaly가 0인 완제품 수를 알려줘.",
+  "expected_status": "success",
+  "row_count": 1,
+  "rows_sha256": "fd9d60a80b2697df8a9479f643d27e95818a2f617181489e868dd4883ae72415",
+  "normalized_rows": [
+    {
+      "cylinder_count": 647
+    }
+  ]
+}

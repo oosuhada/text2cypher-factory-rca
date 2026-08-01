@@ -1,0 +1,18 @@
+{
+  "question_id": "B05",
+  "category": "quality_distribution",
+  "question": "표면거칠기 검사의 합격과 불합격 건수를 각각 알려줘.",
+  "expected_status": "success",
+  "row_count": 2,
+  "rows_sha256": "fec199548f80c319753cb46be5104e08e180da798fe5af72c43ab358c614f5e2",
+  "normalized_rows": [
+    {
+      "measurement_count": 190,
+      "qc_pass": false
+    },
+    {
+      "measurement_count": 654,
+      "qc_pass": true
+    }
+  ]
+}

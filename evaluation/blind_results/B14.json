@@ -1,0 +1,20 @@
+{
+  "question_id": "B14",
+  "category": "final_product_quality",
+  "question": "완제품 300048의 최종 rework와 pressure 검사값 및 합격 여부를 보여줘.",
+  "expected_status": "success",
+  "row_count": 2,
+  "rows_sha256": "d774ce208c3e1f58951c94faeb26eba57c3c4cb504e03089173215aba4caf4f7",
+  "normalized_rows": [
+    {
+      "feature": "pressure",
+      "qc_pass": false,
+      "value": "7461.167"
+    },
+    {
+      "feature": "rework",
+      "qc_pass": true,
+      "value": "n"
+    }
+  ]
+}

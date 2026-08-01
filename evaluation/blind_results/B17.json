@@ -1,0 +1,15 @@
+{
+  "question_id": "B17",
+  "category": "incomplete_genealogy",
+  "question": "완제품 300137에 실제로 연결된 구성품과 역할을 보여줘.",
+  "expected_status": "success",
+  "row_count": 1,
+  "rows_sha256": "560222a8783898899cc5242578db56cad508bd99439458f19453d0379f72743d",
+  "normalized_rows": [
+    {
+      "component_id": "203604",
+      "component_role": "rod",
+      "component_type": "piston_rod"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "question_id": "B01",
+  "category": "single_entity",
+  "question": "부품 103504의 유형과 재작업 여부를 알려줘.",
+  "expected_status": "success",
+  "row_count": 1,
+  "rows_sha256": "b463435cf37c567078e45f08f8c88dff98268dd6601c36e56c17f73c47449310",
+  "normalized_rows": [
+    {
+      "part_id": "103504",
+      "part_type": "cylinder_bottom",
+      "reworked": false
+    }
+  ]
+}

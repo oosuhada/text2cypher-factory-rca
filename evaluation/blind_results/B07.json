@@ -1,0 +1,13 @@
+{
+  "question_id": "B07",
+  "category": "filtered_aggregate",
+  "question": "절단 공정에서 anomaly 1로 분류된 cylinder bottom 수를 알려줘.",
+  "expected_status": "success",
+  "row_count": 1,
+  "rows_sha256": "022df2d68cc39fcaa98a490291ee6ed12e37cbd72d62ab7240f6654040ca75fa",
+  "normalized_rows": [
+    {
+      "bottom_count": 81
+    }
+  ]
+}

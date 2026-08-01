@@ -1,0 +1,13 @@
+{
+  "question_id": "B08",
+  "category": "property_filter",
+  "question": "재작업 표시가 있는 piston rod는 모두 몇 개인가?",
+  "expected_status": "success",
+  "row_count": 1,
+  "rows_sha256": "e621a3e560ab282829663e8eb09ed5e569bd75bed9ec93cad61bef2c657e348f",
+  "normalized_rows": [
+    {
+      "reworked_rod_count": 52
+    }
+  ]
+}

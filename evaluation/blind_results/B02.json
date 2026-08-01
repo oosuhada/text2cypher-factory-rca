@@ -1,0 +1,30 @@
+{
+  "question_id": "B02",
+  "category": "filtered_aggregate",
+  "question": "DMC 50H 장비에서 발생한 정상·이상 클래스별 실행 건수를 보여줘.",
+  "expected_status": "success",
+  "row_count": 4,
+  "rows_sha256": "27dceeda2909363ef7c6d7fbee891365954b1dc5fb6b3fe273edce39b5324336",
+  "normalized_rows": [
+    {
+      "anomaly_code": "0",
+      "anomaly_name": "Normal process",
+      "run_count": 698
+    },
+    {
+      "anomaly_code": "1",
+      "anomaly_name": "Misaligned raw cutting material",
+      "run_count": 98
+    },
+    {
+      "anomaly_code": "2",
+      "anomaly_name": "Uneven milling-jig clamping",
+      "run_count": 39
+    },
+    {
+      "anomaly_code": "3",
+      "anomaly_name": "Miscellaneous process error",
+      "run_count": 11
+    }
+  ]
+}
