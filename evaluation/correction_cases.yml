@@ -1,0 +1,60 @@
+version: "1.0"
+description: >
+  생성 모델이 실제로 수정 노드를 통과하도록 문법·도메인 값·관계 토폴로지·
+  질문 필드 정렬 오류를 의도적으로 주입한 별도 평가셋이다.
+
+cases:
+  - id: C01
+    source_question_id: B03
+    error_type: syntax
+    rejected_cypher: "MATCH (run:ProcessRun RETURN count(run)"
+
+  - id: C02
+    source_question_id: B06
+    error_type: schema_topology
+    rejected_cypher: |
+      MATCH (run:ProcessRun)-[:RUN_ON]->(equipment:Equipment {name: 'Kasto SBA 2'})
+            -[:CLASSIFIED_AS]->(anomaly:AnomalyClass {is_normal: false})
+      RETURN count(run) AS abnormal_run_count
+
+  - id: C03
+    source_question_id: B02
+    error_type: domain_value
+    rejected_cypher: |
+      MATCH (run:ProcessRun)-[:RUN_ON]->(:Equipment {equipment_id: 'DMC 50H'})
+      RETURN count(run) AS run_count
+
+  - id: C04
+    source_question_id: B17
+    error_type: missing_requested_field
+    rejected_cypher: |
+      MATCH (:Cylinder {part_id: '300137'})-[assembly:ASSEMBLED_FROM]->(component:Part)
+      RETURN component.part_id AS component_id
+
+  - id: C05
+    source_question_id: B14
+    error_type: missing_requested_field
+    rejected_cypher: |
+      MATCH (:Cylinder {part_id: '300048'})-[:HAS_MEASUREMENT]->(measurement:QualityMeasurement)
+      RETURN measurement.feature AS feature, measurement.value_text AS value
+
+  - id: C06
+    source_question_id: B01
+    error_type: undefined_variable
+    rejected_cypher: |
+      MATCH (part:Part {part_id: '103504'})
+      RETURN missing_variable
+
+  - id: C07
+    source_question_id: B18
+    error_type: nonexistent_entity_domain_value
+    rejected_cypher: |
+      MATCH (run:ProcessRun)-[:RUN_ON]->(:Equipment {equipment_id: 'ZZZ-999'})
+      RETURN run.run_id AS run_id
+
+  - id: C08
+    source_question_id: B24
+    error_type: syntax
+    rejected_cypher: |
+      MATCH (cylinder:Cylinder)-[:ASSEMBLED_FROM]->(bottom:CylinderBottom
+      RETURN count(DISTINCT cylinder) AS cylinder_count
