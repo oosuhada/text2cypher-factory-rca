@@ -25,6 +25,7 @@ PPT 대조 후 수정 근거는 [방향 수정 기록](./docs/direction-correcti
 | 제품 리팩터링 5단계 — Data Intake | **구현 완료** | ZIP staging·dry-run·승인 적재·reader 복귀·감사로그 |
 | 제품 리팩터링 6단계 — 검색형 Graph Explorer | **구현 완료** | 부분 문자열 노드 검색·선택·1~3-hop 읽기 전용 탐색 |
 | 제품 리팩터링 7단계 — 전문가 검증(HITL) | **구현 완료** | 3단계 판정·의견·질의 지문·append-only 감사기록 |
+| 제품 리팩터링 8단계 — 배포·E2E | **구현 완료** | 5-service Compose·health gate·보안 헤더·black-box smoke |
 
 ## 확정 데이터
 
@@ -151,6 +152,27 @@ Streamlit 안에서 다음 사용자 흐름을 완결한다.
 [6단계 Graph Discovery](./docs/refactor-stage6-graph-discovery.md)에 정리했다.
 도메인 전문가 검증과 감사기록의 신뢰 경계는
 [7단계 HITL 검증](./docs/refactor-stage7-expert-verification.md)에
+정리했다.
+
+## 제품형 전체 스택 실행
+
+Docker Desktop 또는 Docker Engine이 있는 환경에서는 Neo4j부터 두 UI까지
+한 번에 재현할 수 있다.
+
+```bash
+cp .env.example .env
+# .env의 NEO4J_PASSWORD를 실제 비밀값으로 변경
+./scripts/run_product_stack.sh
+```
+
+- Next.js 제품 UI: `http://127.0.0.1:3000`
+- FastAPI 문서: `http://127.0.0.1:8000/docs`
+- Streamlit 사내 프로토타입: `http://127.0.0.1:8501`
+- Neo4j Browser: `http://127.0.0.1:7474`
+
+전체 회귀·빌드·패키지 계약은 `./scripts/release_check.sh`로 확인한다.
+컨테이너 구성과 E2E 범위, Neo4j Community 권한 한계는
+[8단계 배포·E2E 검증](./docs/refactor-stage8-deployment-e2e.md)에
 정리했다.
 
 ## MVP 이후로 미룰 것

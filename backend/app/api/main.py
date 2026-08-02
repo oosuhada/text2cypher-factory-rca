@@ -10,6 +10,7 @@ from typing import Callable
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 
 from backend.app.services.bootstrap import ServiceBundle, build_service_bundle
 from backend.app.services.diagnostics import (
@@ -111,6 +112,16 @@ def create_app(bundle_factory: BundleFactory | None = None) -> FastAPI:
         allow_methods=["GET", "POST"],
         allow_headers=["*"],
     )
+    application.add_middleware(GZipMiddleware, minimum_size=1000)
+
+    @application.middleware("http")
+    async def security_headers(request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["Cache-Control"] = "no-store"
+        return response
 
     @application.get("/api/v1/health/live")
     def live() -> dict[str, str]:

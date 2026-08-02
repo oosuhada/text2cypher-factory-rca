@@ -16,5 +16,6 @@ data/processed/expert_feedback.jsonl
 data/processed/intake_load.lock
 data/processed/intake_runs/
 web/.env.local
+web/next-env.d.ts
 web/.next/
 web/node_modules/
