@@ -164,6 +164,18 @@ class StreamlitIntegrationTest(unittest.TestCase):
             any(box.label == "노드 유형" for box in app.selectbox)
         )
         self.assertEqual(len(app.chat_input), 1)
+        self.assertTrue(
+            any(
+                uploader.label.startswith("CiP-DMD 전체 폴더")
+                for uploader in app.file_uploader
+            )
+        )
+        self.assertTrue(
+            any(
+                button.label == "1 · 번들 staging" and button.disabled
+                for button in app.button
+            )
+        )
         provider_select = next(
             box for box in app.selectbox if box.label == "생성 모드"
         )

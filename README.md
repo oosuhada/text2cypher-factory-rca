@@ -22,6 +22,7 @@ PPT 대조 후 수정 근거는 [방향 수정 기록](./docs/direction-correcti
 | 15단계 — 대시보드·그래프 시각화 | **완료** | 무결성·런타임·토큰·비용 지표와 Evidence 필터 구현 |
 | 16단계 — Blind 평가·회귀 테스트 | **완료** | Gemini 26문항 의미값 정확도 50.0%→50.0%→61.5%, 엄격 계약 정확도 38.5%, 자기수정 스트레스 8건 |
 | 17단계 — 데모 고정·실행 패키징 | **완료** | 원커맨드 프리플라이트·Gold 고정 시나리오 4/4·장애 시 안전 폴백·인라인 Evidence |
+| 제품 리팩터링 5단계 — Data Intake | **구현 완료** | ZIP staging·dry-run·승인 적재·reader 복귀·감사로그 |
 
 ## 확정 데이터
 
@@ -130,12 +131,16 @@ Streamlit 안에서 다음 사용자 흐름을 완결한다.
 - 자연어 질문과 세션 내 최근 대화 다시 열기
 - 답변 직하에서 결과표·관계 경로·Cypher·검증 이력 확인
 - 노드 ID를 기준으로 최대 3-hop 지식그래프 탐색
-- 업로드 후보 파일의 형식·공통 ID 사전검증
+- CiP-DMD ZIP staging·고정 매핑·해시 검증·ETL dry-run
+- 명시적 승인 후 적재·reader 복귀·감사로그
 - 실제 ETL·그래프 무결성·Agent 평가 지표 확인
 
 구현 경계와 검증 결과는
 [Streamlit 제품형 UX 이전](./docs/streamlit-product-ux-migration.md)에
 정리했다.
+
+제품 리팩터링 5단계 Data Intake의 안전 경계는
+[Data Intake 검증](./docs/refactor-stage5-data-intake.md)에 정리했다.
 
 ## MVP 이후로 미룰 것
 
@@ -144,7 +149,7 @@ Streamlit 안에서 다음 사용자 흐름을 완결한다.
 - 범용 GraphRAG와 다중 Agent
 - HITL 승인, 외부 알림, PostgreSQL·pgvector·n8n 통합
 - 사용자 계정·서버 동기화 대화 기록
-- 임의 파일 업로드·스키마 매핑·비동기 ETL 작업 관리
+- 임의 데이터셋 스키마 매핑·비동기 ETL 작업 관리
 
 ## 발표용 실행
 
