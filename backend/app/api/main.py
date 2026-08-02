@@ -24,6 +24,7 @@ from backend.app.services.graph_service import (
 from .schemas import (
     GraphSchemaResponse,
     HealthResponse,
+    NodeSearchResponse,
     QueryRequest,
     QueryResponse,
     SubgraphResponse,
@@ -151,6 +152,40 @@ def create_app(bundle_factory: BundleFactory | None = None) -> FastAPI:
     )
     def graph_schema() -> dict:
         return schema_contract()
+
+    @application.get(
+        "/api/v1/graph/search",
+        response_model=NodeSearchResponse,
+    )
+    def graph_search(
+        label: str = Query(description="노드 라벨"),
+        q: str = Query(min_length=1, max_length=200),
+        limit: int = Query(default=12, ge=1, le=50),
+        bundle: ServiceBundle = Depends(get_bundle),
+    ) -> dict:
+        q = q.strip()
+        if not q:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="검색어는 공백일 수 없습니다.",
+            )
+        if bundle.graph is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="그래프 탐색 서비스가 구성되지 않았습니다.",
+            )
+        try:
+            return bundle.graph.search_nodes(label, q, limit)
+        except ValueError as error:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=str(error),
+            ) from error
+        except Exception as error:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"노드 검색에 실패했습니다: {error}",
+            ) from error
 
     @application.get(
         "/api/v1/graph/subgraph",

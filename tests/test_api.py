@@ -14,6 +14,26 @@ class FakeDashboard:
 
 
 class FakeGraph:
+    def search_nodes(self, label, query, limit):
+        if label == "Anything":
+            raise ValueError("지원하지 않는 노드 라벨입니다: Anything")
+        return {
+            "label": label,
+            "query": query,
+            "identity_property": "part_id",
+            "nodes": [
+                {
+                    "id": "node-1",
+                    "labels": [label],
+                    "properties": {
+                        "part_id": "300002",
+                        "part_type": "cylinder",
+                    },
+                }
+            ],
+            "count": 1,
+        }
+
     def subgraph(self, label, identity, depth, limit):
         return {
             "root": {
@@ -142,6 +162,31 @@ class ApiContractTest(unittest.TestCase):
             params={"label": "Anything", "identity": "x"},
         )
         self.assertEqual(invalid.status_code, 422)
+
+    def test_search_nodes_by_partial_value(self):
+        response = self.client.get(
+            "/api/v1/graph/search",
+            params={"label": "Cylinder", "q": "3000"},
+        )
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["count"], 1)
+        self.assertEqual(body["identity_property"], "part_id")
+        self.assertEqual(
+            body["nodes"][0]["properties"]["part_id"], "300002"
+        )
+
+        invalid = self.client.get(
+            "/api/v1/graph/search",
+            params={"label": "Anything", "q": "x"},
+        )
+        self.assertEqual(invalid.status_code, 422)
+
+        whitespace = self.client.get(
+            "/api/v1/graph/search",
+            params={"label": "Cylinder", "q": "   "},
+        )
+        self.assertEqual(whitespace.status_code, 422)
 
     def test_bundle_is_closed_on_shutdown(self):
         separate_bundle = FakeBundle()

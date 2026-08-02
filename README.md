@@ -23,6 +23,7 @@ PPT 대조 후 수정 근거는 [방향 수정 기록](./docs/direction-correcti
 | 16단계 — Blind 평가·회귀 테스트 | **완료** | Gemini 26문항 의미값 정확도 50.0%→50.0%→61.5%, 엄격 계약 정확도 38.5%, 자기수정 스트레스 8건 |
 | 17단계 — 데모 고정·실행 패키징 | **완료** | 원커맨드 프리플라이트·Gold 고정 시나리오 4/4·장애 시 안전 폴백·인라인 Evidence |
 | 제품 리팩터링 5단계 — Data Intake | **구현 완료** | ZIP staging·dry-run·승인 적재·reader 복귀·감사로그 |
+| 제품 리팩터링 6단계 — 검색형 Graph Explorer | **구현 완료** | 부분 문자열 노드 검색·선택·1~3-hop 읽기 전용 탐색 |
 
 ## 확정 데이터
 
@@ -86,6 +87,7 @@ Text-to-Cypher 엔진을 사용할 수 있도록 FastAPI 경계를 추가했다.
 - 준비 상태: `http://127.0.0.1:8000/api/v1/health`
 - 자연어 질의: `POST http://127.0.0.1:8000/api/v1/query`
 - 그래프 스키마: `GET http://127.0.0.1:8000/api/v1/graph/schema`
+- 노드 검색: `GET http://127.0.0.1:8000/api/v1/graph/search`
 - 부분 그래프: `GET http://127.0.0.1:8000/api/v1/graph/subgraph`
 
 구조 변경과 완료 조건은
@@ -130,7 +132,7 @@ Streamlit 안에서 다음 사용자 흐름을 완결한다.
 
 - 자연어 질문과 세션 내 최근 대화 다시 열기
 - 답변 직하에서 결과표·관계 경로·Cypher·검증 이력 확인
-- 노드 ID를 기준으로 최대 3-hop 지식그래프 탐색
+- 노드 속성 검색 또는 정확한 ID를 기준으로 최대 3-hop 지식그래프 탐색
 - CiP-DMD ZIP staging·고정 매핑·해시 검증·ETL dry-run
 - 명시적 승인 후 적재·reader 복귀·감사로그
 - 실제 ETL·그래프 무결성·Agent 평가 지표 확인
@@ -141,6 +143,8 @@ Streamlit 안에서 다음 사용자 흐름을 완결한다.
 
 제품 리팩터링 5단계 Data Intake의 안전 경계는
 [Data Intake 검증](./docs/refactor-stage5-data-intake.md)에 정리했다.
+검색형 Graph Explorer의 계약과 안전 경계는
+[6단계 Graph Discovery](./docs/refactor-stage6-graph-discovery.md)에 정리했다.
 
 ## MVP 이후로 미룰 것
 
