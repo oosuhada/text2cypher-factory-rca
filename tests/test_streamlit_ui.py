@@ -8,6 +8,7 @@ from frontend.presentation import (
     evidence_to_dot,
     filter_evidence,
     flatten_rows_for_table,
+    normalize_catalog_evidence,
     rows_to_csv,
 )
 
@@ -117,6 +118,23 @@ class PresentationTest(unittest.TestCase):
         dot = evidence_to_dot({"nodes": [], "relationships": []}, rankdir="TB")
         self.assertIn('rankdir="TB"', dot)
 
+    def test_catalog_graph_is_normalized_for_shared_evidence_renderer(self):
+        evidence = normalize_catalog_evidence(
+            {
+                "nodes": [
+                    {
+                        "id": "node-1",
+                        "labels": ["Part", "Cylinder"],
+                        "properties": {"part_id": "300002"},
+                    }
+                ],
+                "relationships": [],
+                "truncated": False,
+            }
+        )
+        self.assertEqual(evidence["nodes"][0]["label"], "Cylinder")
+        self.assertIn("Cylinder", evidence_to_dot(evidence))
+
 
 @unittest.skipUnless(
     neo4j_integration_ready(),
@@ -135,12 +153,21 @@ class StreamlitIntegrationTest(unittest.TestCase):
         self.assertEqual(len(app.exception), 0)
         self.assertEqual(
             [tab.label for tab in app.tabs[:3]],
-            ["Query Studio", "Evidence Lab", "Operations"],
+            ["Query Studio", "Evidence Lab", "Graph Explorer"],
         )
+        self.assertIn("Operations", [tab.label for tab in app.tabs])
         self.assertIn("Data & Health", [tab.label for tab in app.tabs])
-        self.assertEqual(len(app.selectbox), 1)
+        self.assertTrue(
+            any(box.label == "생성 모드" for box in app.selectbox)
+        )
+        self.assertTrue(
+            any(box.label == "노드 유형" for box in app.selectbox)
+        )
         self.assertEqual(len(app.chat_input), 1)
-        app.selectbox[0].set_value("gold").run(timeout=30)
+        provider_select = next(
+            box for box in app.selectbox if box.label == "생성 모드"
+        )
+        provider_select.set_value("gold").run(timeout=30)
         self.assertEqual(len(app.exception), 0)
 
         question = (
@@ -159,6 +186,7 @@ class StreamlitIntegrationTest(unittest.TestCase):
         self.assertGreaterEqual(len(app.metric), 9)
         self.assertGreaterEqual(len(app.expander), 1)
         self.assertGreaterEqual(len(app.code), 1)
+        self.assertEqual(len(app.session_state["conversations"]), 1)
 
         app.chat_input[0].set_value(
             "완제품 399999의 구성품과 품질검사 결과를 보여줘."
@@ -197,7 +225,10 @@ class StreamlitIntegrationTest(unittest.TestCase):
         original_key = os.environ.pop("OPENAI_API_KEY", None)
         try:
             app = AppTest.from_file(str(app_path)).run(timeout=30)
-            app.selectbox[0].set_value("openai").run(timeout=30)
+            provider_select = next(
+                box for box in app.selectbox if box.label == "생성 모드"
+            )
+            provider_select.set_value("openai").run(timeout=30)
         finally:
             if original_key is not None:
                 os.environ["OPENAI_API_KEY"] = original_key

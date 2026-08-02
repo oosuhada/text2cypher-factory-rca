@@ -6,6 +6,8 @@ import os
 from pathlib import Path
 import sys
 from typing import Any
+from copy import deepcopy
+from uuid import uuid4
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -15,12 +17,15 @@ import pandas as pd
 import streamlit as st
 
 from backend.app.services.diagnostics import collect_demo_diagnostics
+from backend.app.services.graph_service import NODE_IDENTITIES
 from frontend.app_services import ServiceBundle, build_service_bundle
+from frontend.conversation_history import upsert_conversation
 from frontend.data_preflight import inspect_uploaded_source
 from frontend.presentation import (
     evidence_to_dot,
     filter_evidence,
     flatten_rows_for_table,
+    normalize_catalog_evidence,
     rows_to_csv,
 )
 
@@ -109,6 +114,29 @@ st.markdown(
     }
     .p3-feature b {color: #0F5E58; font-size: .88rem;}
     .p3-feature p {margin: .3rem 0 0 0; color: #475569; font-size: .78rem;}
+    .p3-trust-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .45rem;
+      margin: .25rem 0 1rem 0;
+    }
+    .p3-trust-strip span {
+      border: 1px solid #CDE5DF;
+      background: #F0FDFA;
+      color: #115E59;
+      border-radius: 999px;
+      padding: .28rem .65rem;
+      font-size: .76rem;
+      font-weight: 650;
+    }
+    .p3-section-note {
+      border-left: 3px solid #14B8A6;
+      background: #F8FAFC;
+      padding: .65rem .8rem;
+      color: #475569;
+      font-size: .82rem;
+      margin: .35rem 0 .9rem 0;
+    }
     @media (max-width: 900px) {
       .p3-feature-grid {grid-template-columns: repeat(2, minmax(0, 1fr));}
     }
@@ -130,6 +158,48 @@ def get_services(provider: str, model_name: str) -> ServiceBundle:
 def initialize_session() -> None:
     st.session_state.setdefault("messages", [])
     st.session_state.setdefault("last_result", None)
+    st.session_state.setdefault("conversations", [])
+    st.session_state.setdefault(
+        "active_conversation_id", str(uuid4())
+    )
+    st.session_state.setdefault("explorer_result", None)
+
+
+def sync_active_conversation() -> None:
+    messages = st.session_state["messages"]
+    if not messages:
+        return
+    st.session_state["conversations"] = upsert_conversation(
+        st.session_state["conversations"],
+        conversation_id=st.session_state["active_conversation_id"],
+        messages=messages,
+        last_result=st.session_state.get("last_result"),
+    )
+
+
+def start_new_conversation() -> None:
+    sync_active_conversation()
+    st.session_state["active_conversation_id"] = str(uuid4())
+    st.session_state["messages"] = []
+    st.session_state["last_result"] = None
+
+
+def open_conversation(conversation_id: str) -> None:
+    conversation = next(
+        (
+            item
+            for item in st.session_state["conversations"]
+            if item["id"] == conversation_id
+        ),
+        None,
+    )
+    if conversation is None:
+        return
+    st.session_state["active_conversation_id"] = conversation_id
+    st.session_state["messages"] = deepcopy(conversation["messages"])
+    st.session_state["last_result"] = deepcopy(
+        conversation.get("last_result")
+    )
 
 
 def failure_response(question: str, error: Exception) -> dict[str, Any]:
@@ -207,16 +277,21 @@ def render_response_summary(response: dict[str, Any]) -> None:
 
 
 def render_inline_evidence(
-    response: dict[str, Any], key_prefix: str
+    response: dict[str, Any],
+    key_prefix: str,
+    *,
+    expanded: bool,
 ) -> None:
     if response.get("status") not in {"success", "empty"}:
         return
     with st.expander(
         "근거 바로 보기 · 결과표 / Cypher / 관계 경로",
-        expanded=response.get("status") == "success",
+        expanded=expanded and response.get("status") == "success",
     ):
-        table_column, cypher_column = st.columns([1.2, 1])
-        with table_column:
+        result_tab, graph_tab, cypher_tab, trace_tab = st.tabs(
+            ["조회 결과", "관계 경로", "Cypher", "검증 이력"]
+        )
+        with result_tab:
             st.markdown("##### 조회 결과")
             rows = response.get("rows", [])
             if rows:
@@ -234,27 +309,45 @@ def render_inline_evidence(
                 )
             else:
                 st.info("정상 실행됐지만 일치하는 데이터가 없습니다.")
-        with cypher_column:
+        with graph_tab:
+            evidence = response.get("evidence", {})
+            st.markdown("##### 실제 조회 관계")
+            if evidence.get("nodes"):
+                st.graphviz_chart(
+                    evidence_to_dot(evidence, rankdir="LR"),
+                    width="stretch",
+                )
+                st.caption(
+                    f"근거 노드 {evidence.get('node_count', 0)}개 · "
+                    f"관계 {evidence.get('relationship_count', 0)}개"
+                )
+            else:
+                st.info(
+                    "집계 질의이거나 경로 ID가 없어 그래프를 임의 생성하지 "
+                    "않습니다."
+                )
+        with cypher_tab:
             st.markdown("##### 생성·검증된 Cypher")
             if response.get("cypher"):
                 st.code(response["cypher"], language="cypher")
             else:
                 st.info("실행된 Cypher가 없습니다.")
-        evidence = response.get("evidence", {})
-        st.markdown("##### 관계 근거")
-        if evidence.get("nodes"):
-            st.graphviz_chart(
-                evidence_to_dot(evidence, rankdir="LR"),
-                width="stretch",
-            )
-            st.caption(
-                f"근거 노드 {evidence.get('node_count', 0)}개 · "
-                f"관계 {evidence.get('relationship_count', 0)}개"
-            )
-        else:
-            st.info(
-                "집계 질의이거나 경로 ID가 없어 관계를 임의 생성하지 않습니다."
-            )
+        with trace_tab:
+            validation = response.get("validation", {})
+            trace = validation.get("trace", [])
+            if trace:
+                st.dataframe(
+                    pd.DataFrame(flatten_rows_for_table(trace)),
+                    width="stretch",
+                    hide_index=True,
+                )
+            errors = validation.get("errors", [])
+            if errors:
+                st.error("\n".join(str(error) for error in errors))
+            elif trace:
+                st.success("쓰기 차단·의미 검사·EXPLAIN 검증을 통과했습니다.")
+            else:
+                st.caption("별도의 교정 없이 검증을 통과했습니다.")
 
 
 def render_chat_history() -> None:
@@ -265,10 +358,11 @@ def render_chat_history() -> None:
                 st.markdown(message["content"])
             else:
                 render_response_summary(message["content"])
-                if index == len(messages) - 1:
-                    render_inline_evidence(
-                        message["content"], key_prefix=f"chat-{index}"
-                    )
+                render_inline_evidence(
+                    message["content"],
+                    key_prefix=f"chat-{index}",
+                    expanded=index == len(messages) - 1,
+                )
 
 
 def submit_question(question: str, services: ServiceBundle) -> None:
@@ -284,12 +378,24 @@ def submit_question(question: str, services: ServiceBundle) -> None:
         {"role": "assistant", "content": response}
     )
     st.session_state["last_result"] = response
+    sync_active_conversation()
 
 
 def render_chat_tab(services: ServiceBundle) -> None:
     st.subheader("제조 관계를 자연어로 조회")
     st.caption(
         "답변과 함께 생성된 Cypher, 결과표, 근거 경로를 확인할 수 있습니다."
+    )
+    st.markdown(
+        """
+        <div class="p3-trust-strip">
+          <span>읽기 전용 Neo4j</span>
+          <span>쓰기 의도 사전 차단</span>
+          <span>EXPLAIN 검증</span>
+          <span>근거 없는 경로 생성 금지</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
     columns = st.columns(len(EXAMPLE_QUESTIONS))
     selected_question = None
@@ -346,6 +452,122 @@ def render_landing_overview() -> None:
         """,
         unsafe_allow_html=True,
     )
+
+
+def render_graph_explorer(services: ServiceBundle) -> None:
+    st.subheader("지식그래프 탐색")
+    st.caption(
+        "노드의 실제 ID를 기준으로 최대 3-hop 관계를 읽기 전용으로 "
+        "탐색합니다."
+    )
+    if services.graph is None:
+        st.error("그래프 탐색 서비스가 구성되지 않았습니다.")
+        return
+
+    label_names = {
+        "Cylinder": "완제품 Cylinder",
+        "CylinderBottom": "구성품 Cylinder Bottom",
+        "PistonRod": "구성품 Piston Rod",
+        "Part": "전체 Part",
+        "Process": "공정",
+        "ProcessRun": "공정 실행",
+        "Equipment": "장비",
+        "AnomalyClass": "이상 유형",
+        "QualityMeasurement": "품질 측정",
+        "QualityFailure": "품질 불합격",
+    }
+    with st.form("graph-explorer-form"):
+        label_column, identity_column, depth_column = st.columns([1, 1.5, 1])
+        with label_column:
+            label = st.selectbox(
+                "노드 유형",
+                options=tuple(NODE_IDENTITIES),
+                index=1,
+                format_func=lambda value: label_names.get(value, value),
+            )
+        with identity_column:
+            identity = st.text_input(
+                f"식별값 · {NODE_IDENTITIES[label]}",
+                value="300002" if label == "Cylinder" else "",
+                placeholder="예: 300002",
+            )
+        with depth_column:
+            depth = st.slider("탐색 깊이", 1, 3, 2)
+        submitted = st.form_submit_button(
+            "관계 탐색",
+            type="primary",
+            width="stretch",
+        )
+
+    if submitted:
+        if not identity.strip():
+            st.warning("탐색할 식별값을 입력하세요.")
+        else:
+            try:
+                with st.spinner("Neo4j에서 연결 관계를 조회하고 있습니다."):
+                    payload = services.graph.subgraph(
+                        label=label,
+                        identity=identity.strip(),
+                        depth=depth,
+                        limit=70,
+                    )
+                st.session_state["explorer_result"] = {
+                    "label": label,
+                    "identity": identity.strip(),
+                    "depth": depth,
+                    "payload": payload,
+                }
+            except Exception as error:
+                st.error(f"관계 탐색에 실패했습니다: {error}")
+
+    explorer_result = st.session_state.get("explorer_result")
+    if not explorer_result:
+        st.markdown(
+            """
+            <div class="p3-section-note">
+              시작 예시: 노드 유형을 <b>Cylinder</b>로 선택하고
+              <b>300002</b>를 입력하면 구성품·공정·장비·품질 관계를
+              실제 그래프에서 확인할 수 있습니다.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        return
+
+    payload = explorer_result["payload"]
+    if payload.get("root") is None:
+        st.info(
+            f"{explorer_result['label']} "
+            f"'{explorer_result['identity']}'에 해당하는 노드가 없습니다."
+        )
+        return
+
+    evidence = normalize_catalog_evidence(payload)
+    node_metric, relation_metric, depth_metric = st.columns(3)
+    node_metric.metric("표시 노드", evidence["node_count"])
+    relation_metric.metric("표시 관계", evidence["relationship_count"])
+    depth_metric.metric("탐색 깊이", explorer_result["depth"])
+    st.graphviz_chart(evidence_to_dot(evidence), width="stretch")
+    if evidence.get("truncated"):
+        st.info("가독성을 위해 최대 70개 경로까지만 표시합니다.")
+    node_tab, relationship_tab = st.tabs(["노드 상세", "관계 상세"])
+    with node_tab:
+        st.dataframe(
+            pd.DataFrame(flatten_rows_for_table(evidence["nodes"])),
+            width="stretch",
+            hide_index=True,
+        )
+    with relationship_tab:
+        if evidence["relationships"]:
+            st.dataframe(
+                pd.DataFrame(
+                    flatten_rows_for_table(evidence["relationships"])
+                ),
+                width="stretch",
+                hide_index=True,
+            )
+        else:
+            st.info("선택한 깊이에서 연결 관계를 찾지 못했습니다.")
 
 
 def render_startup_failure(error: Exception) -> None:
@@ -985,6 +1207,51 @@ def render_dashboard_tab(
 
 
 def render_sidebar() -> tuple[str, str]:
+    st.sidebar.markdown("### 대화")
+    if st.sidebar.button(
+        "＋ 새 대화",
+        type="primary",
+        width="stretch",
+    ):
+        start_new_conversation()
+        st.rerun()
+    conversations = st.session_state["conversations"]
+    if conversations:
+        st.sidebar.caption(
+            "현재 브라우저 세션의 최근 대화 · 최대 12개"
+        )
+        for conversation in conversations[:6]:
+            is_active = (
+                conversation["id"]
+                == st.session_state["active_conversation_id"]
+            )
+            label = (
+                f"● {conversation['title']}"
+                if is_active
+                else conversation["title"]
+            )
+            if st.sidebar.button(
+                label,
+                key=f"conversation-{conversation['id']}",
+                width="stretch",
+                disabled=is_active,
+            ):
+                open_conversation(conversation["id"])
+                st.rerun()
+        if st.sidebar.button(
+            "세션 기록 모두 지우기",
+            key="clear-all-conversations",
+            width="stretch",
+        ):
+            st.session_state["conversations"] = []
+            st.session_state["active_conversation_id"] = str(uuid4())
+            st.session_state["messages"] = []
+            st.session_state["last_result"] = None
+            st.rerun()
+    else:
+        st.sidebar.caption("질문을 실행하면 최근 대화가 여기에 표시됩니다.")
+
+    st.sidebar.divider()
     st.sidebar.markdown("### 실행 설정")
     provider = st.sidebar.selectbox(
         "생성 모드",
@@ -1033,10 +1300,6 @@ def render_sidebar() -> tuple[str, str]:
     st.sidebar.caption(
         "쓰기 의도 차단 · Cypher 검사 · EXPLAIN · DB read-only"
     )
-    if st.sidebar.button("대화 초기화", width="stretch"):
-        st.session_state["messages"] = []
-        st.session_state["last_result"] = None
-        st.rerun()
     return provider, model_name
 
 
@@ -1054,7 +1317,6 @@ def main() -> None:
         """,
         unsafe_allow_html=True,
     )
-    render_landing_overview()
     try:
         services = get_services(provider, model_name)
     except Exception as error:
@@ -1069,13 +1331,22 @@ def main() -> None:
         dashboard_snapshot = None
         st.warning(f"대시보드 진단 일부를 불러오지 못했습니다: {error}")
 
-    chat_tab, evidence_tab, dashboard_tab, data_tab = st.tabs(
-        ["Query Studio", "Evidence Lab", "Operations", "Data & Health"]
+    render_landing_overview()
+    chat_tab, evidence_tab, explorer_tab, dashboard_tab, data_tab = st.tabs(
+        [
+            "Query Studio",
+            "Evidence Lab",
+            "Graph Explorer",
+            "Operations",
+            "Data & Health",
+        ]
     )
     with chat_tab:
         render_chat_tab(services)
     with evidence_tab:
         render_evidence_tab()
+    with explorer_tab:
+        render_graph_explorer(services)
     with dashboard_tab:
         render_dashboard_tab(services, dashboard_snapshot)
     with data_tab:

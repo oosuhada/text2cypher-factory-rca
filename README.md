@@ -17,7 +17,7 @@ PPT 대조 후 수정 근거는 [방향 수정 기록](./docs/direction-correcti
 | 6단계 — 그래프 무결성과 수동 Cypher | **완료** | Gold 결과 스냅샷 15/15 일치, 무결성·전체 테스트 38/38 PASS |
 | 8~11단계 — Text-to-Cypher Agent | **구현 완료** | 생성·차단·EXPLAIN·교정·재검증·실행 PASS |
 | 12단계 — 결과 해석·근거 구성 | **완료** | 답변·표·Cypher·부분 그래프 출력 계약 15/15 PASS |
-| 13단계 — Streamlit UI | **완료** | Chat·Evidence·Dashboard 실제 서비스 연결 PASS |
+| 13단계 — Streamlit UI | **제품형 UX 보강 완료** | 인라인 근거·세션 대화 기록·Graph Explorer·데이터 사전검증 |
 | 14단계 — 실제 Agent·UI 연결 | **완료** | OpenAI 키가 없으면 Vertex Gemini 자동 연결, 실제 자유 질문 PASS |
 | 15단계 — 대시보드·그래프 시각화 | **완료** | 무결성·런타임·토큰·비용 지표와 Evidence 필터 구현 |
 | 16단계 — Blind 평가·회귀 테스트 | **완료** | Gemini 26문항 의미값 정확도 50.0%→50.0%→61.5%, 엄격 계약 정확도 38.5%, 자기수정 스트레스 8건 |
@@ -91,11 +91,12 @@ Text-to-Cypher 엔진을 사용할 수 있도록 FastAPI 경계를 추가했다.
 [제품 리팩터링 1~2단계 검증](./docs/refactor-stage1-2-validation.md)에
 정리했다.
 
-## 제품 리팩터링 2차 — Next.js 제품 UI
+## 선택적 확장 — Next.js 제품 UI
 
 AskOosu와 CodeMap에서 참고한 랜딩·내비게이션·대화 기록 패턴을
-FactoryGraph RCA의 실제 업무 흐름에 맞게 다시 설계했다. Streamlit은
-발표·운영 콘솔로 유지하고, Next.js는 외부 사용자가 쓰는 제품 UI다.
+FactoryGraph RCA의 실제 업무 흐름에 맞게 다시 설계했다. 다만 회사
+가이드에 명시된 공식 사내 프로토타입은 Streamlit이며, Next.js는
+같은 FastAPI를 사용하는 상용화·포트폴리오 확장 화면으로 분리한다.
 
 ```bash
 ./scripts/run_product.sh
@@ -116,6 +117,24 @@ ETL을 안내·진단하는 범위이며, 임의 파일 업로드와 비동기 �
 
 구현 범위와 검증 결과는
 [제품 리팩터링 3~4단계 검증](./docs/refactor-stage3-4-validation.md)에
+정리했다.
+
+## 공식 프로토타입 — Streamlit 제품형 UX
+
+```bash
+./scripts/run_demo.sh
+```
+
+Streamlit 안에서 다음 사용자 흐름을 완결한다.
+
+- 자연어 질문과 세션 내 최근 대화 다시 열기
+- 답변 직하에서 결과표·관계 경로·Cypher·검증 이력 확인
+- 노드 ID를 기준으로 최대 3-hop 지식그래프 탐색
+- 업로드 후보 파일의 형식·공통 ID 사전검증
+- 실제 ETL·그래프 무결성·Agent 평가 지표 확인
+
+구현 경계와 검증 결과는
+[Streamlit 제품형 UX 이전](./docs/streamlit-product-ux-migration.md)에
 정리했다.
 
 ## MVP 이후로 미룰 것

@@ -69,6 +69,29 @@ def filter_evidence(
     }
 
 
+def normalize_catalog_evidence(
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    """Convert GraphCatalogService nodes to the shared evidence contract."""
+
+    nodes = []
+    for node in payload.get("nodes", []):
+        labels = list(node.get("labels", []))
+        label = next(
+            (candidate for candidate in labels if candidate != "Part"),
+            labels[0] if labels else "Node",
+        )
+        nodes.append({**node, "label": label})
+    relationships = list(payload.get("relationships", []))
+    return {
+        "nodes": nodes,
+        "relationships": relationships,
+        "node_count": len(nodes),
+        "relationship_count": len(relationships),
+        "truncated": payload.get("truncated", False),
+    }
+
+
 def evidence_to_dot(
     evidence: dict[str, Any], rankdir: str = "LR"
 ) -> str:
