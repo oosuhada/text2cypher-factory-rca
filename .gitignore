@@ -1,0 +1,13 @@
+.env
+.env.local
+*service-account*.json
+*credentials*.json
+.venv/
+__pycache__/
+*.py[cod]
+.DS_Store
+data/processed/query_audit.jsonl
+data/processed/etl_runs/
+data/processed/quarantine/
+data/processed/cip_dmd_etl_summary.json
+data/processed/demo_smoke_latest.json
