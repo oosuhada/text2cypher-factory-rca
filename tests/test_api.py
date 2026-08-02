@@ -56,6 +56,37 @@ class FakeGraph:
         }
 
 
+class FakeFeedback:
+    def __init__(self):
+        self.events = []
+
+    def record_review(self, **payload):
+        event = {
+            "review_id": "review-1",
+            "timestamp": "2026-07-27T12:00:00+00:00",
+            "query_fingerprint": "a" * 64,
+            **payload,
+        }
+        self.events.append(event)
+        return event
+
+    def summary(self):
+        return {
+            "total_reviews": len(self.events),
+            "unique_queries_reviewed": len(self.events),
+            "decision_counts": {
+                "verified": sum(
+                    event["decision"] == "verified"
+                    for event in self.events
+                ),
+                "disputed": 0,
+                "needs_followup": 0,
+            },
+            "recent": list(reversed(self.events)),
+            "storage": "append-only-jsonl",
+        }
+
+
 class FakeBundle:
     provider = "gold"
     model_name = "gold-lookup"
@@ -63,6 +94,7 @@ class FakeBundle:
     def __init__(self):
         self.dashboard = FakeDashboard()
         self.graph = FakeGraph()
+        self.feedback = FakeFeedback()
         self.closed = False
 
     def query_with_fallback(self, question):
@@ -187,6 +219,39 @@ class ApiContractTest(unittest.TestCase):
             params={"label": "Cylinder", "q": "   "},
         )
         self.assertEqual(whitespace.status_code, 422)
+
+    def test_domain_expert_feedback_is_recorded_and_summarized(self):
+        response = self.client.post(
+            "/api/v1/feedback",
+            json={
+                "question": "완제품 300002의 공정 이력을 보여줘.",
+                "cypher": "MATCH (part:Part) RETURN part LIMIT 1",
+                "query_status": "success",
+                "provider": "gemini",
+                "row_count": 1,
+                "decision": "verified",
+                "reviewer": "quality-engineer",
+                "note": "원장과 대조 완료",
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()["decision"], "verified")
+
+        summary = self.client.get("/api/v1/feedback/summary")
+        self.assertEqual(summary.status_code, 200)
+        self.assertEqual(summary.json()["total_reviews"], 1)
+        self.assertEqual(
+            summary.json()["decision_counts"]["verified"], 1
+        )
+
+        invalid = self.client.post(
+            "/api/v1/feedback",
+            json={
+                "question": "질문",
+                "decision": "approved",
+            },
+        )
+        self.assertEqual(invalid.status_code, 422)
 
     def test_bundle_is_closed_on_shutdown(self):
         separate_bundle = FakeBundle()

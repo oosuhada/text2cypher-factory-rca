@@ -19,6 +19,7 @@ from backend.app.agent.model import (
 from backend.app.agent.workflow import TextToCypherAgent
 from backend.app.etl.cli import password_from_keychain
 from backend.app.services.dashboard_service import DashboardService
+from backend.app.services.feedback_service import FeedbackService
 from backend.app.services.graph_service import GraphCatalogService
 from backend.app.services.query_service import QueryService
 
@@ -32,6 +33,7 @@ class ServiceBundle:
     provider: str
     model_name: str
     graph: GraphCatalogService | None = None
+    feedback: FeedbackService | None = None
 
     def close(self) -> None:
         self.driver.close()
@@ -158,6 +160,12 @@ def build_service_bundle(
             processed_root=project_root / "data" / "processed",
         ),
         graph=GraphCatalogService(driver=driver, database=database),
+        feedback=FeedbackService(
+            project_root
+            / "data"
+            / "processed"
+            / "expert_feedback.jsonl"
+        ),
         provider=resolved_provider,
         model_name=resolved_model_name,
     )

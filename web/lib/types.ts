@@ -85,6 +85,33 @@ export type NodeSearchResponse = {
   count: number;
 };
 
+export type FeedbackDecision =
+  | "verified"
+  | "disputed"
+  | "needs_followup";
+
+export type FeedbackRecord = {
+  review_id: string;
+  timestamp: string;
+  query_fingerprint: string;
+  question: string;
+  cypher: string;
+  query_status: string;
+  provider: string;
+  row_count: number;
+  decision: FeedbackDecision;
+  reviewer: string;
+  note: string;
+};
+
+export type FeedbackSummary = {
+  total_reviews: number;
+  unique_queries_reviewed: number;
+  decision_counts: Record<FeedbackDecision, number>;
+  recent: FeedbackRecord[];
+  storage: string;
+};
+
 export type SubgraphResponse = {
   root: EvidenceNode | null;
   nodes: EvidenceNode[];

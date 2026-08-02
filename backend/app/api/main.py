@@ -22,6 +22,9 @@ from backend.app.services.graph_service import (
 )
 
 from .schemas import (
+    FeedbackRecord,
+    FeedbackRequest,
+    FeedbackSummary,
     GraphSchemaResponse,
     HealthResponse,
     NodeSearchResponse,
@@ -144,6 +147,53 @@ def create_app(bundle_factory: BundleFactory | None = None) -> FastAPI:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail=f"운영 지표 조회에 실패했습니다: {error}",
+            ) from error
+
+    @application.post(
+        "/api/v1/feedback",
+        response_model=FeedbackRecord,
+        status_code=status.HTTP_201_CREATED,
+    )
+    def record_feedback(
+        payload: FeedbackRequest,
+        bundle: ServiceBundle = Depends(get_bundle),
+    ) -> dict:
+        if bundle.feedback is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="전문가 검증 기록 서비스가 구성되지 않았습니다.",
+            )
+        try:
+            return bundle.feedback.record_review(**payload.model_dump())
+        except ValueError as error:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=str(error),
+            ) from error
+        except Exception as error:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"전문가 검증 기록에 실패했습니다: {error}",
+            ) from error
+
+    @application.get(
+        "/api/v1/feedback/summary",
+        response_model=FeedbackSummary,
+    )
+    def feedback_summary(
+        bundle: ServiceBundle = Depends(get_bundle),
+    ) -> dict:
+        if bundle.feedback is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="전문가 검증 기록 서비스가 구성되지 않았습니다.",
+            )
+        try:
+            return bundle.feedback.summary()
+        except Exception as error:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"전문가 검증 요약 조회에 실패했습니다: {error}",
             ) from error
 
     @application.get(
