@@ -1,8 +1,11 @@
 import unittest
+import tempfile
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 
 from backend.app.api.main import create_app
+from backend.app.projects import ProjectRegistry
 
 
 class FakeDashboard:
@@ -129,13 +132,21 @@ class FakeBundle:
 class ApiContractTest(unittest.TestCase):
     def setUp(self):
         self.bundle = FakeBundle()
+        self.temp = tempfile.TemporaryDirectory()
+        self.projects = ProjectRegistry(
+            Path(self.temp.name) / "projects.sqlite3"
+        )
         self.client_context = TestClient(
-            create_app(bundle_factory=lambda: self.bundle)
+            create_app(
+                bundle_factory=lambda: self.bundle,
+                project_registry=self.projects,
+            )
         )
         self.client = self.client_context.__enter__()
 
     def tearDown(self):
         self.client_context.__exit__(None, None, None)
+        self.temp.cleanup()
 
     def test_live_and_schema_do_not_require_database_queries(self):
         live = self.client.get("/api/v1/health/live")
@@ -159,6 +170,43 @@ class ApiContractTest(unittest.TestCase):
         self.assertEqual(runtime.status_code, 200)
         self.assertEqual(runtime.json()["provider"], "gold")
         self.assertEqual(runtime.json()["transport"], "service")
+        self.assertEqual(runtime.json()["active_project_id"], "cip-dmd")
+
+    def test_project_registry_contract_and_active_context(self):
+        projects = self.client.get("/api/v1/projects")
+        self.assertEqual(projects.status_code, 200)
+        self.assertEqual(projects.json()[0]["project_id"], "cip-dmd")
+        created = self.client.post(
+            "/api/v1/projects",
+            json={
+                "project_id": "equipment-history",
+                "name": "Equipment History",
+                "domain_type": "maintenance",
+                "dataset_name": "Synthetic Maintenance",
+            },
+        )
+        self.assertEqual(created.status_code, 201)
+        blocked_query = self.client.post(
+            "/api/v1/query",
+            json={
+                "project_id": "equipment-history",
+                "question": "장비를 보여줘.",
+            },
+        )
+        self.assertEqual(blocked_query.status_code, 409)
+        activated = self.client.post(
+            "/api/v1/projects/equipment-history/activate"
+        )
+        self.assertTrue(activated.json()["is_active"])
+        response = self.client.post(
+            "/api/v1/query",
+            json={
+                "project_id": "equipment-history",
+                "question": "장비를 보여줘.",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["project_id"], "equipment-history")
 
     def test_query_contract_exposes_cypher_rows_and_evidence(self):
         response = self.client.post(
