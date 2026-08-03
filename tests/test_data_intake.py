@@ -139,15 +139,17 @@ class DataIntakeServiceTest(unittest.TestCase):
             ]
         )
         with (
-            patch(
-                "backend.app.services.data_intake_service.graph_counts",
+            patch.object(
+                self.service.pipeline,
+                "graph_counts",
                 side_effect=[
                     dict(EXPECTED_COUNTS),
                     dict(EXPECTED_COUNTS),
                 ],
             ),
-            patch(
-                "backend.app.services.data_intake_service.load_payload",
+            patch.object(
+                self.service.pipeline,
+                "load",
                 return_value={"parts": {"nodes_created": 0}},
             ),
         ):
@@ -174,12 +176,14 @@ class DataIntakeServiceTest(unittest.TestCase):
             ]
         )
         with (
-            patch(
-                "backend.app.services.data_intake_service.graph_counts",
+            patch.object(
+                self.service.pipeline,
+                "graph_counts",
                 return_value=dict(EXPECTED_COUNTS),
             ),
-            patch(
-                "backend.app.services.data_intake_service.load_payload",
+            patch.object(
+                self.service.pipeline,
+                "load",
                 side_effect=RuntimeError("simulated load error"),
             ),
         ):
