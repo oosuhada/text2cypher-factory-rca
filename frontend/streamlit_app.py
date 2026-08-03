@@ -20,7 +20,10 @@ import streamlit as st
 from backend.app.services.diagnostics import collect_demo_diagnostics
 from backend.app.services.data_intake_service import DataIntakeService
 from backend.app.services.graph_service import NODE_IDENTITIES
-from frontend.app_services import ServiceBundle, build_service_bundle
+from frontend.app_services import (
+    ServiceBundle,
+    build_streamlit_service_bundle,
+)
 from frontend.conversation_history import upsert_conversation
 from frontend.data_preflight import inspect_uploaded_source
 from frontend.presentation import (
@@ -33,7 +36,7 @@ from frontend.presentation import (
 
 
 APP_TITLE = "Factory Graph RCA"
-SERVICE_BUNDLE_VERSION = "2026-07-28-feedback-v1"
+SERVICE_BUNDLE_VERSION = "2026-07-28-shared-api-v2"
 NAVIGATION_PAGES = (
     "Home",
     "Query Studio",
@@ -280,9 +283,9 @@ def get_services(
     provider: str,
     model_name: str,
     bundle_version: str,
-) -> ServiceBundle:
+) -> Any:
     del bundle_version
-    return build_service_bundle(
+    return build_streamlit_service_bundle(
         project_root=PROJECT_ROOT,
         provider=provider,
         model_name=model_name,
@@ -2054,7 +2057,8 @@ def main() -> None:
         render_startup_failure(error)
         return
     st.sidebar.caption(
-        f"실제 연결: {services.provider} / {services.model_name}"
+        f"실제 연결: {services.provider} / {services.model_name} · "
+        f"{getattr(services, 'transport', 'direct')}"
     )
     try:
         dashboard_snapshot = services.dashboard.snapshot()

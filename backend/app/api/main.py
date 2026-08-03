@@ -31,6 +31,7 @@ from .schemas import (
     NodeSearchResponse,
     QueryRequest,
     QueryResponse,
+    RuntimeResponse,
     SubgraphResponse,
 )
 
@@ -133,6 +134,16 @@ def create_app(bundle_factory: BundleFactory | None = None) -> FastAPI:
         return {
             "status": "ready" if diagnostics_pass(checks) else "degraded",
             "checks": checks,
+        }
+
+    @application.get("/api/v1/runtime", response_model=RuntimeResponse)
+    def runtime(
+        bundle: ServiceBundle = Depends(get_bundle),
+    ) -> dict[str, str]:
+        return {
+            "provider": bundle.provider,
+            "model_name": bundle.model_name,
+            "transport": "service",
         }
 
     @application.post("/api/v1/query", response_model=QueryResponse)
