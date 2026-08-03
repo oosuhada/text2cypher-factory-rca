@@ -33,6 +33,15 @@ from frontend.presentation import (
 
 
 APP_TITLE = "Factory Graph RCA"
+SERVICE_BUNDLE_VERSION = "2026-07-28-feedback-v1"
+NAVIGATION_PAGES = (
+    "Home",
+    "Query Studio",
+    "Evidence Lab",
+    "Graph Explorer",
+    "Operations",
+    "Data & Health",
+)
 EXAMPLE_QUESTIONS = [
     (
         "제품 Genealogy",
@@ -139,8 +148,126 @@ st.markdown(
       font-size: .82rem;
       margin: .35rem 0 .9rem 0;
     }
+    .p3-landing-hero {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 1rem;
+      align-items: stretch;
+      padding: 2.6rem;
+      border-radius: 24px;
+      color: white;
+      background:
+        radial-gradient(circle at 86% 16%, rgba(45, 212, 191, .28), transparent 34%),
+        linear-gradient(135deg, #082F2C 0%, #0B4F4A 56%, #123C55 100%);
+      box-shadow: 0 24px 60px rgba(8, 47, 44, .2);
+      margin-bottom: 1.2rem;
+    }
+    .p3-landing-copy h1 {
+      max-width: 720px;
+      margin: .45rem 0 .9rem;
+      color: white;
+      font-size: clamp(2.3rem, 5vw, 4.6rem);
+      line-height: .98;
+      letter-spacing: -.055em;
+    }
+    .p3-landing-copy h1 span {display:block; color:#5EEAD4;}
+    .p3-landing-copy p {
+      max-width: 650px;
+      margin: 0;
+      color: #D6F4F0;
+      font-size: 1rem;
+      line-height: 1.75;
+    }
+    .p3-landing-proof {
+      display:flex;
+      flex-wrap:wrap;
+      gap:.45rem;
+      margin-top:1.2rem;
+    }
+    .p3-landing-proof span {
+      border:1px solid rgba(153,246,228,.34);
+      border-radius:999px;
+      padding:.34rem .68rem;
+      color:#CCFBF1;
+      background:rgba(15,118,110,.24);
+      font-size:.76rem;
+      font-weight:700;
+    }
+    .p3-investigation {
+      align-self: stretch;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 18px;
+      padding: 1.1rem;
+      background: rgba(3, 18, 24, .48);
+      backdrop-filter: blur(14px);
+    }
+    .p3-investigation-head {
+      display:flex;
+      justify-content:space-between;
+      color:#99F6E4;
+      font-size:.72rem;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+    }
+    .p3-investigation-question {
+      margin:.9rem 0;
+      border-radius:12px;
+      padding:.8rem;
+      color:#E6FFFB;
+      background:rgba(255,255,255,.08);
+      font-size:.82rem;
+      line-height:1.55;
+    }
+    .p3-investigation-path {
+      display:grid;
+      grid-template-columns:1fr auto 1fr auto 1fr;
+      align-items:center;
+      gap:.35rem;
+      color:#5EEAD4;
+      font-size:.64rem;
+    }
+    .p3-investigation-path b {
+      border:1px solid rgba(94,234,212,.3);
+      border-radius:10px;
+      padding:.6rem .45rem;
+      color:white;
+      text-align:center;
+      background:rgba(15,118,110,.24);
+    }
+    .p3-cypher-preview {
+      margin-top:.8rem;
+      border-radius:10px;
+      padding:.7rem;
+      color:#A7F3D0;
+      background:#061B20;
+      font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size:.65rem;
+      line-height:1.55;
+    }
+    .p3-landing-section {
+      padding:1.5rem 0 .5rem;
+    }
+    .p3-landing-section h2 {
+      margin:.25rem 0 1rem;
+      font-size:1.8rem;
+      letter-spacing:-.035em;
+    }
+    .p3-workflow {
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:.7rem;
+      margin:1rem 0;
+    }
+    .p3-workflow div {
+      border-top:2px solid #14B8A6;
+      padding:.8rem .2rem;
+    }
+    .p3-workflow b {display:block;color:#0F5E58;}
+    .p3-workflow span {color:#64748B;font-size:.76rem;}
     @media (max-width: 900px) {
       .p3-feature-grid {grid-template-columns: repeat(2, minmax(0, 1fr));}
+      .p3-landing-hero {grid-template-columns:1fr;padding:1.5rem;}
+      .p3-workflow {grid-template-columns:repeat(2,minmax(0,1fr));}
     }
     </style>
     """,
@@ -149,7 +276,12 @@ st.markdown(
 
 
 @st.cache_resource(show_spinner=False)
-def get_services(provider: str, model_name: str) -> ServiceBundle:
+def get_services(
+    provider: str,
+    model_name: str,
+    bundle_version: str,
+) -> ServiceBundle:
+    del bundle_version
     return build_service_bundle(
         project_root=PROJECT_ROOT,
         provider=provider,
@@ -168,6 +300,7 @@ def get_reference_intake_archive() -> bytes:
 
 
 def initialize_session() -> None:
+    st.session_state.setdefault("active_page", "Home")
     st.session_state.setdefault("messages", [])
     st.session_state.setdefault("last_result", None)
     st.session_state.setdefault("conversations", [])
@@ -179,6 +312,12 @@ def initialize_session() -> None:
     st.session_state.setdefault("expert_reviews", {})
     st.session_state.setdefault("intake_record", None)
     st.session_state.setdefault("intake_approval_token", None)
+
+
+def navigate_to_page(page: str) -> None:
+    if page not in NAVIGATION_PAGES:
+        return
+    st.session_state["active_page"] = page
 
 
 def sync_active_conversation() -> None:
@@ -371,7 +510,8 @@ def render_expert_review(
     services: ServiceBundle,
     key_prefix: str,
 ) -> None:
-    if services.feedback is None or response.get("status") == "failed":
+    feedback_service = getattr(services, "feedback", None)
+    if feedback_service is None or response.get("status") == "failed":
         return
     fingerprint = sha256(
         (
@@ -432,7 +572,7 @@ def render_expert_review(
         )
     if submitted:
         try:
-            record = services.feedback.record_review(
+            record = feedback_service.record_review(
                 question=response.get("question", ""),
                 cypher=response.get("cypher", ""),
                 query_status=response.get("status", "unknown"),
@@ -554,6 +694,100 @@ def render_landing_overview() -> None:
         </div>
         """,
         unsafe_allow_html=True,
+    )
+
+
+def render_streamlit_landing() -> None:
+    st.markdown(
+        """
+        <section class="p3-landing-hero">
+          <div class="p3-landing-copy">
+            <div class="p3-kicker">Manufacturing Knowledge Graph</div>
+            <h1>Find the path.<span>Keep the proof.</span></h1>
+            <p>
+              제조 관계를 자연어로 묻고, 검증된 Cypher와 실제 그래프
+              경로로 RCA 후보를 확인합니다. 추정한 답변이 아니라 조회한
+              근거와 전문가 판정을 남깁니다.
+            </p>
+            <div class="p3-landing-proof">
+              <span>Gold 15/15</span>
+              <span>READ-only 100%</span>
+              <span>Blind 26</span>
+              <span>Expert HITL</span>
+            </div>
+          </div>
+          <div class="p3-investigation">
+            <div class="p3-investigation-head">
+              <span>Live investigation</span><span>Verified</span>
+            </div>
+            <div class="p3-investigation-question">
+              완제품 300002의 구성품과 각 공정·품질검사 결과를 보여줘.
+            </div>
+            <div class="p3-investigation-path">
+              <b>Cylinder<br>300002</b><span>→</span>
+              <b>Part<br>103504</b><span>→</span>
+              <b>Process<br>CNC milling</b>
+            </div>
+            <div class="p3-cypher-preview">
+              MATCH (c:Cylinder)-[:ASSEMBLED_FROM]-&gt;(p:Part)<br>
+              OPTIONAL MATCH (p)-[:UNDERWENT]-&gt;(run:ProcessRun)<br>
+              RETURN c, p, run
+            </div>
+          </div>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
+    query_column, graph_column, spacer = st.columns([1, 1, 3])
+    query_column.button(
+        "RCA 질문 시작 →",
+        type="primary",
+        width="stretch",
+        on_click=navigate_to_page,
+        args=("Query Studio",),
+    )
+    graph_column.button(
+        "그래프 탐색",
+        width="stretch",
+        on_click=navigate_to_page,
+        args=("Graph Explorer",),
+    )
+
+    metric_columns = st.columns(4)
+    metric_columns[0].metric("조립 완제품", "802")
+    metric_columns[1].metric("Genealogy 완전성", "95.6%")
+    metric_columns[2].metric("Blind 의미값 정확도", "61.5%")
+    metric_columns[3].metric("관계 유형", "7")
+
+    st.markdown(
+        """
+        <section class="p3-landing-section">
+          <div class="p3-kicker" style="color:#0F766E">What the system proves</div>
+          <h2>AI 답변보다 검증 경로를 설계합니다.</h2>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
+    render_landing_overview()
+    st.markdown(
+        """
+        <section class="p3-landing-section">
+          <div class="p3-kicker" style="color:#0F766E">Agent workflow</div>
+          <h2>실행 전에 의심하고, 실행 후에 증명합니다.</h2>
+          <div class="p3-workflow">
+            <div><b>01 · Ask</b><span>현업 언어로 관계 질문</span></div>
+            <div><b>02 · Generate</b><span>스키마 기반 Cypher 생성</span></div>
+            <div><b>03 · Verify</b><span>READ-only·EXPLAIN·의미 검사</span></div>
+            <div><b>04 · Trace</b><span>조회값·관계·전문가 판정</span></div>
+          </div>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.info(
+        "사내 프로토타입에서는 질문, 실행 Cypher, 조회 결과, 관계 경로와 "
+        "도메인 전문가 판정을 같은 앱에서 확인합니다.",
+        icon="🔷",
     )
 
 
@@ -1455,10 +1689,11 @@ def render_dashboard_tab(
             st.info("Query Studio에서 질문을 실행하면 이력이 기록됩니다.")
 
     st.markdown("#### 도메인 전문가 검증")
-    if services.feedback is None:
+    feedback_service = getattr(services, "feedback", None)
+    if feedback_service is None:
         st.info("전문가 검증 기록 서비스가 구성되지 않았습니다.")
     else:
-        feedback = services.feedback.summary()
+        feedback = feedback_service.summary()
         feedback_columns = st.columns(5)
         feedback_columns[0].metric(
             "전체 판정", feedback["total_reviews"]
@@ -1675,7 +1910,27 @@ def render_dashboard_tab(
         )
 
 
-def render_sidebar() -> tuple[str, str]:
+def render_sidebar() -> tuple[str, str, str]:
+    st.sidebar.markdown("### Navigation")
+    page = st.sidebar.radio(
+        "Navigation",
+        options=NAVIGATION_PAGES,
+        key="active_page",
+        label_visibility="collapsed",
+    )
+    st.sidebar.divider()
+    if page == "Home":
+        st.sidebar.markdown("### FactoryGraph RCA")
+        st.sidebar.caption(
+            "자연어 질문 → 검증된 Cypher → Neo4j 근거 → 전문가 판정"
+        )
+        st.sidebar.success("제품 랜딩")
+        return (
+            page,
+            "auto",
+            os.getenv("GOOGLE_VERTEX_MODEL", "gemini-2.5-flash"),
+        )
+
     st.sidebar.markdown("### 대화")
     if st.sidebar.button(
         "＋ 새 대화",
@@ -1769,12 +2024,15 @@ def render_sidebar() -> tuple[str, str]:
     st.sidebar.caption(
         "쓰기 의도 차단 · Cypher 검사 · EXPLAIN · DB read-only"
     )
-    return provider, model_name
+    return page, provider, model_name
 
 
 def main() -> None:
     initialize_session()
-    provider, model_name = render_sidebar()
+    page, provider, model_name = render_sidebar()
+    if page == "Home":
+        render_streamlit_landing()
+        return
     st.markdown(
         """
         <div class="p3-hero">
@@ -1787,7 +2045,11 @@ def main() -> None:
         unsafe_allow_html=True,
     )
     try:
-        services = get_services(provider, model_name)
+        services = get_services(
+            provider,
+            model_name,
+            SERVICE_BUNDLE_VERSION,
+        )
     except Exception as error:
         render_startup_failure(error)
         return
@@ -1800,25 +2062,15 @@ def main() -> None:
         dashboard_snapshot = None
         st.warning(f"대시보드 진단 일부를 불러오지 못했습니다: {error}")
 
-    render_landing_overview()
-    chat_tab, evidence_tab, explorer_tab, dashboard_tab, data_tab = st.tabs(
-        [
-            "Query Studio",
-            "Evidence Lab",
-            "Graph Explorer",
-            "Operations",
-            "Data & Health",
-        ]
-    )
-    with chat_tab:
+    if page == "Query Studio":
         render_chat_tab(services)
-    with evidence_tab:
+    elif page == "Evidence Lab":
         render_evidence_tab()
-    with explorer_tab:
+    elif page == "Graph Explorer":
         render_graph_explorer(services)
-    with dashboard_tab:
+    elif page == "Operations":
         render_dashboard_tab(services, dashboard_snapshot)
-    with data_tab:
+    elif page == "Data & Health":
         render_data_health_tab(services, dashboard_snapshot)
 
 
