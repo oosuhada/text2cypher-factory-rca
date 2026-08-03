@@ -108,9 +108,14 @@ class NodeIdentity(BaseModel):
 
 
 class GraphSchemaResponse(BaseModel):
+    project_id: str = "cip-dmd"
+    schema_version: str = "1.1"
+    title: str = "Manufacturing graph"
     schema_context: str
     node_identities: list[NodeIdentity]
     relationship_types: list[str]
+    nodes: list[dict[str, Any]] = Field(default_factory=list)
+    relationships: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class NodeSearchResponse(BaseModel):
