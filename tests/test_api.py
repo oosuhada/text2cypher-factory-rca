@@ -17,6 +17,11 @@ class FakeDashboard:
 
 
 class FakeGraph:
+    def graph_counts(self, project_id=None):
+        if project_id == "empty-project":
+            return {"nodes": 0, "relationships": 0}
+        return {"nodes": 10, "relationships": 12}
+
     def search_nodes(self, label, query, limit):
         if label == "Anything":
             raise ValueError("지원하지 않는 노드 라벨입니다: Anything")
@@ -173,6 +178,7 @@ class ApiContractTest(unittest.TestCase):
         self.assertEqual(runtime.json()["provider"], "gold")
         self.assertEqual(runtime.json()["transport"], "service")
         self.assertEqual(runtime.json()["active_project_id"], "cip-dmd")
+        self.assertFalse(runtime.json()["ui_load_enabled"])
 
     def test_project_registry_contract_and_active_context(self):
         projects = self.client.get("/api/v1/projects")
@@ -212,6 +218,33 @@ class ApiContractTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["project_id"], "equipment-history")
+        readiness = self.client.get(
+            "/api/v1/projects/equipment-history/readiness"
+        )
+        self.assertEqual(readiness.status_code, 200)
+        self.assertTrue(readiness.json()["can_query"])
+        self.assertEqual(readiness.json()["next_action"], "query")
+
+    def test_empty_custom_project_is_blocked_before_llm_query(self):
+        created = self.client.post(
+            "/api/v1/projects",
+            json={
+                "project_id": "empty-project",
+                "name": "Empty",
+                "domain_type": "maintenance",
+                "dataset_name": "Empty data",
+            },
+        )
+        self.assertEqual(created.status_code, 201)
+        response = self.client.post(
+            "/api/v1/query",
+            json={
+                "project_id": "empty-project",
+                "question": "장비를 보여줘.",
+            },
+        )
+        self.assertEqual(response.status_code, 409)
+        self.assertIn("적재된 그래프 데이터", response.json()["detail"])
 
     def test_graph_load_is_disabled_without_explicit_server_opt_in(self):
         response = self.client.post(

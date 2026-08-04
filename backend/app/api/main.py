@@ -34,6 +34,7 @@ from .schemas import (
     HealthResponse,
     NodeSearchResponse,
     ProjectCreate,
+    ProjectReadinessResponse,
     ProjectResponse,
     ProjectUpdate,
     QueryRequest,
@@ -208,6 +209,9 @@ def create_app(
             "model_name": bundle.model_name,
             "transport": "service",
             "active_project_id": resolved_project_id,
+            "ui_load_enabled": (
+                os.getenv("P3_ENABLE_UI_LOAD", "0") == "1"
+            ),
         }
 
     @application.get(
@@ -247,6 +251,64 @@ def create_app(
             return projects.require(project_id)
         except (KeyError, ValueError) as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
+
+    @application.get(
+        "/api/v1/projects/{project_id}/readiness",
+        response_model=ProjectReadinessResponse,
+    )
+    def project_readiness(project_id: str) -> dict:
+        try:
+            project = projects.require(project_id)
+            bundle = registry.get(project_id)
+            if bundle.graph is None:
+                raise RuntimeError(
+                    "그래프 탐색 서비스가 구성되지 않았습니다."
+                )
+            counts = bundle.graph.graph_counts(project_id)
+            upload_count = len(datasets.list(project_id))
+            try:
+                mappings.get(project_id)
+                mapping_approved = True
+            except KeyError:
+                mapping_approved = False
+            try:
+                schemas.load(project_id)
+                schema_available = True
+            except KeyError:
+                schema_available = False
+            can_query = counts["nodes"] > 0
+            can_load = (
+                mapping_approved
+                and os.getenv("P3_ENABLE_UI_LOAD", "0") == "1"
+            )
+            next_action = (
+                "query"
+                if can_query
+                else "load"
+                if mapping_approved
+                else "map"
+                if upload_count
+                else "upload"
+            )
+            return {
+                "project_id": project_id,
+                "lifecycle_status": project["status"],
+                "upload_count": upload_count,
+                "mapping_approved": mapping_approved,
+                "schema_available": schema_available,
+                "node_count": counts["nodes"],
+                "relationship_count": counts["relationships"],
+                "can_query": can_query,
+                "can_load": can_load,
+                "next_action": next_action,
+            }
+        except (KeyError, ValueError) as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except Exception as error:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"프로젝트 준비 상태 확인 실패: {error}",
+            ) from error
 
     @application.patch(
         "/api/v1/projects/{project_id}",
@@ -338,7 +400,7 @@ def create_app(
             projects.update(
                 project_id,
                 schema_version=payload.schema_version,
-                status="ready",
+                status="mapping_ready",
             )
             registry.close(project_id)
             return result
@@ -376,9 +438,11 @@ def create_app(
         try:
             projects.require(project_id)
             bundle = registry.get(project_id)
-            return generic_loader.load(
+            result = generic_loader.load(
                 bundle.driver, project_id, payload.upload_id
             )
+            projects.update(project_id, status="ready")
+            return result
         except KeyError as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         except ValueError as error:
@@ -398,9 +462,27 @@ def create_app(
         try:
             projects.require(requested_project_id)
             bundle = registry.get(requested_project_id)
+            if (
+                requested_project_id != "cip-dmd"
+                and bundle.graph is not None
+                and bundle.graph.graph_counts(requested_project_id)[
+                    "nodes"
+                ]
+                == 0
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=(
+                        "선택한 프로젝트에는 적재된 그래프 데이터가 "
+                        "없습니다. Data → Schema → Load 단계를 먼저 "
+                        "완료하세요."
+                    ),
+                )
             result = bundle.query_with_fallback(payload.question.strip())
             result["project_id"] = requested_project_id
             return result
+        except HTTPException:
+            raise
         except (KeyError, ValueError) as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         except Exception as error:

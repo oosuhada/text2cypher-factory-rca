@@ -102,6 +102,38 @@ class GraphCatalogService:
     def schema(self) -> dict[str, Any]:
         return schema_contract()
 
+    def graph_counts(
+        self, project_id: str | None = None
+    ) -> dict[str, int]:
+        if project_id and project_id != "cip-dmd":
+            statement = """
+            MATCH (node {project_id: $project_id})
+            WITH count(node) AS nodes
+            OPTIONAL MATCH ()-[relationship {project_id: $project_id}]->()
+            RETURN nodes, count(relationship) AS relationships
+            """
+        else:
+            statement = """
+            MATCH (node)
+            WITH count(node) AS nodes
+            OPTIONAL MATCH ()-[relationship]->()
+            RETURN nodes, count(relationship) AS relationships
+            """
+        with self.driver.session(
+            database=self.database,
+            default_access_mode=READ_ACCESS,
+        ) as session:
+            record = session.run(
+                Query(statement, timeout=self.timeout_seconds),
+                project_id=project_id,
+            ).single()
+        return {
+            "nodes": int(record["nodes"]) if record else 0,
+            "relationships": (
+                int(record["relationships"]) if record else 0
+            ),
+        }
+
     def search_nodes(
         self,
         label: str,

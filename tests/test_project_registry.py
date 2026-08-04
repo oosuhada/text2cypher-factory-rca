@@ -33,6 +33,10 @@ class ProjectRegistryTest(unittest.TestCase):
         self.assertFalse(second["is_active"])
         activated = self.registry.activate("equipment-history")
         self.assertTrue(activated["is_active"])
+        mapped = self.registry.update(
+            "equipment-history", status="mapping_ready"
+        )
+        self.assertEqual(mapped["status"], "mapping_ready")
         with self.assertRaisesRegex(ValueError, "활성 프로젝트"):
             self.registry.update(
                 "equipment-history", status="archived"

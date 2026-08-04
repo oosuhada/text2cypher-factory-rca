@@ -7,6 +7,7 @@ import type {
   NodeSearchResponse,
   QueryResponse,
   Project,
+  ProjectReadiness,
   DatasetProfile,
   SubgraphResponse,
 } from "@/lib/types";
@@ -62,6 +63,12 @@ export function activateProject(projectId: string) {
   return request<Project>(`/api/v1/projects/${projectId}/activate`, {
     method: "POST",
   });
+}
+
+export function getProjectReadiness(projectId: string) {
+  return request<ProjectReadiness>(
+    `/api/v1/projects/${projectId}/readiness`,
+  );
 }
 
 export function profileDataset(
