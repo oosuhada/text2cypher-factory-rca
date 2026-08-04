@@ -102,7 +102,6 @@ def create_app(
     schema_registry: SchemaRegistry | None = None,
     dataset_workspace: DatasetWorkspace | None = None,
 ) -> FastAPI:
-    registry = ServiceRegistry(bundle_factory or _default_bundle_factory)
     projects = project_registry or ProjectRegistry(
         Path(
             os.getenv(
@@ -113,6 +112,17 @@ def create_app(
     )
     projects.ensure_default()
     schemas = schema_registry or SchemaRegistry(PROJECT_ROOT / "schemas")
+    def active_bundle_factory() -> ServiceBundle:
+        project_id = projects.active_project_id() or "cip-dmd"
+        return build_service_bundle(
+            project_root=PROJECT_ROOT,
+            provider=os.getenv("P3_API_PROVIDER", "auto"),
+            model_name=os.getenv("P3_API_MODEL") or None,
+            project_id=project_id,
+            schema_context=schemas.context(project_id),
+        )
+
+    registry = ServiceRegistry(bundle_factory or active_bundle_factory)
     datasets = dataset_workspace or DatasetWorkspace(
         PROJECT_ROOT / "data" / "processed" / "project_uploads"
     )
@@ -244,7 +254,9 @@ def create_app(
     )
     def activate_project(project_id: str) -> dict:
         try:
-            return projects.activate(project_id)
+            activated = projects.activate(project_id)
+            registry.close()
+            return activated
         except KeyError as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         except ValueError as error:
