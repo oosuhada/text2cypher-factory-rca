@@ -67,7 +67,14 @@ class RuntimeResponse(BaseModel):
     ui_load_enabled: bool
 
 
-ProjectStatus = Literal["draft", "mapping_ready", "ready", "archived"]
+ProjectStatus = Literal[
+    "draft",
+    "mapping_ready",
+    "loading",
+    "load_failed",
+    "ready",
+    "archived",
+]
 
 
 class ProjectCreate(BaseModel):
