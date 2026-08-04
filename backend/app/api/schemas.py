@@ -117,6 +117,11 @@ class GraphMappingRequest(BaseModel):
     mapping: dict[str, Any]
 
 
+class ProjectLoadRequest(BaseModel):
+    upload_id: str = Field(min_length=36, max_length=36)
+    confirm_project_id: str = Field(min_length=3, max_length=63)
+
+
 class NodeIdentity(BaseModel):
     label: str
     identity_property: str

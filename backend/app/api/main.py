@@ -16,6 +16,7 @@ from backend.app.services.bootstrap import ServiceBundle, build_service_bundle
 from backend.app.projects import ProjectRegistry
 from backend.app.ingestion import DatasetWorkspace
 from backend.app.mapping import MappingWorkspace
+from backend.app.etl.generic_loader import GenericGraphLoader
 from backend.app.schema_registry import SchemaRegistry
 from backend.app.services.diagnostics import (
     collect_demo_diagnostics,
@@ -29,6 +30,7 @@ from .schemas import (
     FeedbackSummary,
     DatasetUploadRequest,
     GraphMappingRequest,
+    ProjectLoadRequest,
     GraphSchemaResponse,
     HealthResponse,
     NodeSearchResponse,
@@ -118,6 +120,11 @@ def create_app(
         PROJECT_ROOT / "data" / "processed" / "project_mappings",
         datasets,
         schemas,
+    )
+    generic_loader = GenericGraphLoader(
+        datasets,
+        mappings,
+        database=os.getenv("NEO4J_DATABASE", "neo4j"),
     )
 
     @asynccontextmanager
@@ -321,6 +328,31 @@ def create_app(
             return mappings.get(project_id)
         except KeyError as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
+
+    @application.post("/api/v1/projects/{project_id}/graph/load")
+    def load_project_graph(
+        project_id: str,
+        payload: ProjectLoadRequest,
+        bundle: ServiceBundle = Depends(get_bundle),
+    ) -> dict:
+        if payload.confirm_project_id != project_id:
+            raise HTTPException(
+                status_code=422,
+                detail="적재 승인용 confirm_project_id가 일치하지 않습니다.",
+            )
+        try:
+            projects.require(project_id)
+            return generic_loader.load(
+                bundle.driver, project_id, payload.upload_id
+            )
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+        except Exception as error:
+            raise HTTPException(
+                status_code=502, detail=f"프로젝트 그래프 적재 실패: {error}"
+            ) from error
 
     @application.post("/api/v1/query", response_model=QueryResponse)
     def query_graph(
