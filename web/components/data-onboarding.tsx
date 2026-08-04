@@ -17,7 +17,13 @@ async function encode(file: File) {
 }
 
 export function DataOnboarding() {
-  const { activeProject, refresh, switchProject } = useProject();
+  const {
+    activeProject,
+    readiness,
+    refresh,
+    refreshReadiness,
+    switchProject,
+  } = useProject();
   const [files, setFiles] = useState<File[]>([]);
   const [profile, setProfile] = useState<DatasetProfile | null>(null);
   const [busy, setBusy] = useState(false);
@@ -31,6 +37,7 @@ export function DataOnboarding() {
     try {
       const encoded = await Promise.all(files.map(encode));
       setProfile(await profileDataset(activeProject.project_id, encoded));
+      await refreshReadiness();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "업로드 실패");
     } finally {
@@ -63,6 +70,33 @@ export function DataOnboarding() {
 
   return (
     <div className="onboarding-grid">
+      <section className="pipeline-progress card">
+        {[
+          ["Upload", readiness?.upload_count ? "done" : "active"],
+          [
+            "Mapping",
+            readiness?.mapping_approved
+              ? "done"
+              : readiness?.upload_count
+                ? "active"
+                : "waiting",
+          ],
+          [
+            "Load",
+            readiness?.can_query
+              ? "done"
+              : readiness?.mapping_approved
+                ? "active"
+                : "waiting",
+          ],
+          ["Query", readiness?.can_query ? "active" : "waiting"],
+        ].map(([label, state], index) => (
+          <div className={`pipeline-progress-step ${state}`} key={label}>
+            <span>{index + 1}</span>
+            <strong>{label}</strong>
+          </div>
+        ))}
+      </section>
       <section className="card onboarding-panel">
         <h2>1 · 프로젝트 워크스페이스</h2>
         <p>도메인과 데이터셋을 분리해 스키마·대화·그래프를 격리합니다.</p>
@@ -96,6 +130,11 @@ export function DataOnboarding() {
             onChange={(event) => setFiles(Array.from(event.target.files ?? []))}
           />
         </label>
+        {files.length > 0 && (
+          <p className="selected-files">
+            선택됨: {files.map((file) => file.name).join(", ")}
+          </p>
+        )}
         <button
           className="primary-button"
           disabled={busy || !files.length || !activeProject}

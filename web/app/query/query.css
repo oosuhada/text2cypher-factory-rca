@@ -271,6 +271,37 @@
   line-height: 1.65;
 }
 
+.project-not-ready {
+  display: grid;
+  min-height: 420px;
+  place-content: center;
+  justify-items: center;
+  padding: 34px;
+  text-align: center;
+}
+
+.project-not-ready > svg {
+  margin-bottom: 15px;
+  color: var(--brand);
+}
+
+.project-not-ready h2 {
+  margin: 10px 0 7px;
+  font-size: 1.25rem;
+}
+
+.project-not-ready p {
+  max-width: 430px;
+  margin: 3px 0;
+  color: var(--text-soft);
+  font-size: .74rem;
+  line-height: 1.6;
+}
+
+.project-not-ready .primary-button {
+  margin-top: 18px;
+}
+
 .user-message {
   display: flex;
   gap: 11px;
