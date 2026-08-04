@@ -14,6 +14,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 
 from backend.app.services.bootstrap import ServiceBundle, build_service_bundle
 from backend.app.projects import ProjectRegistry
+from backend.app.ingestion import DatasetWorkspace
 from backend.app.schema_registry import SchemaRegistry
 from backend.app.services.diagnostics import (
     collect_demo_diagnostics,
@@ -25,6 +26,7 @@ from .schemas import (
     FeedbackRecord,
     FeedbackRequest,
     FeedbackSummary,
+    DatasetUploadRequest,
     GraphSchemaResponse,
     HealthResponse,
     NodeSearchResponse,
@@ -94,6 +96,7 @@ def create_app(
     bundle_factory: BundleFactory | None = None,
     project_registry: ProjectRegistry | None = None,
     schema_registry: SchemaRegistry | None = None,
+    dataset_workspace: DatasetWorkspace | None = None,
 ) -> FastAPI:
     registry = ServiceRegistry(bundle_factory or _default_bundle_factory)
     projects = project_registry or ProjectRegistry(
@@ -106,6 +109,9 @@ def create_app(
     )
     projects.ensure_default()
     schemas = schema_registry or SchemaRegistry(PROJECT_ROOT / "schemas")
+    datasets = dataset_workspace or DatasetWorkspace(
+        PROJECT_ROOT / "data" / "processed" / "project_uploads"
+    )
 
     @asynccontextmanager
     async def lifespan(application: FastAPI):
@@ -225,6 +231,41 @@ def create_app(
     def activate_project(project_id: str) -> dict:
         try:
             return projects.activate(project_id)
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+
+    @application.post(
+        "/api/v1/projects/{project_id}/uploads/profile",
+        status_code=status.HTTP_201_CREATED,
+    )
+    def profile_dataset(project_id: str, payload: DatasetUploadRequest) -> dict:
+        try:
+            projects.require(project_id)
+            return datasets.profile_upload(
+                project_id,
+                [item.model_dump() for item in payload.files],
+            )
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+
+    @application.get("/api/v1/projects/{project_id}/uploads")
+    def list_dataset_uploads(project_id: str) -> dict:
+        try:
+            projects.require(project_id)
+            rows = datasets.list(project_id)
+            return {"project_id": project_id, "uploads": rows, "count": len(rows)}
+        except (KeyError, ValueError) as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+
+    @application.get("/api/v1/projects/{project_id}/uploads/{upload_id}")
+    def get_dataset_upload(project_id: str, upload_id: str) -> dict:
+        try:
+            projects.require(project_id)
+            return datasets.get(project_id, upload_id)
         except KeyError as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         except ValueError as error:
