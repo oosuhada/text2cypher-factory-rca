@@ -80,8 +80,14 @@ class FactoryGraphApiClient:
         except ApiRequestError:
             return False
 
-    def runtime(self) -> dict[str, Any]:
-        return self._request("GET", "/api/v1/runtime")
+    def runtime(
+        self, project_id: str | None = None
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/api/v1/runtime",
+            params={"project_id": project_id} if project_id else None,
+        )
 
     def query(
         self, question: str, project_id: str | None = None
@@ -114,16 +120,35 @@ class FactoryGraphApiClient:
             },
         )
 
-    def metrics(self) -> dict[str, Any]:
-        return self._request("GET", "/api/v1/metrics")
+    def metrics(
+        self, project_id: str | None = None
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/api/v1/metrics",
+            params={"project_id": project_id} if project_id else None,
+        )
 
     def search_nodes(
-        self, label: str, query: str, limit: int
+        self,
+        label: str,
+        query: str,
+        limit: int,
+        project_id: str | None = None,
     ) -> dict[str, Any]:
         return self._request(
             "GET",
             "/api/v1/graph/search",
-            params={"label": label, "q": query, "limit": limit},
+            params={
+                "label": label,
+                "q": query,
+                "limit": limit,
+                **(
+                    {"project_id": project_id}
+                    if project_id
+                    else {}
+                ),
+            },
         )
 
     def subgraph(
@@ -132,6 +157,7 @@ class FactoryGraphApiClient:
         identity: str,
         depth: int,
         limit: int,
+        project_id: str | None = None,
     ) -> dict[str, Any]:
         return self._request(
             "GET",
@@ -141,6 +167,11 @@ class FactoryGraphApiClient:
                 "identity": identity,
                 "depth": depth,
                 "limit": limit,
+                **(
+                    {"project_id": project_id}
+                    if project_id
+                    else {}
+                ),
             },
         )
 
@@ -151,26 +182,36 @@ class FactoryGraphApiClient:
             json=payload,
         )
 
-    def feedback_summary(self) -> dict[str, Any]:
-        return self._request("GET", "/api/v1/feedback/summary")
+    def feedback_summary(
+        self, project_id: str | None = None
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/api/v1/feedback/summary",
+            params={"project_id": project_id} if project_id else None,
+        )
 
 
 @dataclass
 class _ApiDashboard:
     api: FactoryGraphApiClient
+    project_id: str
 
     def snapshot(self) -> dict[str, Any]:
-        return self.api.metrics()
+        return self.api.metrics(self.project_id)
 
 
 @dataclass
 class _ApiGraph:
     api: FactoryGraphApiClient
+    project_id: str
 
     def search_nodes(
         self, label: str, query: str, limit: int
     ) -> dict[str, Any]:
-        return self.api.search_nodes(label, query, limit)
+        return self.api.search_nodes(
+            label, query, limit, self.project_id
+        )
 
     def subgraph(
         self,
@@ -179,18 +220,23 @@ class _ApiGraph:
         depth: int,
         limit: int,
     ) -> dict[str, Any]:
-        return self.api.subgraph(label, identity, depth, limit)
+        return self.api.subgraph(
+            label, identity, depth, limit, self.project_id
+        )
 
 
 @dataclass
 class _ApiFeedback:
     api: FactoryGraphApiClient
+    project_id: str
 
     def record_review(self, **payload: Any) -> dict[str, Any]:
-        return self.api.record_feedback(**payload)
+        return self.api.record_feedback(
+            project_id=self.project_id, **payload
+        )
 
     def summary(self) -> dict[str, Any]:
-        return self.api.feedback_summary()
+        return self.api.feedback_summary(self.project_id)
 
 
 class ApiServiceBundle:
@@ -200,18 +246,16 @@ class ApiServiceBundle:
         self, api: FactoryGraphApiClient, project_id: str | None = None
     ):
         self.api = api
-        if project_id:
-            api.activate_project(project_id)
-        runtime = api.runtime()
+        runtime = api.runtime(project_id)
         self.provider = str(runtime.get("provider", "api"))
         self.model_name = str(runtime.get("model_name", "server-managed"))
         self.transport = "api"
-        self.dashboard = _ApiDashboard(api)
-        self.graph = _ApiGraph(api)
-        self.feedback = _ApiFeedback(api)
         self.project_id = str(
             runtime.get("active_project_id", project_id or "cip-dmd")
         )
+        self.dashboard = _ApiDashboard(api, self.project_id)
+        self.graph = _ApiGraph(api, self.project_id)
+        self.feedback = _ApiFeedback(api, self.project_id)
 
     def query_with_fallback(self, question: str) -> dict[str, Any]:
         return self.api.query(question, self.project_id)

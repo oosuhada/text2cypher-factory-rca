@@ -21,6 +21,7 @@ import type {
   FeedbackSummary,
   HealthResponse,
 } from "@/lib/types";
+import { useProject } from "@/components/project-context";
 
 type Dashboard = {
   totals?: { nodes?: number; relationships?: number };
@@ -39,13 +40,19 @@ function percent(value: unknown) {
 }
 
 export function OperationsPanel() {
+  const { activeProject } = useProject();
+  const projectId = activeProject?.project_id ?? "cip-dmd";
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [feedback, setFeedback] = useState<FeedbackSummary | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    Promise.all([getHealth(), getMetrics(), getFeedbackSummary()])
+    Promise.all([
+      getHealth(),
+      getMetrics(projectId),
+      getFeedbackSummary(projectId),
+    ])
       .then(([healthResult, metricResult, feedbackResult]) => {
         setHealth(healthResult);
         setDashboard(metricResult as Dashboard);
@@ -56,7 +63,7 @@ export function OperationsPanel() {
           reason instanceof Error ? reason.message : "운영 지표 조회 실패",
         ),
       );
-  }, []);
+  }, [projectId]);
 
   if (error) return <div className="inline-error">{error}</div>;
   if (!health || !dashboard || !feedback) {

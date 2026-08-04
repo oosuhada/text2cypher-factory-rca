@@ -23,6 +23,26 @@ def _read_rows(path: Path) -> list[dict[str, Any]]:
     return [dict(row) for row in payload]
 
 
+def _coerce_value(value: Any, property_type: str) -> Any:
+    if value in (None, ""):
+        return None
+    normalized_type = property_type.upper()
+    if normalized_type == "INTEGER":
+        return int(value)
+    if normalized_type == "FLOAT":
+        return float(value)
+    if normalized_type == "BOOLEAN":
+        if isinstance(value, bool):
+            return value
+        normalized = str(value).strip().lower()
+        if normalized in {"true", "1"}:
+            return True
+        if normalized in {"false", "0"}:
+            return False
+        raise ValueError(f"BOOLEAN 값으로 변환할 수 없습니다: {value}")
+    return str(value) if normalized_type == "STRING" else value
+
+
 class GenericGraphLoader:
     def __init__(
         self,
@@ -48,6 +68,9 @@ class GenericGraphLoader:
             self.datasets._project_root(project_id) / upload_id / "source"
         )
         mapping = approved["mapping"]
+        manifest_nodes = {
+            node["label"]: node for node in approved["manifest"]["nodes"]
+        }
         nodes_by_label = {node["label"]: node for node in mapping["nodes"]}
         loaded_nodes: dict[str, int] = {}
         loaded_relationships: dict[str, int] = {}
@@ -56,10 +79,14 @@ class GenericGraphLoader:
             identity = node["identity"]
             projected = [
                 {
-                    graph_property: row.get(source_column)
+                    graph_property: _coerce_value(
+                        row.get(source_column),
+                        manifest_nodes[node["label"]]["properties"][
+                            graph_property
+                        ],
+                    )
                     for graph_property, source_column in node["properties"].items()
                 }
-                | {identity: row.get(identity)}
                 for row in rows
             ]
             projected = [row for row in projected if row.get(identity) not in (None, "")]
@@ -95,8 +122,18 @@ class GenericGraphLoader:
             rows = _read_rows(source_root / relationship_file)
             projected = [
                 {
-                    "source_value": row.get(relationship["source_key"]),
-                    "target_value": row.get(relationship["target_key"]),
+                    "source_value": _coerce_value(
+                        row.get(relationship["source_key"]),
+                        manifest_nodes[source_node["label"]]["properties"][
+                            source_node["identity"]
+                        ],
+                    ),
+                    "target_value": _coerce_value(
+                        row.get(relationship["target_key"]),
+                        manifest_nodes[target_node["label"]]["properties"][
+                            target_node["identity"]
+                        ],
+                    ),
                 }
                 for row in rows
             ]

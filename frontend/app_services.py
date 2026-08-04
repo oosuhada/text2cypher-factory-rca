@@ -30,6 +30,12 @@ def build_streamlit_service_bundle(
         raise ValueError(
             "P3_STREAMLIT_TRANSPORT는 auto, api, direct 중 하나여야 합니다."
         )
+    # An explicit model choice in the Streamlit UI must not be silently
+    # ignored by an already-running API configured with another provider.
+    # Operators can still force centralized API mode with
+    # P3_STREAMLIT_TRANSPORT=api.
+    if resolved_transport == "auto" and provider != "auto":
+        resolved_transport = "direct"
     if resolved_transport in {"auto", "api"}:
         api = FactoryGraphApiClient()
         if api.live():

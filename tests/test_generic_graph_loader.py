@@ -31,7 +31,11 @@ class GenericGraphLoaderTest(unittest.TestCase):
             schemas = SchemaRegistry(root / "schemas")
             mappings = MappingWorkspace(root / "mappings", datasets, schemas)
             encoded = base64.b64encode(
-                b"equipment_id,part_id\nEQ-1,P-1\nEQ-2,P-2\n"
+                (
+                    b"equipment_id,part_id,capacity,is_active\n"
+                    b"EQ-1,P-1,10,true\n"
+                    b"EQ-2,P-2,20,false\n"
+                )
             ).decode()
             upload = datasets.profile_upload(
                 "factory-demo",
@@ -43,7 +47,11 @@ class GenericGraphLoaderTest(unittest.TestCase):
                         "label": "Equipment",
                         "source_file": "events.csv",
                         "identity": "equipment_id",
-                        "properties": {"equipment_id": "equipment_id"},
+                        "properties": {
+                            "equipment_id": "equipment_id",
+                            "capacity": "capacity",
+                            "is_active": "is_active",
+                        },
                     },
                     {
                         "label": "Part",
@@ -75,3 +83,7 @@ class GenericGraphLoaderTest(unittest.TestCase):
                 self.assertIn("project_id", query)
                 self.assertEqual(kwargs["project_id"], "factory-demo")
             self.assertIn("`PROCESSED`", driver.calls[2][0])
+            equipment_rows = driver.calls[0][1]["rows"]
+            self.assertEqual(equipment_rows[0]["capacity"], 10)
+            self.assertIs(equipment_rows[0]["is_active"], True)
+            self.assertIs(equipment_rows[1]["is_active"], False)

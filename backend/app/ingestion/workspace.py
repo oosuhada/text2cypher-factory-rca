@@ -8,6 +8,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import shutil
 from typing import Any
 from uuid import uuid4
 
@@ -43,38 +44,57 @@ class DatasetWorkspace:
         upload_root = self._project_root(project_id) / upload_id
         source_root = upload_root / "source"
         source_root.mkdir(parents=True, exist_ok=False)
-        profiles = []
-        total_bytes = 0
-        for item in files:
-            filename = Path(item["filename"]).name
-            if filename != item["filename"] or not SAFE_FILENAME.fullmatch(filename):
-                raise ValueError(f"안전하지 않은 파일명입니다: {item['filename']}")
-            try:
-                payload = base64.b64decode(item["content_base64"], validate=True)
-            except Exception as error:
-                raise ValueError(f"{filename}의 base64 데이터가 유효하지 않습니다.") from error
-            if not payload or len(payload) > MAX_FILE_BYTES:
-                raise ValueError(f"{filename}은 비었거나 10MB 제한을 초과했습니다.")
-            total_bytes += len(payload)
-            target = source_root / filename
-            target.write_bytes(payload)
-            profile = profile_tabular(filename, payload)
-            profile["sha256"] = hashlib.sha256(payload).hexdigest()
-            profile["bytes"] = len(payload)
-            profiles.append(profile)
-        record = {
-            "upload_id": upload_id,
-            "project_id": project_id,
-            "created_at": _now(),
-            "status": "profiled",
-            "total_bytes": total_bytes,
-            "files": profiles,
-        }
-        (upload_root / "profile.json").write_text(
-            json.dumps(record, ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
-        )
-        return record
+        try:
+            profiles = []
+            total_bytes = 0
+            seen_names: set[str] = set()
+            for item in files:
+                filename = Path(item["filename"]).name
+                if (
+                    filename != item["filename"]
+                    or not SAFE_FILENAME.fullmatch(filename)
+                ):
+                    raise ValueError(
+                        f"안전하지 않은 파일명입니다: {item['filename']}"
+                    )
+                if filename in seen_names:
+                    raise ValueError(f"중복 파일명입니다: {filename}")
+                seen_names.add(filename)
+                try:
+                    payload = base64.b64decode(
+                        item["content_base64"], validate=True
+                    )
+                except Exception as error:
+                    raise ValueError(
+                        f"{filename}의 base64 데이터가 유효하지 않습니다."
+                    ) from error
+                if not payload or len(payload) > MAX_FILE_BYTES:
+                    raise ValueError(
+                        f"{filename}은 비었거나 10MB 제한을 초과했습니다."
+                    )
+                total_bytes += len(payload)
+                target = source_root / filename
+                target.write_bytes(payload)
+                profile = profile_tabular(filename, payload)
+                profile["sha256"] = hashlib.sha256(payload).hexdigest()
+                profile["bytes"] = len(payload)
+                profiles.append(profile)
+            record = {
+                "upload_id": upload_id,
+                "project_id": project_id,
+                "created_at": _now(),
+                "status": "profiled",
+                "total_bytes": total_bytes,
+                "files": profiles,
+            }
+            (upload_root / "profile.json").write_text(
+                json.dumps(record, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            return record
+        except Exception:
+            shutil.rmtree(upload_root, ignore_errors=True)
+            raise
 
     def get(self, project_id: str, upload_id: str) -> dict[str, Any]:
         if not re.fullmatch(r"[0-9a-f-]{36}", upload_id):

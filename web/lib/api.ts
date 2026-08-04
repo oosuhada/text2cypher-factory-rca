@@ -138,11 +138,15 @@ export function getHealth() {
   return request<HealthResponse>("/api/v1/health");
 }
 
-export function getMetrics() {
-  return request<Record<string, unknown>>("/api/v1/metrics");
+export function getMetrics(projectId?: string) {
+  const suffix = projectId
+    ? `?project_id=${encodeURIComponent(projectId)}`
+    : "";
+  return request<Record<string, unknown>>(`/api/v1/metrics${suffix}`);
 }
 
 export function submitExpertFeedback(payload: {
+  project_id: string;
   question: string;
   cypher: string;
   query_status: string;
@@ -158,8 +162,13 @@ export function submitExpertFeedback(payload: {
   });
 }
 
-export function getFeedbackSummary() {
-  return request<FeedbackSummary>("/api/v1/feedback/summary");
+export function getFeedbackSummary(projectId?: string) {
+  const suffix = projectId
+    ? `?project_id=${encodeURIComponent(projectId)}`
+    : "";
+  return request<FeedbackSummary>(
+    `/api/v1/feedback/summary${suffix}`,
+  );
 }
 
 export function getGraphSchema(projectId?: string) {

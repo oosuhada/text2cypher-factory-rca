@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 from time import perf_counter
 from typing import Any, Callable, Literal
 
@@ -24,6 +25,25 @@ from .state import CypherState
 
 def _event(step: str, **details: Any) -> list[dict[str, Any]]:
     return [{"step": step, **details}]
+
+
+def _has_project_scope(statement: str, project_id: str) -> bool:
+    """Require an executable project property predicate, not a comment."""
+    without_comments = re.sub(
+        r"(?m)//.*$|/\*.*?\*/",
+        " ",
+        statement,
+        flags=re.DOTALL,
+    )
+    property_name = r"(?:\bproject_id\b|`project_id`)"
+    quoted_project = re.escape(project_id)
+    return bool(
+        re.search(
+            rf"{property_name}\s*(?::|=)\s*(['\"]){quoted_project}\1",
+            without_comments,
+            flags=re.IGNORECASE,
+        )
+    )
 
 
 def create_text2cypher_agent(
@@ -65,10 +85,7 @@ def create_text2cypher_agent(
         if (
             not errors
             and project_id != "cip-dmd"
-            and (
-                "project_id" not in statement
-                or project_id not in statement
-            )
+            and not _has_project_scope(statement, project_id)
         ):
             errors.append(
                 "PROJECT_SCOPE: Query must restrict graph access to "

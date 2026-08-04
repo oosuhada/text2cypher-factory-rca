@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import os
 from pathlib import Path
+from typing import Any
 
 from neo4j import Driver, GraphDatabase
 
@@ -23,6 +24,9 @@ from backend.app.etl.cli import password_from_keychain
 from backend.app.services.dashboard_service import DashboardService
 from backend.app.services.feedback_service import FeedbackService
 from backend.app.services.graph_service import GraphCatalogService
+from backend.app.services.project_dashboard_service import (
+    ProjectDashboardService,
+)
 from backend.app.services.query_service import QueryService
 
 
@@ -31,7 +35,7 @@ class ServiceBundle:
     driver: Driver
     query: QueryService
     fallback_query: QueryService | None
-    dashboard: DashboardService
+    dashboard: Any
     provider: str
     model_name: str
     graph: GraphCatalogService | None = None
@@ -153,9 +157,13 @@ def build_service_bundle(
         ),
         project_id=project_id,
     )
-    audit_log_path = (
-        project_root / "data" / "processed" / "query_audit.jsonl"
+    processed_root = project_root / "data" / "processed"
+    project_processed_root = (
+        processed_root
+        if project_id == "cip-dmd"
+        else processed_root / "projects" / project_id
     )
+    audit_log_path = project_processed_root / "query_audit.jsonl"
     fallback_query = None
     if resolved_provider != "gold":
         fallback_query = QueryService(
@@ -173,9 +181,25 @@ def build_service_bundle(
                 ),
                 project_id=project_id,
             ),
-        audit_log_path=audit_log_path,
+            audit_log_path=audit_log_path,
             provider="gold-fallback",
         )
+    dashboard = (
+        DashboardService(
+            driver=driver,
+            database=database,
+            metrics_path=project_root / "evaluation" / "metrics.json",
+            audit_log_path=audit_log_path,
+            processed_root=processed_root,
+        )
+        if project_id == "cip-dmd"
+        else ProjectDashboardService(
+            driver=driver,
+            database=database,
+            project_id=project_id,
+            audit_log_path=audit_log_path,
+        )
+    )
     return ServiceBundle(
         driver=driver,
         query=QueryService(
@@ -189,19 +213,10 @@ def build_service_bundle(
             ),
         ),
         fallback_query=fallback_query,
-        dashboard=DashboardService(
-            driver=driver,
-            database=database,
-            metrics_path=project_root / "evaluation" / "metrics.json",
-            audit_log_path=audit_log_path,
-            processed_root=project_root / "data" / "processed",
-        ),
+        dashboard=dashboard,
         graph=GraphCatalogService(driver=driver, database=database),
         feedback=FeedbackService(
-            project_root
-            / "data"
-            / "processed"
-            / "expert_feedback.jsonl"
+            project_processed_root / "expert_feedback.jsonl"
         ),
         provider=resolved_provider,
         model_name=resolved_model_name,

@@ -42,6 +42,10 @@ class DeploymentContractTest(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertIn("USER factorygraph", python_dockerfile)
         self.assertIn("USER factorygraph", web_dockerfile)
+        self.assertIn(
+            "COPY --chown=factorygraph:factorygraph schemas /app/schemas",
+            python_dockerfile,
+        )
         self.assertNotIn("COPY .env", python_dockerfile)
         self.assertNotIn("COPY .env", web_dockerfile)
 

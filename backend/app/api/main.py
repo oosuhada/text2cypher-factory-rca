@@ -8,7 +8,7 @@ from pathlib import Path
 from threading import Lock
 from typing import Callable
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
+from fastapi import FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
@@ -22,7 +22,6 @@ from backend.app.services.diagnostics import (
     collect_demo_diagnostics,
     diagnostics_pass,
 )
-from backend.app.services.graph_service import NODE_IDENTITIES
 
 from .schemas import (
     FeedbackRecord,
@@ -45,37 +44,49 @@ from .schemas import (
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-BundleFactory = Callable[[], ServiceBundle]
+BundleFactory = Callable[..., ServiceBundle]
 
 
 class ServiceRegistry:
-    """Create one shared service bundle lazily and close it on shutdown."""
+    """Lazily cache service bundles without mixing project schemas."""
 
-    def __init__(self, factory: BundleFactory):
+    def __init__(
+        self,
+        factory: BundleFactory,
+        *,
+        project_aware: bool = False,
+    ):
         self.factory = factory
-        self._bundle: ServiceBundle | None = None
+        self.project_aware = project_aware
+        self._bundles: dict[str, ServiceBundle] = {}
         self._lock = Lock()
 
-    def get(self) -> ServiceBundle:
-        if self._bundle is not None:
-            return self._bundle
+    def get(self, project_id: str = "cip-dmd") -> ServiceBundle:
+        cache_key = project_id if self.project_aware else "__shared__"
+        if cache_key in self._bundles:
+            return self._bundles[cache_key]
         with self._lock:
-            if self._bundle is None:
-                self._bundle = self.factory()
-        return self._bundle
+            if cache_key not in self._bundles:
+                self._bundles[cache_key] = (
+                    self.factory(project_id)
+                    if self.project_aware
+                    else self.factory()
+                )
+        return self._bundles[cache_key]
 
-    def close(self) -> None:
-        if self._bundle is not None:
-            self._bundle.close()
-            self._bundle = None
-
-
-def _default_bundle_factory() -> ServiceBundle:
-    return build_service_bundle(
-        project_root=PROJECT_ROOT,
-        provider=os.getenv("P3_API_PROVIDER", "auto"),
-        model_name=os.getenv("P3_API_MODEL") or None,
-    )
+    def close(self, project_id: str | None = None) -> None:
+        with self._lock:
+            if project_id is None:
+                bundles = list(self._bundles.values())
+                self._bundles.clear()
+            else:
+                cache_key = (
+                    project_id if self.project_aware else "__shared__"
+                )
+                bundle = self._bundles.pop(cache_key, None)
+                bundles = [bundle] if bundle is not None else []
+        for bundle in bundles:
+            bundle.close()
 
 
 def _cors_origins() -> list[str]:
@@ -84,16 +95,6 @@ def _cors_origins() -> list[str]:
         "http://localhost:3000,http://127.0.0.1:3000",
     )
     return [origin.strip() for origin in configured.split(",") if origin.strip()]
-
-
-def get_bundle(request: Request) -> ServiceBundle:
-    try:
-        return request.app.state.registry.get()
-    except Exception as error:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"서비스 의존성을 시작하지 못했습니다: {error}",
-        ) from error
 
 
 def create_app(
@@ -112,8 +113,8 @@ def create_app(
     )
     projects.ensure_default()
     schemas = schema_registry or SchemaRegistry(PROJECT_ROOT / "schemas")
-    def active_bundle_factory() -> ServiceBundle:
-        project_id = projects.active_project_id() or "cip-dmd"
+
+    def project_bundle_factory(project_id: str) -> ServiceBundle:
         return build_service_bundle(
             project_root=PROJECT_ROOT,
             provider=os.getenv("P3_API_PROVIDER", "auto"),
@@ -122,7 +123,10 @@ def create_app(
             schema_context=schemas.context(project_id),
         )
 
-    registry = ServiceRegistry(bundle_factory or active_bundle_factory)
+    registry = ServiceRegistry(
+        bundle_factory or project_bundle_factory,
+        project_aware=bundle_factory is None,
+    )
     datasets = dataset_workspace or DatasetWorkspace(
         PROJECT_ROOT / "data" / "processed" / "project_uploads"
     )
@@ -158,7 +162,7 @@ def create_app(
         CORSMiddleware,
         allow_origins=_cors_origins(),
         allow_credentials=True,
-        allow_methods=["GET", "POST"],
+        allow_methods=["GET", "POST", "PATCH"],
         allow_headers=["*"],
     )
     application.add_middleware(GZipMiddleware, minimum_size=1000)
@@ -185,14 +189,25 @@ def create_app(
         }
 
     @application.get("/api/v1/runtime", response_model=RuntimeResponse)
-    def runtime(
-        bundle: ServiceBundle = Depends(get_bundle),
-    ) -> dict[str, str]:
+    def runtime(project_id: str | None = None) -> dict[str, str]:
+        resolved_project_id = (
+            project_id or projects.active_project_id() or "cip-dmd"
+        )
+        try:
+            projects.require(resolved_project_id)
+            bundle = registry.get(resolved_project_id)
+        except (KeyError, ValueError) as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except Exception as error:
+            raise HTTPException(
+                status_code=503,
+                detail=f"서비스 의존성을 시작하지 못했습니다: {error}",
+            ) from error
         return {
             "provider": bundle.provider,
             "model_name": bundle.model_name,
             "transport": "service",
-            "active_project_id": projects.active_project_id() or "cip-dmd",
+            "active_project_id": resolved_project_id,
         }
 
     @application.get(
@@ -254,9 +269,7 @@ def create_app(
     )
     def activate_project(project_id: str) -> dict:
         try:
-            activated = projects.activate(project_id)
-            registry.close()
-            return activated
+            return projects.activate(project_id)
         except KeyError as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         except ValueError as error:
@@ -327,6 +340,7 @@ def create_app(
                 schema_version=payload.schema_version,
                 status="ready",
             )
+            registry.close(project_id)
             return result
         except KeyError as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
@@ -345,8 +359,15 @@ def create_app(
     def load_project_graph(
         project_id: str,
         payload: ProjectLoadRequest,
-        bundle: ServiceBundle = Depends(get_bundle),
     ) -> dict:
+        if os.getenv("P3_ENABLE_UI_LOAD", "0") != "1":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=(
+                    "그래프 적재 API가 비활성화되어 있습니다. "
+                    "P3_ENABLE_UI_LOAD=1 설정이 필요합니다."
+                ),
+            )
         if payload.confirm_project_id != project_id:
             raise HTTPException(
                 status_code=422,
@@ -354,6 +375,7 @@ def create_app(
             )
         try:
             projects.require(project_id)
+            bundle = registry.get(project_id)
             return generic_loader.load(
                 bundle.driver, project_id, payload.upload_id
             )
@@ -367,24 +389,20 @@ def create_app(
             ) from error
 
     @application.post("/api/v1/query", response_model=QueryResponse)
-    def query_graph(
-        payload: QueryRequest,
-        bundle: ServiceBundle = Depends(get_bundle),
-    ) -> dict:
-        active_project_id = projects.active_project_id()
-        requested_project_id = payload.project_id or active_project_id
-        if requested_project_id != active_project_id:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=(
-                    f"프로젝트 {requested_project_id}는 아직 활성 상태가 "
-                    "아닙니다. 먼저 activate API를 호출하세요."
-                ),
-            )
+    def query_graph(payload: QueryRequest) -> dict:
+        requested_project_id = (
+            payload.project_id
+            or projects.active_project_id()
+            or "cip-dmd"
+        )
         try:
+            projects.require(requested_project_id)
+            bundle = registry.get(requested_project_id)
             result = bundle.query_with_fallback(payload.question.strip())
             result["project_id"] = requested_project_id
             return result
+        except (KeyError, ValueError) as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
         except Exception as error:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
@@ -392,11 +410,16 @@ def create_app(
             ) from error
 
     @application.get("/api/v1/metrics")
-    def metrics(
-        bundle: ServiceBundle = Depends(get_bundle),
-    ) -> dict:
+    def metrics(project_id: str | None = None) -> dict:
         try:
+            resolved_project_id = (
+                project_id or projects.active_project_id() or "cip-dmd"
+            )
+            projects.require(resolved_project_id)
+            bundle = registry.get(resolved_project_id)
             return bundle.dashboard.snapshot()
+        except (KeyError, ValueError) as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
         except Exception as error:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
@@ -410,15 +433,27 @@ def create_app(
     )
     def record_feedback(
         payload: FeedbackRequest,
-        bundle: ServiceBundle = Depends(get_bundle),
     ) -> dict:
+        project_id = (
+            payload.project_id
+            or projects.active_project_id()
+            or "cip-dmd"
+        )
+        try:
+            projects.require(project_id)
+            bundle = registry.get(project_id)
+        except (KeyError, ValueError) as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except Exception as error:
+            raise HTTPException(status_code=503, detail=str(error)) from error
         if bundle.feedback is None:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="전문가 검증 기록 서비스가 구성되지 않았습니다.",
             )
         try:
-            return bundle.feedback.record_review(**payload.model_dump())
+            review = payload.model_dump(exclude={"project_id"})
+            return bundle.feedback.record_review(**review)
         except ValueError as error:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
@@ -435,8 +470,18 @@ def create_app(
         response_model=FeedbackSummary,
     )
     def feedback_summary(
-        bundle: ServiceBundle = Depends(get_bundle),
+        project_id: str | None = None,
     ) -> dict:
+        resolved_project_id = (
+            project_id or projects.active_project_id() or "cip-dmd"
+        )
+        try:
+            projects.require(resolved_project_id)
+            bundle = registry.get(resolved_project_id)
+        except (KeyError, ValueError) as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except Exception as error:
+            raise HTTPException(status_code=503, detail=str(error)) from error
         if bundle.feedback is None:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -486,7 +531,6 @@ def create_app(
         q: str = Query(min_length=1, max_length=200),
         limit: int = Query(default=12, ge=1, le=50),
         project_id: str | None = None,
-        bundle: ServiceBundle = Depends(get_bundle),
     ) -> dict:
         q = q.strip()
         if not q:
@@ -494,15 +538,16 @@ def create_app(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail="검색어는 공백일 수 없습니다.",
             )
-        if bundle.graph is None:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="그래프 탐색 서비스가 구성되지 않았습니다.",
-            )
         try:
             resolved_project_id = (
                 project_id or projects.active_project_id() or "cip-dmd"
             )
+            projects.require(resolved_project_id)
+            bundle = registry.get(resolved_project_id)
+            if bundle.graph is None:
+                raise RuntimeError(
+                    "그래프 탐색 서비스가 구성되지 않았습니다."
+                )
             contract = schemas.contract(resolved_project_id)
             identity_by_label = {
                 row["label"]: row["identity_property"]
@@ -523,6 +568,11 @@ def create_app(
                 identity_property=identity_by_label[label],
                 search_properties=tuple((node.get("properties") or {}).keys()),
             )
+        except KeyError as error:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=str(error),
+            ) from error
         except ValueError as error:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
@@ -544,7 +594,6 @@ def create_app(
         depth: int = Query(default=2, ge=1, le=3),
         limit: int = Query(default=50, ge=1, le=100),
         project_id: str | None = None,
-        bundle: ServiceBundle = Depends(get_bundle),
     ) -> dict:
         identity = identity.strip()
         if not identity:
@@ -552,15 +601,16 @@ def create_app(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail="identity는 공백일 수 없습니다.",
             )
-        if bundle.graph is None:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="그래프 탐색 서비스가 구성되지 않았습니다.",
-            )
         try:
             resolved_project_id = (
                 project_id or projects.active_project_id() or "cip-dmd"
             )
+            projects.require(resolved_project_id)
+            bundle = registry.get(resolved_project_id)
+            if bundle.graph is None:
+                raise RuntimeError(
+                    "그래프 탐색 서비스가 구성되지 않았습니다."
+                )
             contract = schemas.contract(resolved_project_id)
             identity_by_label = {
                 row["label"]: row["identity_property"]
@@ -578,6 +628,11 @@ def create_app(
                 project_id=resolved_project_id,
                 identity_property=identity_by_label[label],
             )
+        except KeyError as error:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=str(error),
+            ) from error
         except ValueError as error:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,

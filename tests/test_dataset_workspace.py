@@ -44,3 +44,25 @@ class DatasetWorkspaceTest(unittest.TestCase):
                     "demo-project",
                     [{"filename": "x.exe", "content_base64": payload}],
                 )
+            self.assertEqual(workspace.list("demo-project"), [])
+
+    def test_failed_multi_file_upload_is_rolled_back(self):
+        with tempfile.TemporaryDirectory() as temp:
+            workspace = DatasetWorkspace(Path(temp))
+            valid = base64.b64encode(b"id\n1\n").decode()
+            with self.assertRaisesRegex(ValueError, "base64"):
+                workspace.profile_upload(
+                    "demo-project",
+                    [
+                        {
+                            "filename": "valid.csv",
+                            "content_base64": valid,
+                        },
+                        {
+                            "filename": "broken.csv",
+                            "content_base64": "***",
+                        },
+                    ],
+                )
+            project_root = Path(temp) / "demo-project"
+            self.assertEqual(list(project_root.glob("*")), [])
