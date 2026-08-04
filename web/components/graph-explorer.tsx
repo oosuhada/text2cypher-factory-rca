@@ -15,6 +15,7 @@ import type {
   NodeSearchResponse,
   SubgraphResponse,
 } from "@/lib/types";
+import { useProject } from "@/components/project-context";
 
 function nodeTitle(node: EvidenceNode, identityProperty: string) {
   const value = node.properties[identityProperty];
@@ -29,6 +30,8 @@ function nodeTitle(node: EvidenceNode, identityProperty: string) {
 }
 
 export function GraphExplorer() {
+  const { activeProject } = useProject();
+  const projectId = activeProject?.project_id ?? "cip-dmd";
   const [schema, setSchema] = useState<GraphSchema | null>(null);
   const [label, setLabel] = useState("Cylinder");
   const [identity, setIdentity] = useState("300002");
@@ -42,10 +45,14 @@ export function GraphExplorer() {
   const [searchLoading, setSearchLoading] = useState(false);
 
   useEffect(() => {
-    getGraphSchema().then(setSchema).catch((reason) => {
+    getGraphSchema(projectId).then((nextSchema) => {
+      setSchema(nextSchema);
+      const first = nextSchema.node_identities[0];
+      if (first) setLabel(first.label);
+    }).catch((reason) => {
       setError(reason instanceof Error ? reason.message : "스키마 조회 실패");
     });
-  }, []);
+  }, [projectId]);
 
   const search = async (event: FormEvent) => {
     event.preventDefault();
@@ -54,7 +61,7 @@ export function GraphExplorer() {
     setError("");
     try {
       setSearchResult(
-        await searchGraphNodes(label, searchTerm.trim()),
+        await searchGraphNodes(label, searchTerm.trim(), 12, projectId),
       );
     } catch (reason) {
       setSearchResult(null);
@@ -74,7 +81,7 @@ export function GraphExplorer() {
     setLoading(true);
     setError("");
     try {
-      setResult(await getSubgraph(label, selectedIdentity, depth));
+      setResult(await getSubgraph(label, selectedIdentity, depth, projectId));
     } catch (reason) {
       setResult(null);
       setError(
@@ -91,7 +98,7 @@ export function GraphExplorer() {
     setLoading(true);
     setError("");
     try {
-      setResult(await getSubgraph(label, identity.trim(), depth));
+      setResult(await getSubgraph(label, identity.trim(), depth, projectId));
     } catch (reason) {
       setResult(null);
       setError(

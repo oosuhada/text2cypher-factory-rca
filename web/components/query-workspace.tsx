@@ -41,6 +41,7 @@ import type {
   QueryResponse,
   StoredConversation,
 } from "@/lib/types";
+import { useProject } from "@/components/project-context";
 
 const EXAMPLES = [
   {
@@ -86,6 +87,8 @@ const STATUS_LABEL: Record<QueryResponse["status"], string> = {
 type EvidenceTab = "table" | "graph" | "cypher" | "trace";
 
 export function QueryWorkspace() {
+  const { activeProject } = useProject();
+  const projectId = activeProject?.project_id ?? "cip-dmd";
   const searchParams = useSearchParams();
   const [question, setQuestion] = useState("");
   const [submittedQuestion, setSubmittedQuestion] = useState("");
@@ -106,7 +109,7 @@ export function QueryWorkspace() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      const stored = readHistory();
+      const stored = readHistory(projectId);
       setHistory(stored);
       const conversationId = searchParams.get("conversation");
       const selected = stored.find((item) => item.id === conversationId);
@@ -120,7 +123,7 @@ export function QueryWorkspace() {
       }
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [searchParams]);
+  }, [searchParams, projectId]);
 
   useEffect(() => {
     if (!loading) return;
@@ -156,7 +159,7 @@ export function QueryWorkspace() {
     setReviewError("");
     setSubmittedQuestion(normalized);
     try {
-      const result = await queryFactoryGraph(normalized);
+      const result = await queryFactoryGraph(normalized, projectId);
       setResponse(result);
       setActiveTab(result.evidence.nodes.length > 0 ? "graph" : "table");
       const now = new Date().toISOString();
@@ -170,8 +173,9 @@ export function QueryWorkspace() {
         updatedAt: now,
         question: normalized,
         response: result,
+        projectId,
       };
-      setHistory(saveConversation(item));
+      setHistory(saveConversation(item, projectId));
     } catch (requestError) {
       setError(
         requestError instanceof Error

@@ -485,6 +485,7 @@ def create_app(
         label: str = Query(description="노드 라벨"),
         q: str = Query(min_length=1, max_length=200),
         limit: int = Query(default=12, ge=1, le=50),
+        project_id: str | None = None,
         bundle: ServiceBundle = Depends(get_bundle),
     ) -> dict:
         q = q.strip()
@@ -499,7 +500,29 @@ def create_app(
                 detail="그래프 탐색 서비스가 구성되지 않았습니다.",
             )
         try:
-            return bundle.graph.search_nodes(label, q, limit)
+            resolved_project_id = (
+                project_id or projects.active_project_id() or "cip-dmd"
+            )
+            contract = schemas.contract(resolved_project_id)
+            identity_by_label = {
+                row["label"]: row["identity_property"]
+                for row in contract["node_identities"]
+            }
+            if label not in identity_by_label:
+                raise ValueError(f"지원하지 않는 노드 라벨입니다: {label}")
+            if resolved_project_id == "cip-dmd":
+                return bundle.graph.search_nodes(label, q, limit)
+            node = next(
+                row for row in contract["nodes"] if row["label"] == label
+            )
+            return bundle.graph.search_nodes(
+                label,
+                q,
+                limit,
+                project_id=resolved_project_id,
+                identity_property=identity_by_label[label],
+                search_properties=tuple((node.get("properties") or {}).keys()),
+            )
         except ValueError as error:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
@@ -520,6 +543,7 @@ def create_app(
         identity: str = Query(min_length=1, max_length=200),
         depth: int = Query(default=2, ge=1, le=3),
         limit: int = Query(default=50, ge=1, le=100),
+        project_id: str | None = None,
         bundle: ServiceBundle = Depends(get_bundle),
     ) -> dict:
         identity = identity.strip()
@@ -528,21 +552,32 @@ def create_app(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail="identity는 공백일 수 없습니다.",
             )
-        if label not in NODE_IDENTITIES:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail=(
-                    f"지원하지 않는 라벨입니다. "
-                    f"가능한 값: {', '.join(NODE_IDENTITIES)}"
-                ),
-            )
         if bundle.graph is None:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="그래프 탐색 서비스가 구성되지 않았습니다.",
             )
         try:
-            return bundle.graph.subgraph(label, identity, depth, limit)
+            resolved_project_id = (
+                project_id or projects.active_project_id() or "cip-dmd"
+            )
+            contract = schemas.contract(resolved_project_id)
+            identity_by_label = {
+                row["label"]: row["identity_property"]
+                for row in contract["node_identities"]
+            }
+            if label not in identity_by_label:
+                raise ValueError(f"지원하지 않는 노드 라벨입니다: {label}")
+            if resolved_project_id == "cip-dmd":
+                return bundle.graph.subgraph(label, identity, depth, limit)
+            return bundle.graph.subgraph(
+                label,
+                identity,
+                depth,
+                limit,
+                project_id=resolved_project_id,
+                identity_property=identity_by_label[label],
+            )
         except ValueError as error:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,

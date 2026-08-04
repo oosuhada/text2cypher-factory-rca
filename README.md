@@ -5,6 +5,17 @@ CiP-DMD의 완제품·구성품·공정·품질 관계를 Neo4j로 구조화하�
 구현 순서와 완료 조건은 [MVP_단계별_구현_계획.md](./MVP_단계별_구현_계획.md)를 따른다.
 PPT 대조 후 수정 근거는 [방향 수정 기록](./docs/direction-correction-2026-07-27.md)에 정리했다.
 
+## 프로젝트형 플랫폼 확장
+
+새 프로젝트를 만들고 CSV/JSON을 업로드한 뒤 컬럼 프로파일 → 그래프
+매핑 검토 → schema 승인 → 프로젝트 격리 적재 → schema 기반
+Text-to-Cypher 질의까지 같은 파이프라인으로 실행할 수 있다. 설비 정비
+이력 예제가 두 번째 도메인 재적용 기준으로 포함되어 있다.
+
+- Streamlit: `http://localhost:8501`
+- React: `http://localhost:3000`
+- FastAPI/OpenAPI: `http://localhost:8000/docs`
+
 ## 현재 진행 상태
 
 | 단계 | 상태 | 산출물 |

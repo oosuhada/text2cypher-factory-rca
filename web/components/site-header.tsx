@@ -7,6 +7,7 @@ import {
   Menu,
   MessageSquareText,
   Network,
+  Workflow,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -15,18 +16,21 @@ import { useState } from "react";
 
 import { ApiStatus } from "@/components/api-status";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useProject } from "@/components/project-context";
 
 const NAVIGATION = [
   { href: "/query", label: "Query", icon: MessageSquareText },
   { href: "/graph", label: "Graph", icon: Network },
   { href: "/history", label: "History", icon: History },
   { href: "/data", label: "Data", icon: Database },
+  { href: "/schema", label: "Schema", icon: Workflow },
   { href: "/operations", label: "Operations", icon: Activity },
 ];
 
 export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { projects, activeProject, switchProject } = useProject();
 
   return (
     <header className="site-header">
@@ -59,6 +63,19 @@ export function SiteHeader() {
         </nav>
 
         <div className="header-actions">
+          <select
+            className="project-switcher"
+            aria-label="활성 프로젝트"
+            value={activeProject?.project_id ?? ""}
+            disabled={!activeProject}
+            onChange={(event) => void switchProject(event.target.value)}
+          >
+            {projects.map((project) => (
+              <option key={project.project_id} value={project.project_id}>
+                {project.name}
+              </option>
+            ))}
+          </select>
           <ApiStatus />
           <ThemeToggle />
           <button

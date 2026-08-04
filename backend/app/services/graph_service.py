@@ -107,18 +107,30 @@ class GraphCatalogService:
         label: str,
         query: str,
         limit: int = 12,
+        *,
+        project_id: str | None = None,
+        identity_property: str | None = None,
+        search_properties: tuple[str, ...] | None = None,
     ) -> dict[str, Any]:
-        if label not in NODE_IDENTITIES:
+        if label not in NODE_IDENTITIES and identity_property is None:
             raise ValueError(f"지원하지 않는 노드 라벨입니다: {label}")
         normalized = query.strip().lower()
         if not normalized:
             raise ValueError("검색어는 공백일 수 없습니다.")
         if not 1 <= limit <= 50:
             raise ValueError("limit은 1~50이어야 합니다.")
-        identity_property = NODE_IDENTITIES[label]
+        identity_property = identity_property or NODE_IDENTITIES[label]
+        properties = search_properties or NODE_SEARCH_PROPERTIES.get(
+            label, (identity_property,)
+        )
+        scope = (
+            "node.project_id = $project_id AND "
+            if project_id
+            else ""
+        )
         statement = f"""
         MATCH (node:`{label}`)
-        WHERE any(property IN $properties
+        WHERE {scope}any(property IN $properties
           WHERE toLower(toString(node[property])) CONTAINS $search_term
         )
         RETURN node
@@ -131,9 +143,10 @@ class GraphCatalogService:
         ) as session:
             records = session.run(
                 Query(statement, timeout=self.timeout_seconds),
-                properties=list(NODE_SEARCH_PROPERTIES[label]),
+                properties=list(properties),
                 search_term=normalized,
                 limit=limit,
+                project_id=project_id,
             )
             nodes = [_node_payload(record["node"]) for record in records]
         return {
@@ -150,20 +163,33 @@ class GraphCatalogService:
         identity: str,
         depth: int = 2,
         limit: int = 50,
+        *,
+        project_id: str | None = None,
+        identity_property: str | None = None,
     ) -> dict[str, Any]:
-        if label not in NODE_IDENTITIES:
+        if label not in NODE_IDENTITIES and identity_property is None:
             raise ValueError(f"지원하지 않는 노드 라벨입니다: {label}")
         if not 1 <= depth <= 3:
             raise ValueError("depth는 1~3이어야 합니다.")
         if not 1 <= limit <= 100:
             raise ValueError("limit은 1~100이어야 합니다.")
 
-        identity_property = NODE_IDENTITIES[label]
+        identity_property = identity_property or NODE_IDENTITIES[label]
+        root_scope = (
+            " AND root.project_id = $project_id" if project_id else ""
+        )
+        path_scope = (
+            " WHERE path IS NULL OR all(node IN nodes(path) "
+            "WHERE node.project_id = $project_id)"
+            if project_id
+            else ""
+        )
         statement = f"""
         MATCH (root:`{label}`)
-        WHERE root.`{identity_property}` = $identity
+        WHERE root.`{identity_property}` = $identity{root_scope}
         CALL (root) {{
           OPTIONAL MATCH path=(root)-[*1..{depth}]-(neighbor)
+          {path_scope}
           RETURN path
           LIMIT $limit
         }}
@@ -178,6 +204,7 @@ class GraphCatalogService:
                 Query(statement, timeout=self.timeout_seconds),
                 identity=identity,
                 limit=limit,
+                project_id=project_id,
             ).single()
 
         if record is None:
