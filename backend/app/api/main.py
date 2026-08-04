@@ -41,6 +41,17 @@ from backend.app.services.project_load_service import (
 )
 from backend.app.services.graph_service import node_search_contract
 from backend.app.etl.cli import password_from_keychain
+from backend.app.graph_projection import (
+    GraphProjectionConflict,
+    GraphProjectionRequest,
+    GraphProjectionResponse,
+    GraphProjectionUnavailable,
+    GraphProjectionValidationError,
+    Neo4jProjectionWriter,
+    OntologyGraphProjectionService,
+    ProjectionReceiptStore,
+    predictive_maintenance_schema_manifest,
+)
 
 from .schemas import (
     AgentRunStateResponse,
@@ -177,6 +188,7 @@ def create_app(
     project_graph_loader: ProjectGraphLoadService | None = None,
     connector_service: Neo4jConnectorService | None = None,
     readiness_service: ProjectReadinessService | None = None,
+    graph_projection_service: OntologyGraphProjectionService | None = None,
 ) -> FastAPI:
     projects = project_registry or ProjectRegistry(
         Path(
@@ -229,6 +241,20 @@ def create_app(
             PROJECT_ROOT,
             generic_loader,
         )
+    )
+    projection_service = graph_projection_service or OntologyGraphProjectionService(
+        Neo4jProjectionWriter(),
+        ProjectionReceiptStore(
+            Path(
+                os.getenv(
+                    "P3_GRAPH_PROJECTION_RECEIPTS_PATH",
+                    PROJECT_ROOT
+                    / "data"
+                    / "processed"
+                    / "graph_projection_receipts.sqlite3",
+                )
+            )
+        ),
     )
 
     def direct_graph_counts(project_id: str) -> dict[str, int]:
@@ -307,6 +333,158 @@ def create_app(
         ),
         top_k=int(os.getenv("P3_PROJECT_ROUTER_TOP_K", "3")),
     )
+
+    def require_projection_scope(
+        request: Request,
+        payload: GraphProjectionRequest,
+        project_id: str,
+    ) -> None:
+        if payload.project_id != project_id:
+            raise HTTPException(
+                status_code=422,
+                detail="projection payload project_id does not match the route",
+            )
+        expected_headers = {
+            "X-Organization-ID": payload.organization_id,
+            "X-Project-ID": payload.project_id,
+            "X-Workspace-ID": payload.workspace_id,
+        }
+        for name, expected in expected_headers.items():
+            actual = request.headers.get(name)
+            if actual != expected:
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"projection scope header mismatch: {name}",
+                )
+        configured_secret = os.getenv("P3_GRAPH_PROJECTION_SHARED_SECRET")
+        if configured_secret:
+            if request.headers.get("X-Projection-Secret") != configured_secret:
+                raise HTTPException(
+                    status_code=403,
+                    detail="graph projection service secret is invalid",
+                )
+
+    def promote_projection_project(
+        payload: GraphProjectionRequest,
+        response: GraphProjectionResponse,
+    ) -> None:
+        project = projects.get(payload.project_id)
+        if project is None:
+            projects.create(
+                project_id=payload.project_id,
+                name="Predictive Maintenance V3.1 Ontology",
+                domain_type="predictive-maintenance",
+                dataset_name="Predictive Maintenance Canonical V3.1",
+                schema_version=payload.mapping_version,
+                status="ready",
+                description=(
+                    "Version-scoped Ontology Dashboard projection with "
+                    "Result Artifact provenance."
+                ),
+                source_type="neo4j",
+                source_version=payload.source_version,
+                _bootstrap=True,
+            )
+        else:
+            if project["status"] == "archived":
+                raise GraphProjectionValidationError(
+                    "archived projects cannot receive graph projections"
+                )
+            projects.update(
+                payload.project_id,
+                schema_version=payload.mapping_version,
+                source_type="neo4j",
+                source_version=payload.source_version,
+            )
+            transition_path = {
+                "draft": [
+                    "profiling",
+                    "mapping_review",
+                    "loading",
+                    "validating",
+                    "evaluation_required",
+                    "ready",
+                ],
+                "profiling": [
+                    "mapping_review",
+                    "loading",
+                    "validating",
+                    "evaluation_required",
+                    "ready",
+                ],
+                "mapping_review": [
+                    "loading",
+                    "validating",
+                    "evaluation_required",
+                    "ready",
+                ],
+                "loading": ["validating", "evaluation_required", "ready"],
+                "validating": ["evaluation_required", "ready"],
+                "evaluation_required": ["ready"],
+                "failed": [
+                    "loading",
+                    "validating",
+                    "evaluation_required",
+                    "ready",
+                ],
+                "ready": [],
+            }[project["status"]]
+            for target in transition_path:
+                projects.transition(
+                    payload.project_id,
+                    target,
+                    reason="typed_graph_projection_completed",
+                )
+
+        schema = predictive_maintenance_schema_manifest(payload)
+        schemas.save(payload.project_id, schema)
+        projects.record_artifact(
+            payload.project_id,
+            "graph_projection",
+            version=payload.dataset_version_id,
+            fingerprint=response.projection_checksum_sha256,
+            metadata={
+                "projection_id": payload.projection_id,
+                "project3_run_id": response.project3_run_id,
+                "dataset_id": payload.dataset_id,
+                "dataset_version_id": payload.dataset_version_id,
+                "bundle_checksum_sha256": payload.bundle_checksum_sha256,
+                "materialization_checksum_sha256": (
+                    payload.materialization_checksum_sha256
+                ),
+                "mapping_id": payload.mapping_id,
+                "mapping_version": payload.mapping_version,
+                "counts": response.counts.model_dump(mode="json"),
+                "idempotent_replay": response.idempotent_replay,
+            },
+        )
+        projects.record_artifact(
+            payload.project_id,
+            "integrity",
+            version=payload.dataset_version_id,
+            status="verified",
+            fingerprint=payload.materialization_checksum_sha256,
+            metadata={
+                "project_scope_applied": True,
+                "dataset_version_scope_applied": True,
+                "nodes": response.counts.nodes_written,
+                "relationships": response.counts.relationships_written,
+                "topology_semantics": payload.topology_semantics.model_dump(
+                    mode="json", by_alias=True
+                ),
+            },
+        )
+        projects.record_artifact(
+            payload.project_id,
+            "read_only",
+            version="project3-reader-v1",
+            status="verified",
+            metadata={
+                "query_surface": "validated_text_to_cypher",
+                "arbitrary_cypher_exposed": False,
+            },
+        )
+        registry.close(payload.project_id)
 
     @asynccontextmanager
     async def lifespan(application: FastAPI):
@@ -799,6 +977,49 @@ def create_app(
             raise HTTPException(
                 status_code=502, detail=f"프로젝트 그래프 적재 실패: {error}"
             ) from error
+
+    @application.post(
+        "/api/v1/projects/{project_id}/graph/projections",
+        response_model=GraphProjectionResponse,
+    )
+    def project_ontology_graph(
+        project_id: str,
+        payload: GraphProjectionRequest,
+        request: Request,
+    ) -> GraphProjectionResponse:
+        require_projection_scope(request, payload, project_id)
+        try:
+            response = projection_service.project(payload)
+            promote_projection_project(payload, response)
+            return response
+        except GraphProjectionConflict as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        except GraphProjectionValidationError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+        except GraphProjectionUnavailable as error:
+            raise HTTPException(status_code=503, detail=str(error)) from error
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+
+    @application.get(
+        "/api/v1/projects/{project_id}/graph/projections/{projection_id}",
+        response_model=GraphProjectionResponse,
+    )
+    def graph_projection_status(
+        project_id: str,
+        projection_id: str,
+        request: Request,
+    ) -> GraphProjectionResponse:
+        header_project_id = request.headers.get("X-Project-ID")
+        if header_project_id != project_id:
+            raise HTTPException(
+                status_code=403,
+                detail="projection scope header mismatch: X-Project-ID",
+            )
+        try:
+            return projection_service.get(project_id, projection_id)
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
 
     @application.post("/api/v1/query", response_model=QueryResponse)
     def query_graph(payload: QueryRequest, request: Request) -> dict:
@@ -1350,6 +1571,11 @@ def create_app(
         q: str = Query(min_length=1, max_length=200),
         limit: int = Query(default=12, ge=1, le=50),
         project_id: str | None = None,
+        dataset_version_id: str | None = Query(
+            default=None,
+            min_length=1,
+            max_length=160,
+        ),
     ) -> dict:
         q = q.strip()
         if not q:
@@ -1384,6 +1610,7 @@ def create_app(
                 q,
                 limit,
                 project_id=resolved_project_id,
+                dataset_version_id=dataset_version_id,
                 identity_property=identity_property,
                 search_properties=search_properties,
             )
@@ -1413,6 +1640,11 @@ def create_app(
         depth: int = Query(default=2, ge=1, le=3),
         limit: int = Query(default=50, ge=1, le=100),
         project_id: str | None = None,
+        dataset_version_id: str | None = Query(
+            default=None,
+            min_length=1,
+            max_length=160,
+        ),
     ) -> dict:
         identity = identity.strip()
         if not identity:
@@ -1445,6 +1677,7 @@ def create_app(
                 depth,
                 limit,
                 project_id=resolved_project_id,
+                dataset_version_id=dataset_version_id,
                 identity_property=identity_by_label[label],
             )
         except KeyError as error:

@@ -184,6 +184,7 @@ class GraphCatalogService:
         limit: int = 12,
         *,
         project_id: str | None = None,
+        dataset_version_id: str | None = None,
         identity_property: str | None = None,
         search_properties: tuple[str, ...] | None = None,
     ) -> dict[str, Any]:
@@ -198,9 +199,16 @@ class GraphCatalogService:
         properties = search_properties or NODE_SEARCH_PROPERTIES.get(
             label, (identity_property,)
         )
+        scope_parts: list[str] = []
+        if project_id:
+            scope_parts.append("node.project_id = $project_id")
+        if dataset_version_id:
+            scope_parts.append(
+                "node.dataset_version_id = $dataset_version_id"
+            )
         scope = (
-            "node.project_id = $project_id AND "
-            if project_id
+            " AND ".join(scope_parts) + " AND "
+            if scope_parts
             else ""
         )
         statement = f"""
@@ -222,12 +230,14 @@ class GraphCatalogService:
                 search_term=normalized,
                 limit=limit,
                 project_id=project_id,
+                dataset_version_id=dataset_version_id,
             )
             nodes = [_node_payload(record["node"]) for record in records]
         return {
             "label": label,
             "query": query.strip(),
             "identity_property": identity_property,
+            "dataset_version_id": dataset_version_id,
             "nodes": nodes,
             "count": len(nodes),
         }
@@ -240,6 +250,7 @@ class GraphCatalogService:
         limit: int = 50,
         *,
         project_id: str | None = None,
+        dataset_version_id: str | None = None,
         identity_property: str | None = None,
     ) -> dict[str, Any]:
         if label not in NODE_IDENTITIES and identity_property is None:
@@ -250,18 +261,42 @@ class GraphCatalogService:
             raise ValueError("limit은 1~100이어야 합니다.")
 
         identity_property = identity_property or NODE_IDENTITIES[label]
+        root_scope_parts: list[str] = []
+        if project_id:
+            root_scope_parts.append("root.project_id = $project_id")
+        if dataset_version_id:
+            root_scope_parts.append(
+                "root.dataset_version_id = $dataset_version_id"
+            )
         root_scope = (
-            " AND root.project_id = $project_id" if project_id else ""
-        )
-        path_scope = (
-            " WHERE path IS NULL OR ("
-            "all(node IN nodes(path) "
-            "WHERE node.project_id = $project_id) AND "
-            "all(relationship IN relationships(path) "
-            "WHERE relationship.project_id = $project_id))"
-            if project_id
+            " AND " + " AND ".join(root_scope_parts)
+            if root_scope_parts
             else ""
         )
+        node_path_scope: list[str] = []
+        relationship_path_scope: list[str] = []
+        if project_id:
+            node_path_scope.append("node.project_id = $project_id")
+            relationship_path_scope.append(
+                "relationship.project_id = $project_id"
+            )
+        if dataset_version_id:
+            node_path_scope.append(
+                "node.dataset_version_id = $dataset_version_id"
+            )
+            relationship_path_scope.append(
+                "relationship.dataset_version_id = $dataset_version_id"
+            )
+        path_scope = ""
+        if node_path_scope or relationship_path_scope:
+            path_scope = (
+                " WHERE path IS NULL OR ("
+                "all(node IN nodes(path) WHERE "
+                + " AND ".join(node_path_scope)
+                + ") AND all(relationship IN relationships(path) WHERE "
+                + " AND ".join(relationship_path_scope)
+                + "))"
+            )
         statement = f"""
         MATCH (root:`{label}`)
         WHERE root.`{identity_property}` = $identity{root_scope}
@@ -283,6 +318,7 @@ class GraphCatalogService:
                 identity=identity,
                 limit=limit,
                 project_id=project_id,
+                dataset_version_id=dataset_version_id,
             ).single()
 
         if record is None:
@@ -292,6 +328,7 @@ class GraphCatalogService:
                 "relationships": [],
                 "node_count": 0,
                 "relationship_count": 0,
+                "dataset_version_id": dataset_version_id,
                 "depth": depth,
                 "truncated": False,
             }
@@ -315,6 +352,7 @@ class GraphCatalogService:
             "relationships": list(relationships.values()),
             "node_count": len(nodes),
             "relationship_count": len(relationships),
+            "dataset_version_id": dataset_version_id,
             "depth": depth,
             "truncated": len(paths) >= limit,
         }
