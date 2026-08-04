@@ -10,6 +10,7 @@ from backend.app.etl.cli import password_from_keychain
 from backend.app.security.read_only import validate_read_only
 from evaluation.evaluator import (
     VARIANTS,
+    classification_metrics,
     evaluate_question,
     load_blind_questions,
     summarize_results,
@@ -166,6 +167,8 @@ class BlindEvaluationTest(unittest.TestCase):
         summary = summarize_results(
             [
                 {
+                    "expected_status": "success",
+                    "actual_status": "success",
                     "execution_success": True,
                     "result_match": True,
                     "strict_result_match": True,
@@ -180,6 +183,8 @@ class BlindEvaluationTest(unittest.TestCase):
                     "failure_type": None,
                 },
                 {
+                    "expected_status": "success",
+                    "actual_status": "failed",
                     "execution_success": False,
                     "result_match": False,
                     "strict_result_match": False,
@@ -201,6 +206,38 @@ class BlindEvaluationTest(unittest.TestCase):
         self.assertEqual(
             summary["failure_counts"], {"wrong_value_or_rowset": 1}
         )
+
+    def test_status_classification_builds_precision_recall_f1_and_matrix(self):
+        metrics = classification_metrics(
+            [
+                {
+                    "expected_status": "success",
+                    "actual_status": "success",
+                },
+                {
+                    "expected_status": "success",
+                    "actual_status": "empty",
+                },
+                {
+                    "expected_status": "empty",
+                    "actual_status": "empty",
+                },
+                {
+                    "expected_status": "blocked",
+                    "actual_status": "blocked",
+                },
+            ]
+        )
+        self.assertEqual(
+            metrics["confusion_matrix"]["success"]["empty"], 1
+        )
+        self.assertEqual(
+            metrics["per_class"]["success"]["precision"], 1.0
+        )
+        self.assertEqual(
+            metrics["per_class"]["success"]["recall"], 0.5
+        )
+        self.assertEqual(metrics["accuracy"], 0.75)
 
 
 @unittest.skipUnless(

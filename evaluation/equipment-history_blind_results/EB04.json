@@ -1,0 +1,16 @@
+{
+  "question_id": "EB04",
+  "category": "unresolved_technician",
+  "question": "미해결 이벤트의 설비와 담당 기술자를 찾아줘.",
+  "expected_status": "success",
+  "row_count": 1,
+  "rows_sha256": "98ef2d33c16ec01b60ed90f40682f58d9f5157ecd7c47c3b96289fd89e6d735f",
+  "normalized_rows": [
+    {
+      "equipment_id": "EQ-WELD-03",
+      "event_id": "ME-012",
+      "technician_id": "T-04",
+      "technician_name": "Choi"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "question_id": "EH14",
+  "category": "frequent_equipment",
+  "question": "정비 이력이 3건 이상인 설비를 보여줘.",
+  "expected_status": "success",
+  "row_count": 3,
+  "rows_sha256": "89647561e0eb9ff9af0b8a422e53ff9af581efdc667fd7c5c10781529ada5653",
+  "normalized_rows": [
+    {
+      "equipment_id": "EQ-CNC-02",
+      "event_count": 3
+    },
+    {
+      "equipment_id": "EQ-PRESS-01",
+      "event_count": 4
+    },
+    {
+      "equipment_id": "EQ-WELD-03",
+      "event_count": 3
+    }
+  ]
+}

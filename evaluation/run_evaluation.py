@@ -24,6 +24,7 @@ from backend.app.agent.model import (
     has_vertex_credentials,
 )
 from backend.app.etl.cli import password_from_keychain
+from backend.app.schema_registry import SchemaRegistry
 from evaluation.evaluator import (
     VARIANTS,
     evaluate_question,
@@ -36,6 +37,8 @@ from evaluation.gold_validation import (
     load_snapshot,
     write_snapshot,
 )
+from evaluation.registry import EvaluationRegistry
+from evaluation.reporting import render_metrics_markdown
 
 
 def parse_args() -> argparse.Namespace:
@@ -58,6 +61,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--model",
         default=None,
+    )
+    parser.add_argument(
+        "--project",
+        default="cip-dmd",
+        help="Evaluation project_id registered under evaluation/projects.",
     )
     return parser.parse_args()
 
@@ -130,6 +138,8 @@ def run_evaluation(
     expected_root,
     provider,
     model_name,
+    project_config,
+    schema_context,
 ) -> dict:
     resolved_provider = provider
     if provider == "auto":
@@ -155,9 +165,14 @@ def run_evaluation(
         else os.getenv("GOOGLE_VERTEX_MODEL", "gemini-2.5-flash")
     )
     examples = GoldExampleStore(
-        PROJECT_ROOT / "evaluation" / "gold_questions.yml"
+        Path(project_config["gold"]["questions_path"])
     )
     graph = Neo4jReadGraph(driver, database=database)
+    semantic_validator = (
+        validate_domain_semantics
+        if project_config["project_id"] == "cip-dmd"
+        else lambda _question, _statement: []
+    )
     variant_reports = {}
     for variant in VARIANTS:
         model = (
@@ -185,6 +200,9 @@ def run_evaluation(
                 graph,
                 examples,
                 variant,
+                schema_context=schema_context,
+                semantic_validator=semantic_validator,
+                project_id=project_config["project_id"],
             )
             results.append(result)
             print(
@@ -220,7 +238,13 @@ def run_evaluation(
         for variant in VARIANTS
     ]
     return {
-        "dataset": "CiP-DMD",
+        "project_id": project_config["project_id"],
+        "dataset": project_config["dataset"],
+        "evaluation_version": project_config["evaluation_version"],
+        "schema_version": project_config["schema_version"],
+        "source_version": project_config["source_version"],
+        "prompt_version": project_config["prompt_version"],
+        "evaluation_fingerprint": project_config["fingerprint"],
         "provider": resolved_provider,
         "model": resolved_model,
         "evaluated_at": datetime.now(timezone.utc).isoformat(),
@@ -273,21 +297,52 @@ def run_evaluation(
     }
 
 
-def write_report(report: dict) -> tuple[Path, Path]:
-    results_root = PROJECT_ROOT / "evaluation" / "results"
+def write_report(report: dict) -> tuple[Path, Path, Path]:
+    results_root = (
+        PROJECT_ROOT
+        / "evaluation"
+        / "results"
+        / report["project_id"]
+    )
     results_root.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     run_path = results_root / f"blind_evaluation_{timestamp}.json"
     latest_path = results_root / "latest.json"
+    markdown_path = results_root / "latest.md"
     serialized = json.dumps(report, ensure_ascii=False, indent=2) + "\n"
     run_path.write_text(serialized, encoding="utf-8")
     latest_path.write_text(serialized, encoding="utf-8")
-    return run_path, latest_path
+    markdown_path.write_text(
+        render_metrics_markdown(report), encoding="utf-8"
+    )
+    if report["project_id"] == "cip-dmd":
+        # Backward compatibility for the existing Streamlit dashboard.
+        legacy_latest = (
+            PROJECT_ROOT / "evaluation" / "results" / "latest.json"
+        )
+        legacy_latest.write_text(serialized, encoding="utf-8")
+    return run_path, latest_path, markdown_path
 
 
 def update_dashboard_metrics(report: dict) -> Path:
-    metrics_path = PROJECT_ROOT / "evaluation" / "metrics.json"
-    metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+    project_metrics = (
+        PROJECT_ROOT
+        / "evaluation"
+        / "projects"
+        / report["project_id"]
+        / "metrics.json"
+    )
+    legacy_metrics = PROJECT_ROOT / "evaluation" / "metrics.json"
+    metrics_path = (
+        legacy_metrics
+        if report["project_id"] == "cip-dmd"
+        else project_metrics
+    )
+    metrics = (
+        json.loads(metrics_path.read_text(encoding="utf-8"))
+        if metrics_path.exists()
+        else {}
+    )
     final_metrics = report["variants"]["self_correction"]["metrics"]
     metrics.update(
         {
@@ -328,12 +383,28 @@ def update_dashboard_metrics(report: dict) -> Path:
                 "output_tokens"
             ],
             "blind_evaluation_status": "complete",
+            "project_id": report["project_id"],
+            "evaluation_version": report["evaluation_version"],
+            "schema_version": report["schema_version"],
+            "source_version": report["source_version"],
+            "prompt_version": report["prompt_version"],
+            "evaluation_fingerprint": report[
+                "evaluation_fingerprint"
+            ],
+            "status_classification": final_metrics[
+                "status_classification"
+            ],
         }
     )
     metrics_path.write_text(
         json.dumps(metrics, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
+    if metrics_path != project_metrics:
+        project_metrics.write_text(
+            json.dumps(metrics, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
     return metrics_path
 
 
@@ -343,10 +414,17 @@ def main() -> None:
         raise SystemExit(
             "Choose only one of --update-expected and --verify-expected."
         )
-    questions = load_blind_questions(
-        PROJECT_ROOT / "evaluation" / "blind_questions.yml"
+    registry = EvaluationRegistry(
+        PROJECT_ROOT / "evaluation", PROJECT_ROOT / "schemas"
     )
-    expected_root = PROJECT_ROOT / "evaluation" / "blind_results"
+    project_config = registry.load(args.project)
+    questions = load_blind_questions(
+        Path(project_config["blind"]["questions_path"])
+    )
+    expected_root = Path(project_config["blind"]["snapshots_path"])
+    schema_context = SchemaRegistry(
+        PROJECT_ROOT / "schemas"
+    ).context(args.project)
     username, password = database_credentials()
     database = os.getenv("NEO4J_DATABASE", "neo4j")
     with GraphDatabase.driver(
@@ -367,11 +445,14 @@ def main() -> None:
             expected_root,
             args.provider,
             args.model,
+            project_config,
+            schema_context,
         )
-    run_path, latest_path = write_report(report)
+    run_path, latest_path, markdown_path = write_report(report)
     metrics_path = update_dashboard_metrics(report)
     print(f"Run report: {run_path}")
     print(f"Latest report: {latest_path}")
+    print(f"Markdown report: {markdown_path}")
     print(f"Dashboard metrics: {metrics_path}")
 
 

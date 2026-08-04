@@ -1,0 +1,30 @@
+{
+  "question_id": "EH4",
+  "category": "technician_workload",
+  "question": "기술자별 정비 작업 수를 보여줘.",
+  "expected_status": "success",
+  "row_count": 4,
+  "rows_sha256": "5789f0cf6d42b89efdba13ba24fe91b631e95cc58750da1feab61d7520cf6d3c",
+  "normalized_rows": [
+    {
+      "event_count": 3,
+      "technician_id": "T-01",
+      "technician_name": "Kim"
+    },
+    {
+      "event_count": 3,
+      "technician_id": "T-02",
+      "technician_name": "Lee"
+    },
+    {
+      "event_count": 3,
+      "technician_id": "T-03",
+      "technician_name": "Park"
+    },
+    {
+      "event_count": 3,
+      "technician_id": "T-04",
+      "technician_name": "Choi"
+    }
+  ]
+}

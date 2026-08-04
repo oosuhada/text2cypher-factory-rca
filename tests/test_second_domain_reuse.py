@@ -54,7 +54,7 @@ class SecondDomainReuseTest(unittest.TestCase):
                 ROOT / "evaluation" / "equipment-history_gold.yml"
             ).read_text(encoding="utf-8")
         )
-        self.assertEqual(len(payload["questions"]), 7)
+        self.assertEqual(len(payload["questions"]), 15)
         self.assertTrue(
             all(
                 "project_id: 'equipment-history'" in row["gold_cypher"]

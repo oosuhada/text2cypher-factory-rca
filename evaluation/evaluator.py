@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from time import perf_counter
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 import yaml
 
@@ -13,6 +13,7 @@ from backend.app.agent.graph import ReadGraph
 from backend.app.agent.model import CypherModel, normalize_model_cypher
 from backend.app.agent.schema import SCHEMA_CONTEXT
 from backend.app.agent.semantic_validation import validate_domain_semantics
+from backend.app.agent.workflow import has_project_scope
 from backend.app.security.read_only import (
     detect_ambiguous_request,
     detect_write_request,
@@ -113,7 +114,12 @@ def classify_failure(
         return "syntax_or_schema_error"
     if any(
         error.startswith(
-            ("DOMAIN_VALUE", "QUESTION_ALIGNMENT", "SCHEMA_TOPOLOGY")
+            (
+                "DOMAIN_VALUE",
+                "QUESTION_ALIGNMENT",
+                "SCHEMA_TOPOLOGY",
+                "PROJECT_SCOPE",
+            )
         )
         for error in errors
     ):
@@ -135,6 +141,11 @@ def evaluate_question(
     examples: GoldExampleStore,
     variant: EvaluationVariant,
     max_attempts: int = 3,
+    schema_context: str = SCHEMA_CONTEXT,
+    semantic_validator: Callable[
+        [str, str], list[str]
+    ] = validate_domain_semantics,
+    project_id: str = "cip-dmd",
 ) -> dict[str, Any]:
     started = perf_counter()
     question_text = str(question["question"]).strip()
@@ -161,7 +172,7 @@ def evaluate_question(
         status = "failed"
         try:
             statement = normalize_model_cypher(
-                model.generate(question_text, SCHEMA_CONTEXT, few_shot)
+                model.generate(question_text, schema_context, few_shot)
             )
             trace.append({"step": "generate_cypher"})
         except Exception as error:
@@ -178,7 +189,16 @@ def evaluate_question(
                 for error in errors
             )
             if not errors:
-                errors = validate_domain_semantics(question_text, statement)
+                errors = semantic_validator(question_text, statement)
+            if (
+                not errors
+                and project_id != "cip-dmd"
+                and not has_project_scope(statement, project_id)
+            ):
+                errors = [
+                    "PROJECT_SCOPE: Query must restrict graph access to "
+                    f"project_id {project_id!r}."
+                ]
             if not errors:
                 errors = graph.explain(statement)
             trace.append(
@@ -215,7 +235,7 @@ def evaluate_question(
                 statement = normalize_model_cypher(
                     model.correct(
                         question_text,
-                        SCHEMA_CONTEXT,
+                        schema_context,
                         statement,
                         errors,
                     )
@@ -333,6 +353,101 @@ def _rate(values: list[bool | None]) -> float | None:
     )
 
 
+def classification_metrics(
+    results: list[dict[str, Any]],
+    *,
+    labels: tuple[str, ...] = (
+        "success",
+        "empty",
+        "blocked",
+        "needs_clarification",
+        "failed",
+    ),
+) -> dict[str, Any]:
+    observed = {
+        str(result[field])
+        for result in results
+        for field in ("expected_status", "actual_status")
+    }
+    ordered_labels = list(labels) + sorted(observed - set(labels))
+    matrix = {
+        expected: {actual: 0 for actual in ordered_labels}
+        for expected in ordered_labels
+    }
+    for result in results:
+        matrix[str(result["expected_status"])][
+            str(result["actual_status"])
+        ] += 1
+    per_class = {}
+    for label in ordered_labels:
+        true_positive = matrix[label][label]
+        false_positive = sum(
+            matrix[expected][label]
+            for expected in ordered_labels
+            if expected != label
+        )
+        false_negative = sum(
+            matrix[label][actual]
+            for actual in ordered_labels
+            if actual != label
+        )
+        support = sum(matrix[label].values())
+        precision = (
+            true_positive / (true_positive + false_positive)
+            if true_positive + false_positive
+            else 0.0
+        )
+        recall = (
+            true_positive / (true_positive + false_negative)
+            if true_positive + false_negative
+            else 0.0
+        )
+        f1 = (
+            2 * precision * recall / (precision + recall)
+            if precision + recall
+            else 0.0
+        )
+        per_class[label] = {
+            "precision": round(precision, 6),
+            "recall": round(recall, 6),
+            "f1": round(f1, 6),
+            "support": support,
+        }
+    supported = [
+        metrics for metrics in per_class.values() if metrics["support"]
+    ]
+    total = len(results)
+    return {
+        "labels": ordered_labels,
+        "confusion_matrix": matrix,
+        "accuracy": round(
+            sum(
+                matrix[label][label] for label in ordered_labels
+            )
+            / total,
+            6,
+        )
+        if total
+        else 0.0,
+        "macro_precision": round(
+            sum(row["precision"] for row in supported) / len(supported), 6
+        )
+        if supported
+        else 0.0,
+        "macro_recall": round(
+            sum(row["recall"] for row in supported) / len(supported), 6
+        )
+        if supported
+        else 0.0,
+        "macro_f1": round(
+            sum(row["f1"] for row in supported) / len(supported), 6
+        )
+        if supported
+        else 0.0,
+        "per_class": per_class,
+    }
+
+
 def summarize_results(results: list[dict[str, Any]]) -> dict[str, Any]:
     failure_counts: dict[str, int] = {}
     for result in results:
@@ -388,4 +503,5 @@ def summarize_results(results: list[dict[str, Any]]) -> dict[str, Any]:
                 "wrong_value_or_rowset",
             )
         },
+        "status_classification": classification_metrics(results),
     }

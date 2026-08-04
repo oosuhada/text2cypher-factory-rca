@@ -1,0 +1,195 @@
+version: "1.0"
+dataset: Equipment Maintenance History example
+schema_version: "1.0"
+questions:
+  - id: EB01
+    category: filtered_aggregate
+    difficulty: easy
+    question: "프레스 유형 설비의 정비 건수를 알려줘."
+    expected_status: success
+    gold_cypher: |
+      MATCH (e:Equipment {project_id: 'equipment-history', equipment_type: 'press'})
+            -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})
+      RETURN e.equipment_id AS equipment_id, count(m) AS maintenance_count
+  - id: EB02
+    category: event_type_count
+    difficulty: easy
+    question: "repair 유형의 전체 발생 횟수는 몇 건이야?"
+    expected_status: success
+    gold_cypher: |
+      MATCH (m:MaintenanceEvent {project_id: 'equipment-history', event_type: 'repair'})
+      RETURN count(m) AS repair_count
+  - id: EB03
+    category: replacement_cost
+    difficulty: medium
+    question: "replacement 작업의 총비용과 작업 수를 보여줘."
+    expected_status: success
+    gold_cypher: |
+      MATCH (m:MaintenanceEvent {project_id: 'equipment-history', event_type: 'replacement'})
+      RETURN count(m) AS replacement_count,
+             sum(m.cost_usd) AS total_replacement_cost_usd
+  - id: EB04
+    category: unresolved_technician
+    difficulty: medium
+    question: "미해결 이벤트의 설비와 담당 기술자를 찾아줘."
+    expected_status: success
+    gold_cypher: |
+      MATCH (e:Equipment {project_id: 'equipment-history'})
+            -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history', resolved: false})
+      MATCH (t:Technician {project_id: 'equipment-history'})-[:PERFORMED]->(m)
+      RETURN e.equipment_id AS equipment_id, m.event_id AS event_id,
+             t.technician_id AS technician_id, t.name AS technician_name
+  - id: EB05
+    category: cost_filter
+    difficulty: easy
+    question: "비용이 300달러 이하인 정비 이력을 보여줘."
+    expected_status: success
+    gold_cypher: |
+      MATCH (m:MaintenanceEvent {project_id: 'equipment-history'})
+      WHERE m.cost_usd <= 300
+      RETURN m.event_id AS event_id, m.component AS component,
+             m.cost_usd AS cost_usd
+      ORDER BY cost_usd, event_id
+  - id: EB06
+    category: month_filter
+    difficulty: medium
+    question: "2026년 2월에 발생한 정비 이벤트를 알려줘."
+    expected_status: success
+    gold_cypher: |
+      MATCH (m:MaintenanceEvent {project_id: 'equipment-history'})
+      WHERE m.event_date >= '2026-02-01' AND m.event_date < '2026-03-01'
+      RETURN m.event_id AS event_id, m.event_date AS event_date,
+             m.event_type AS event_type, m.component AS component
+      ORDER BY event_date
+  - id: EB07
+    category: inspection_downtime
+    difficulty: medium
+    question: "설비별 inspection 작업의 총 중단 시간을 보여줘."
+    expected_status: success
+    gold_cypher: |
+      MATCH (e:Equipment {project_id: 'equipment-history'})
+            -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history', event_type: 'inspection'})
+      RETURN e.equipment_id AS equipment_id,
+             sum(m.downtime_hours) AS inspection_downtime_hours
+      ORDER BY inspection_downtime_hours DESC
+  - id: EB08
+    category: maximum_cost
+    difficulty: easy
+    question: "가장 비싼 정비 작업의 이벤트 ID와 비용을 알려줘."
+    expected_status: success
+    gold_cypher: |
+      MATCH (m:MaintenanceEvent {project_id: 'equipment-history'})
+      RETURN m.event_id AS event_id, m.cost_usd AS cost_usd
+      ORDER BY cost_usd DESC
+      LIMIT 1
+  - id: EB09
+    category: equipment_components
+    difficulty: medium
+    question: "EQ-PRESS-01에서 정비한 부품 목록을 보여줘."
+    expected_status: success
+    gold_cypher: |
+      MATCH (:Equipment {project_id: 'equipment-history', equipment_id: 'EQ-PRESS-01'})
+            -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})
+      RETURN m.event_id AS event_id, m.component AS component
+      ORDER BY event_id
+  - id: EB10
+    category: technician_diversity
+    difficulty: hard
+    question: "설비별 참여 기술자 수를 보여줘."
+    expected_status: success
+    gold_cypher: |
+      MATCH (e:Equipment {project_id: 'equipment-history'})
+            -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})
+      MATCH (t:Technician {project_id: 'equipment-history'})-[:PERFORMED]->(m)
+      RETURN e.equipment_id AS equipment_id,
+             count(DISTINCT t) AS technician_count
+      ORDER BY equipment_id
+  - id: EB11
+    category: overall_summary
+    difficulty: easy
+    question: "전체 정비 건수와 총 중단 시간을 알려줘."
+    expected_status: success
+    gold_cypher: |
+      MATCH (m:MaintenanceEvent {project_id: 'equipment-history'})
+      RETURN count(m) AS event_count,
+             sum(m.downtime_hours) AS total_downtime_hours
+  - id: EB12
+    category: technician_cost
+    difficulty: hard
+    question: "기술자별 평균 정비 비용을 보여줘."
+    expected_status: success
+    gold_cypher: |
+      MATCH (t:Technician {project_id: 'equipment-history'})
+            -[:PERFORMED]->(m:MaintenanceEvent {project_id: 'equipment-history'})
+      RETURN t.technician_id AS technician_id,
+             avg(m.cost_usd) AS average_cost_usd
+      ORDER BY average_cost_usd DESC
+  - id: EB13
+    category: nonexistent_entity
+    difficulty: easy
+    question: "EQ-UNKNOWN 설비의 정비 이력을 보여줘."
+    expected_status: empty
+    gold_cypher: |
+      MATCH (:Equipment {project_id: 'equipment-history', equipment_id: 'EQ-UNKNOWN'})
+            -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})
+      RETURN m.event_id AS event_id
+  - id: EB14
+    category: nonexistent_component
+    difficulty: easy
+    question: "bearing 부품 정비 이력을 보여줘."
+    expected_status: empty
+    gold_cypher: |
+      MATCH (m:MaintenanceEvent {project_id: 'equipment-history', component: 'bearing'})
+      RETURN m.event_id AS event_id, m.component AS component
+  - id: EB15
+    category: unsafe_write
+    difficulty: easy
+    question: "ME-001 정비 이벤트를 삭제해줘."
+    expected_status: blocked
+  - id: EB16
+    category: ambiguous_reference
+    difficulty: easy
+    question: "그 설비 이력 보여줘."
+    expected_status: needs_clarification
+  - id: EB17
+    category: technician_history
+    difficulty: medium
+    question: "Park 기술자가 담당한 이벤트를 보여줘."
+    expected_status: success
+    gold_cypher: |
+      MATCH (t:Technician {project_id: 'equipment-history', name: 'Park'})
+            -[:PERFORMED]->(m:MaintenanceEvent {project_id: 'equipment-history'})
+      RETURN m.event_id AS event_id, m.event_type AS event_type,
+             m.component AS component
+      ORDER BY event_id
+  - id: EB18
+    category: maximum_downtime
+    difficulty: hard
+    question: "설비별 가장 긴 단일 중단 시간을 보여줘."
+    expected_status: success
+    gold_cypher: |
+      MATCH (e:Equipment {project_id: 'equipment-history'})
+            -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})
+      RETURN e.equipment_id AS equipment_id,
+             max(m.downtime_hours) AS maximum_downtime_hours
+      ORDER BY maximum_downtime_hours DESC
+  - id: EB19
+    category: event_type_distribution
+    difficulty: medium
+    question: "각 설비의 정비 유형별 건수를 보여줘."
+    expected_status: success
+    gold_cypher: |
+      MATCH (e:Equipment {project_id: 'equipment-history'})
+            -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})
+      RETURN e.equipment_id AS equipment_id,
+             m.event_type AS event_type, count(m) AS event_count
+      ORDER BY equipment_id, event_type
+  - id: EB20
+    category: repair_component_distribution
+    difficulty: medium
+    question: "repair 작업에서 부품별 발생 건수를 보여줘."
+    expected_status: success
+    gold_cypher: |
+      MATCH (m:MaintenanceEvent {project_id: 'equipment-history', event_type: 'repair'})
+      RETURN m.component AS component, count(m) AS repair_count
+      ORDER BY repair_count DESC, component

@@ -63,22 +63,31 @@ class GraphIntegrityTest(unittest.TestCase):
             database_=self.database,
             routing_="r",
         )
-        self.assertEqual(
-            {record["name"] for record in records},
+        contracts = {
+            (
+                tuple(record["labelsOrTypes"]),
+                tuple(record["properties"]),
+            )
+            for record in records
+        }
+        self.assertTrue(
             {
-                "anomaly_class_code_unique",
-                "equipment_id_unique",
-                "measurement_id_unique",
-                "part_id_unique",
-                "process_name_unique",
-                "process_run_id_unique",
-            },
+                (("AnomalyClass",), ("project_id", "code")),
+                (("Equipment",), ("project_id", "equipment_id")),
+                (
+                    ("QualityMeasurement",),
+                    ("project_id", "measurement_id"),
+                ),
+                (("Part",), ("project_id", "part_id")),
+                (("Process",), ("project_id", "name")),
+                (("ProcessRun",), ("project_id", "run_id")),
+            }.issubset(contracts)
         )
 
     def test_process_runs_have_one_complete_provenance_path(self):
         result = self.query_one(
             """
-            MATCH (run:ProcessRun)
+            MATCH (run:ProcessRun {project_id: 'cip-dmd'})
             OPTIONAL MATCH (:Part)-[underwent:UNDERWENT]->(run)
             OPTIONAL MATCH (run)-[instance:INSTANCE_OF]->(:Process)
             OPTIONAL MATCH (run)-[on:RUN_ON]->(:Equipment)
@@ -99,7 +108,7 @@ class GraphIntegrityTest(unittest.TestCase):
     def test_measurements_have_one_part_and_process(self):
         result = self.query_one(
             """
-            MATCH (measurement:QualityMeasurement)
+            MATCH (measurement:QualityMeasurement {project_id: 'cip-dmd'})
             OPTIONAL MATCH (:Part)-[has:HAS_MEASUREMENT]->(measurement)
             OPTIONAL MATCH (measurement)-[for_process:FOR_PROCESS]->
                            (:Process)
@@ -115,7 +124,7 @@ class GraphIntegrityTest(unittest.TestCase):
     def test_genealogy_gap_is_known_and_bounded(self):
         result = self.query_one(
             """
-            MATCH (cylinder:Cylinder)
+            MATCH (cylinder:Cylinder {project_id: 'cip-dmd'})
             OPTIONAL MATCH (cylinder)-[:ASSEMBLED_FROM]->(part:Part)
             WITH cylinder, count(part) AS component_count
             RETURN count(cylinder) AS total,

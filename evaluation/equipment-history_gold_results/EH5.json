@@ -1,0 +1,22 @@
+{
+  "question_id": "EH5",
+  "category": "replacement_cost",
+  "question": "부품 교체 비용이 발생한 장비와 이벤트를 보여줘.",
+  "expected_status": "success",
+  "row_count": 2,
+  "rows_sha256": "4be00e16145e7892f98204a63fa71c149ab3b7c9ccb09ab2e4b5db8454688fe7",
+  "normalized_rows": [
+    {
+      "component": "belt",
+      "cost_usd": 980,
+      "equipment_id": "EQ-CONV-01",
+      "event_id": "ME-003"
+    },
+    {
+      "component": "hydraulic_pump",
+      "cost_usd": 4200,
+      "equipment_id": "EQ-PRESS-01",
+      "event_id": "ME-008"
+    }
+  ]
+}

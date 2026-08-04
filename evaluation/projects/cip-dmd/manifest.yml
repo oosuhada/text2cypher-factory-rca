@@ -1,0 +1,26 @@
+project_id: cip-dmd
+dataset: CiP-DMD
+evaluation_version: "1.0"
+schema_version: "1.1"
+source_version: "CiP-DMD public release"
+prompt_version: "text2cypher-v1"
+gold:
+  questions: gold_questions.yml
+  snapshots: gold_results
+  min_questions: 15
+  max_questions: 20
+blind:
+  questions: blind_questions.yml
+  snapshots: blind_results
+  min_questions: 20
+  max_questions: 30
+evaluation_policy:
+  semantic: alias_agnostic_value_match
+  strict: exact_contract_match
+  status_labels:
+    - success
+    - empty
+    - blocked
+    - needs_clarification
+    - failed
+failure_taxonomy: failure_taxonomy.md

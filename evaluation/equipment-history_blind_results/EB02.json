@@ -1,0 +1,13 @@
+{
+  "question_id": "EB02",
+  "category": "event_type_count",
+  "question": "repair 유형의 전체 발생 횟수는 몇 건이야?",
+  "expected_status": "success",
+  "row_count": 1,
+  "rows_sha256": "af919898bd6c7b32002b6eafbb6d580907d260e000114c0cbf4788ad27d3e2af",
+  "normalized_rows": [
+    {
+      "repair_count": 5
+    }
+  ]
+}

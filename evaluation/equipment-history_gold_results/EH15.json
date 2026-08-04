@@ -1,0 +1,22 @@
+{
+  "question_id": "EH15",
+  "category": "event_type_downtime",
+  "question": "정비 유형별 평균 중단 시간을 보여줘.",
+  "expected_status": "success",
+  "row_count": 3,
+  "rows_sha256": "3562950b110d4d79b6ed77848e06a988d06c3747c4e8c162f4360872f861245b",
+  "normalized_rows": [
+    {
+      "average_downtime_hours": 1.6,
+      "event_type": "inspection"
+    },
+    {
+      "average_downtime_hours": 6.0,
+      "event_type": "replacement"
+    },
+    {
+      "average_downtime_hours": 6.3,
+      "event_type": "repair"
+    }
+  ]
+}

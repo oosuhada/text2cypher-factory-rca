@@ -27,7 +27,7 @@ def _event(step: str, **details: Any) -> list[dict[str, Any]]:
     return [{"step": step, **details}]
 
 
-def _has_project_scope(statement: str, project_id: str) -> bool:
+def has_project_scope(statement: str, project_id: str) -> bool:
     """Require an executable project property predicate, not a comment."""
     without_comments = re.sub(
         r"(?m)//.*$|/\*.*?\*/",
@@ -85,7 +85,7 @@ def create_text2cypher_agent(
         if (
             not errors
             and project_id != "cip-dmd"
-            and not _has_project_scope(statement, project_id)
+            and not has_project_scope(statement, project_id)
         ):
             errors.append(
                 "PROJECT_SCOPE: Query must restrict graph access to "

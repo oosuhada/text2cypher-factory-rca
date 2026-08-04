@@ -1,0 +1,26 @@
+project_id: equipment-history
+dataset: Equipment Maintenance History example
+evaluation_version: "1.0"
+schema_version: "1.0"
+source_version: "synthetic-equipment-history-v1"
+prompt_version: "text2cypher-v1"
+gold:
+  questions: equipment-history_gold.yml
+  snapshots: equipment-history_gold_results
+  min_questions: 15
+  max_questions: 20
+blind:
+  questions: equipment-history_blind.yml
+  snapshots: equipment-history_blind_results
+  min_questions: 20
+  max_questions: 30
+evaluation_policy:
+  semantic: alias_agnostic_value_match
+  strict: exact_contract_match
+  status_labels:
+    - success
+    - empty
+    - blocked
+    - needs_clarification
+    - failed
+failure_taxonomy: failure_taxonomy.md

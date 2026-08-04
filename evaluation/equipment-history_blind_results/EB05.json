@@ -1,0 +1,25 @@
+{
+  "question_id": "EB05",
+  "category": "cost_filter",
+  "question": "비용이 300달러 이하인 정비 이력을 보여줘.",
+  "expected_status": "success",
+  "row_count": 3,
+  "rows_sha256": "ec98ef92f2c5a6070446c1a466978ebaeff6787621be02088d37d06e7a70bdd9",
+  "normalized_rows": [
+    {
+      "component": "hydraulic_pump",
+      "cost_usd": 220,
+      "event_id": "ME-001"
+    },
+    {
+      "component": "motor",
+      "cost_usd": 180,
+      "event_id": "ME-007"
+    },
+    {
+      "component": "safety_sensor",
+      "cost_usd": 260,
+      "event_id": "ME-010"
+    }
+  ]
+}

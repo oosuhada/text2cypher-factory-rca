@@ -1,0 +1,14 @@
+{
+  "question_id": "EB08",
+  "category": "maximum_cost",
+  "question": "가장 비싼 정비 작업의 이벤트 ID와 비용을 알려줘.",
+  "expected_status": "success",
+  "row_count": 1,
+  "rows_sha256": "912bf4a2a5425d860c4dc87c53855ffad43b354eff33b158eb77534b9eb2b272",
+  "normalized_rows": [
+    {
+      "cost_usd": 5100,
+      "event_id": "ME-012"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "question_id": "EB01",
+  "category": "filtered_aggregate",
+  "question": "프레스 유형 설비의 정비 건수를 알려줘.",
+  "expected_status": "success",
+  "row_count": 1,
+  "rows_sha256": "5bc44864fa1403afa17e2e14a86701c97e65c6aadeeb0afa955487ddbbc07b43",
+  "normalized_rows": [
+    {
+      "equipment_id": "EQ-PRESS-01",
+      "maintenance_count": 4
+    }
+  ]
+}
