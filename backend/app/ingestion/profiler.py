@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import csv
-import io
 import json
 from typing import Any
 
+from .readers import NORMALIZED_SUFFIXES, read_tabular_bytes
 
-SUPPORTED_SUFFIXES = {".csv", ".json"}
+SUPPORTED_SUFFIXES = NORMALIZED_SUFFIXES
+PROFILE_VERSION = "1.0"
 
 
 def _infer_type(values: list[Any]) -> str:
@@ -32,30 +32,24 @@ def _infer_type(values: list[Any]) -> str:
         return "STRING"
 
 
-def _rows_from_csv(payload: bytes) -> list[dict[str, Any]]:
-    text = payload.decode("utf-8-sig")
-    return [dict(row) for row in csv.DictReader(io.StringIO(text))]
-
-
-def _rows_from_json(payload: bytes) -> list[dict[str, Any]]:
-    value = json.loads(payload.decode("utf-8-sig"))
-    if isinstance(value, dict):
-        value = value.get("rows", value.get("data", [value]))
-    if not isinstance(value, list) or any(not isinstance(row, dict) for row in value):
-        raise ValueError("JSON은 객체 배열 또는 rows/data 객체 배열이어야 합니다.")
-    return value
-
-
 def profile_tabular(filename: str, payload: bytes) -> dict[str, Any]:
     suffix = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     if suffix not in SUPPORTED_SUFFIXES:
         raise ValueError("CSV와 JSON 파일만 지원합니다.")
-    rows = _rows_from_csv(payload) if suffix == ".csv" else _rows_from_json(payload)
+    rows = read_tabular_bytes(filename, payload)
     columns = list(dict.fromkeys(key for row in rows for key in row))
+    duplicate_row_count = len(rows) - len(
+        {
+            json.dumps(row, sort_keys=True, default=str)
+            for row in rows
+        }
+    )
     profiles = []
+    missing_cell_count = 0
     for column in columns:
         values = [row.get(column) for row in rows]
         missing = sum(value in (None, "") for value in values)
+        missing_cell_count += missing
         unique = len({str(value) for value in values if value not in (None, "")})
         profiles.append(
             {
@@ -71,10 +65,16 @@ def profile_tabular(filename: str, payload: bytes) -> dict[str, Any]:
             }
         )
     return {
+        "profile_version": PROFILE_VERSION,
         "filename": filename,
         "format": suffix.lstrip("."),
         "row_count": len(rows),
         "column_count": len(columns),
         "columns": profiles,
         "sample_rows": rows[:5],
+        "quality": {
+            "missing_cell_count": missing_cell_count,
+            "duplicate_row_count": duplicate_row_count,
+            "issue_count": missing_cell_count + duplicate_row_count,
+        },
     }

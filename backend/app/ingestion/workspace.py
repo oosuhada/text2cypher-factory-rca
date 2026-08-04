@@ -13,11 +13,16 @@ from typing import Any
 from uuid import uuid4
 
 from .profiler import profile_tabular
+from .source_adapters import (
+    SourceAdapterRegistry,
+    default_source_adapter_registry,
+)
 
 
 MAX_FILE_BYTES = 10 * 1024 * 1024
 MAX_FILES = 10
-SAFE_FILENAME = re.compile(r"^[A-Za-z0-9._ -]{1,160}$")
+MAX_NORMALIZED_FILES = 50
+SAFE_FILENAME = re.compile(r"^[\w .()\[\]-]{1,160}$", re.UNICODE)
 
 
 def _now() -> str:
@@ -25,9 +30,16 @@ def _now() -> str:
 
 
 class DatasetWorkspace:
-    def __init__(self, root: Path):
+    def __init__(
+        self,
+        root: Path,
+        source_adapters: SourceAdapterRegistry | None = None,
+    ):
         self.root = root.resolve()
         self.root.mkdir(parents=True, exist_ok=True)
+        self.source_adapters = (
+            source_adapters or default_source_adapter_registry()
+        )
 
     def _project_root(self, project_id: str) -> Path:
         path = (self.root / project_id).resolve()
@@ -43,11 +55,15 @@ class DatasetWorkspace:
         upload_id = str(uuid4())
         upload_root = self._project_root(project_id) / upload_id
         source_root = upload_root / "source"
+        original_root = upload_root / "original"
         source_root.mkdir(parents=True, exist_ok=False)
+        original_root.mkdir(parents=True, exist_ok=False)
         try:
             profiles = []
+            sources = []
             total_bytes = 0
-            seen_names: set[str] = set()
+            seen_uploaded_names: set[str] = set()
+            seen_normalized_names: set[str] = set()
             for item in files:
                 filename = Path(item["filename"]).name
                 if (
@@ -57,9 +73,10 @@ class DatasetWorkspace:
                     raise ValueError(
                         f"안전하지 않은 파일명입니다: {item['filename']}"
                     )
-                if filename in seen_names:
+                uploaded_key = filename.casefold()
+                if uploaded_key in seen_uploaded_names:
                     raise ValueError(f"중복 파일명입니다: {filename}")
-                seen_names.add(filename)
+                seen_uploaded_names.add(uploaded_key)
                 try:
                     payload = base64.b64decode(
                         item["content_base64"], validate=True
@@ -73,18 +90,63 @@ class DatasetWorkspace:
                         f"{filename}은 비었거나 10MB 제한을 초과했습니다."
                     )
                 total_bytes += len(payload)
-                target = source_root / filename
-                target.write_bytes(payload)
-                profile = profile_tabular(filename, payload)
-                profile["sha256"] = hashlib.sha256(payload).hexdigest()
-                profile["bytes"] = len(payload)
-                profiles.append(profile)
+                source_hash = hashlib.sha256(payload).hexdigest()
+                (original_root / filename).write_bytes(payload)
+                normalized_sources = self.source_adapters.normalize(
+                    filename, payload
+                )
+                for normalized in normalized_sources:
+                    normalized_name = Path(normalized.filename).name
+                    if (
+                        normalized_name != normalized.filename
+                        or not SAFE_FILENAME.fullmatch(normalized_name)
+                    ):
+                        raise ValueError(
+                            "정규화된 파일명이 안전하지 않습니다: "
+                            f"{normalized.filename}"
+                        )
+                    normalized_key = normalized_name.casefold()
+                    if normalized_key in seen_normalized_names:
+                        raise ValueError(
+                            "정규화 후 중복 파일명입니다: "
+                            f"{normalized_name}"
+                        )
+                    seen_normalized_names.add(normalized_key)
+                    if len(seen_normalized_names) > MAX_NORMALIZED_FILES:
+                        raise ValueError(
+                            "정규화된 파일 수 제한을 초과했습니다."
+                        )
+                    target = source_root / normalized_name
+                    target.write_bytes(normalized.payload)
+                    profile = profile_tabular(
+                        normalized_name, normalized.payload
+                    )
+                    profile["sha256"] = hashlib.sha256(
+                        normalized.payload
+                    ).hexdigest()
+                    profile["bytes"] = len(normalized.payload)
+                    profile["lineage"] = {
+                        **normalized.lineage,
+                        "original_sha256": source_hash,
+                    }
+                    profiles.append(profile)
+                sources.append(
+                    {
+                        "filename": filename,
+                        "sha256": source_hash,
+                        "bytes": len(payload),
+                        "normalized_files": [
+                            row.filename for row in normalized_sources
+                        ],
+                    }
+                )
             record = {
                 "upload_id": upload_id,
                 "project_id": project_id,
                 "created_at": _now(),
                 "status": "profiled",
                 "total_bytes": total_bytes,
+                "sources": sources,
                 "files": profiles,
             }
             (upload_root / "profile.json").write_text(

@@ -70,3 +70,50 @@ class SchemaRegistryTest(unittest.TestCase):
         contract = registry.contract("cip-dmd")
         self.assertIn("ASSEMBLED_FROM", contract["relationship_types"])
         self.assertIn("QualityMeasurement", contract["schema_context"])
+        self.assertEqual(contract["query_validation"]["status"], "PASS")
+        self.assertEqual(contract["query_validation"]["scenario_count"], 3)
+        assembled_from = next(
+            relationship
+            for relationship in contract["relationships"]
+            if relationship["type"] == "ASSEMBLED_FROM"
+        )
+        self.assertEqual(
+            assembled_from["cardinality"], "ONE_TO_MANY"
+        )
+
+    def test_query_scenario_rejects_missing_schema_elements(self):
+        manifest = self.manifest()
+        manifest["query_scenarios"] = [
+            {
+                "id": "q1",
+                "question": "없는 관계를 사용하는 질문",
+                "required_nodes": ["Asset"],
+                "required_relationships": ["MISSING_RELATIONSHIP"],
+                "required_properties": ["Asset.missing_property"],
+            }
+        ]
+        with self.assertRaisesRegex(ValueError, "질의 관점"):
+            self.registry.save("sample-project", manifest)
+
+    def test_relationship_property_and_cardinality_contract(self):
+        manifest = self.manifest()
+        manifest["relationships"][0].update(
+            {
+                "cardinality": "ONE_TO_MANY",
+                "properties": {"sequence": "INTEGER"},
+                "required_properties": ["sequence"],
+            }
+        )
+        saved = self.registry.save("sample-project", manifest)
+        relationship = saved["relationships"][0]
+        self.assertEqual(relationship["cardinality"], "ONE_TO_MANY")
+        manifest["relationships"][0]["cardinality"] = "SOMETIMES"
+        with self.assertRaisesRegex(ValueError, "cardinality"):
+            self.registry.save("sample-project", manifest)
+
+    def test_node_inheritance_cycle_is_rejected(self):
+        manifest = self.manifest()
+        manifest["nodes"][0]["extends"] = "Event"
+        manifest["nodes"][1]["extends"] = "Asset"
+        with self.assertRaisesRegex(ValueError, "상속 순환"):
+            self.registry.save("sample-project", manifest)

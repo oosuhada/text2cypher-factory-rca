@@ -1,15 +1,18 @@
 project_id: equipment-history
 version: '1.0'
+source_version: 'synthetic-equipment-history-v1'
 title: Equipment Maintenance History
 nodes:
 - label: Equipment
   identity: equipment_id
+  required_properties: [equipment_id, name]
   properties:
     equipment_id: STRING
     name: STRING
     equipment_type: STRING
 - label: MaintenanceEvent
   identity: event_id
+  required_properties: [event_id, event_date, resolved]
   properties:
     event_id: STRING
     event_date: STRING
@@ -20,18 +23,43 @@ nodes:
     resolved: BOOLEAN
 - label: Technician
   identity: technician_id
+  required_properties: [technician_id, name]
   properties:
     technician_id: STRING
     name: STRING
 relationships:
 - type: HAS_MAINTENANCE
   source: Equipment
+  cardinality: ONE_TO_MANY
   targets:
   - MaintenanceEvent
 - type: PERFORMED
   source: Technician
+  cardinality: ONE_TO_MANY
   targets:
   - MaintenanceEvent
 output_rules:
 - Return maintenance evidence only from project equipment-history.
 - Do not claim causality from maintenance co-occurrence.
+query_scenarios:
+- id: maintenance-q1
+  question: 특정 설비의 정비 이력을 날짜순으로 보여줘.
+  required_nodes: [Equipment, MaintenanceEvent]
+  required_relationships: [HAS_MAINTENANCE]
+  required_properties:
+  - Equipment.equipment_id
+  - MaintenanceEvent.event_date
+- id: maintenance-q2
+  question: 미해결 정비 이벤트와 담당 기술자를 보여줘.
+  required_nodes: [MaintenanceEvent, Technician]
+  required_relationships: [PERFORMED]
+  required_properties:
+  - MaintenanceEvent.resolved
+  - Technician.technician_id
+- id: maintenance-q3
+  question: 설비별 총 다운타임과 정비 비용을 집계해줘.
+  required_nodes: [Equipment, MaintenanceEvent]
+  required_relationships: [HAS_MAINTENANCE]
+  required_properties:
+  - MaintenanceEvent.downtime_hours
+  - MaintenanceEvent.cost_usd
