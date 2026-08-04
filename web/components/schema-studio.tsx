@@ -6,6 +6,7 @@ import { CheckCircle2, LoaderCircle } from "lucide-react";
 import { useProject } from "@/components/project-context";
 import {
   approveGraphMapping,
+  getApprovedGraphMapping,
   getDatasetUploads,
   loadProjectGraph,
   previewGraphMapping,
@@ -43,6 +44,10 @@ export function SchemaStudio() {
   const [uploads, setUploads] = useState<DatasetProfile[]>([]);
   const [uploadId, setUploadId] = useState("");
   const [mappingText, setMappingText] = useState("");
+  const [approvedMapping, setApprovedMapping] = useState<{
+    upload_id: string;
+    mapping: Record<string, unknown>;
+  } | null>(null);
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
   const [confirmation, setConfirmation] = useState("");
   const [busy, setBusy] = useState(false);
@@ -54,13 +59,24 @@ export function SchemaStudio() {
 
   useEffect(() => {
     if (!projectId) return;
-    getDatasetUploads(projectId)
-      .then((response) => {
+    Promise.all([
+      getDatasetUploads(projectId),
+      getApprovedGraphMapping(projectId).catch(() => null),
+    ])
+      .then(([response, approved]) => {
         setUploads(response.uploads);
-        const first = response.uploads[0];
+        setApprovedMapping(approved);
+        const first =
+          response.uploads.find(
+            (upload) => upload.upload_id === approved?.upload_id,
+          ) ?? response.uploads[0];
         setUploadId(first?.upload_id ?? "");
         setMappingText(
-          first ? JSON.stringify(defaultMapping(first), null, 2) : "",
+          approved && first?.upload_id === approved.upload_id
+            ? JSON.stringify(approved.mapping, null, 2)
+            : first
+              ? JSON.stringify(defaultMapping(first), null, 2)
+              : "",
         );
       })
       .catch((reason) =>
@@ -79,6 +95,7 @@ export function SchemaStudio() {
         : await previewGraphMapping(projectId, uploadId, mapping);
       setResult(response);
       if (approve) {
+        setApprovedMapping({ upload_id: uploadId, mapping });
         await refresh();
         await refreshReadiness();
       }
@@ -124,7 +141,13 @@ export function SchemaStudio() {
                 (upload) => upload.upload_id === event.target.value,
               );
               setUploadId(event.target.value);
-              if (next) setMappingText(JSON.stringify(defaultMapping(next), null, 2));
+              if (next) {
+                setMappingText(
+                  approvedMapping?.upload_id === next.upload_id
+                    ? JSON.stringify(approvedMapping.mapping, null, 2)
+                    : JSON.stringify(defaultMapping(next), null, 2),
+                );
+              }
             }}
           >
             {uploads.map((upload) => (

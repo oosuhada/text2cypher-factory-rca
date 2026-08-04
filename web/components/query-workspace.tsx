@@ -69,7 +69,7 @@ const EXAMPLES = [
 const EQUIPMENT_EXAMPLES = [
   {
     label: "장비 정비 이력",
-    question: "EQ-PRESS-01 장비의 유지보수 이력을 보여줘.",
+    question: "EQ-PRESS-01의 정비 이력을 보여줘.",
   },
   {
     label: "고비용 정비",
@@ -109,10 +109,11 @@ export function QueryWorkspace() {
     error: projectError,
   } = useProject();
   const projectId = activeProject?.project_id ?? "cip-dmd";
+  const isEquipmentHistory = projectId === "equipment-history";
   const examples =
     projectId === "cip-dmd"
       ? EXAMPLES
-      : projectId === "equipment-history"
+      : isEquipmentHistory
         ? EQUIPMENT_EXAMPLES
         : [];
   const queryEnabled = Boolean(readiness?.can_query);
@@ -406,8 +407,9 @@ export function QueryWorkspace() {
               </span>
               <h2>관계형 질문에서 시작합니다.</h2>
               <p>
-                완제품과 구성품의 공정 이력, 품질 실패와 이상 유형,
-                역방향 영향 범위를 질문해 보세요.
+                {isEquipmentHistory
+                  ? "장비별 정비 이력, 비용, 부품 교체와 담당 기술자를 질문해 보세요."
+                  : "완제품과 구성품의 공정 이력, 품질 실패와 이상 유형, 역방향 영향 범위를 질문해 보세요."}
               </p>
             </div>
           )}
@@ -568,7 +570,11 @@ export function QueryWorkspace() {
                 void runQuestion(question);
               }
             }}
-            placeholder="예: 완제품 300002의 구성품과 공정 이력을 보여줘."
+            placeholder={
+              isEquipmentHistory
+                ? "예: EQ-PRESS-01의 정비 이력을 보여줘."
+                : "예: 완제품 300002의 구성품과 공정 이력을 보여줘."
+            }
             rows={2}
             maxLength={2000}
             aria-label="제조 관계 질문"

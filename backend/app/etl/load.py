@@ -185,17 +185,19 @@ def load_payload(
 
 
 def graph_counts(driver: Driver, database: str) -> dict[str, int]:
+    cip_scope = (
+        " WHERE n.project_id IS NULL OR n.project_id = 'cip-dmd' "
+        "RETURN count(n) AS count"
+    )
     node_queries = {
-        "Part": "MATCH (n:Part) RETURN count(n) AS count",
-        "Process": "MATCH (n:Process) RETURN count(n) AS count",
-        "Equipment": "MATCH (n:Equipment) RETURN count(n) AS count",
-        "AnomalyClass": "MATCH (n:AnomalyClass) RETURN count(n) AS count",
-        "ProcessRun": "MATCH (n:ProcessRun) RETURN count(n) AS count",
-        "QualityMeasurement": (
-            "MATCH (n:QualityMeasurement) RETURN count(n) AS count"
-        ),
+        "Part": "MATCH (n:Part)" + cip_scope,
+        "Process": "MATCH (n:Process)" + cip_scope,
+        "Equipment": "MATCH (n:Equipment)" + cip_scope,
+        "AnomalyClass": "MATCH (n:AnomalyClass)" + cip_scope,
+        "ProcessRun": "MATCH (n:ProcessRun)" + cip_scope,
+        "QualityMeasurement": "MATCH (n:QualityMeasurement)" + cip_scope,
         "QualityFailure": (
-            "MATCH (n:QualityMeasurement:QualityFailure) RETURN count(n) AS count"
+            "MATCH (n:QualityMeasurement:QualityFailure)" + cip_scope
         ),
     }
     counts = {
@@ -205,6 +207,10 @@ def graph_counts(driver: Driver, database: str) -> dict[str, int]:
     relationship_query = """
     MATCH ()-[relationship]->()
     WHERE type(relationship) = $relationship_type
+      AND (
+        relationship.project_id IS NULL
+        OR relationship.project_id = 'cip-dmd'
+      )
     RETURN count(relationship) AS count
     """
     for relationship_type in (

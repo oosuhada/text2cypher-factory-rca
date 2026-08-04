@@ -327,6 +327,47 @@ class EvidenceBuilder:
                 "anomaly_code",
             )
 
+        equipment_id = record.get("equipment_id")
+        equipment_node = self.add_node(
+            "Equipment",
+            equipment_id,
+            {
+                "equipment_id": equipment_id,
+                "name": record.get("equipment_name"),
+                "equipment_type": record.get("equipment_type"),
+            },
+            "equipment_id",
+        )
+        event_id = record.get("event_id")
+        event_node = self.add_node(
+            "MaintenanceEvent",
+            event_id,
+            {
+                "event_id": event_id,
+                "event_date": record.get("event_date"),
+                "event_type": record.get("event_type"),
+                "component": record.get("component"),
+                "downtime_hours": record.get("downtime_hours"),
+                "cost_usd": record.get("cost_usd"),
+                "resolved": record.get("resolved"),
+            },
+            "event_id",
+        )
+        technician_id = record.get("technician_id")
+        technician_node = self.add_node(
+            "Technician",
+            technician_id,
+            {
+                "technician_id": technician_id,
+                "name": record.get("technician_name"),
+            },
+            "technician_id",
+        )
+        self.add_relationship(
+            "HAS_MAINTENANCE", equipment_node, event_node
+        )
+        self.add_relationship("PERFORMED", technician_node, event_node)
+
     def build(self, records: Iterable[dict[str, Any]]) -> dict[str, Any]:
         materialized = list(records)
         for record in materialized:

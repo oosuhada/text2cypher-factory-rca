@@ -7,7 +7,8 @@ questions:
     gold_cypher: |
       MATCH (e:Equipment {project_id: 'equipment-history', equipment_id: 'EQ-PRESS-01'})
             -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})
-      RETURN m.event_id AS event_id, m.event_date AS event_date,
+      RETURN e.equipment_id AS equipment_id,
+             m.event_id AS event_id, m.event_date AS event_date,
              m.event_type AS event_type, m.component AS component,
              m.downtime_hours AS downtime_hours
       ORDER BY event_date
@@ -47,4 +48,28 @@ questions:
       WHERE m.event_type = 'replacement'
       RETURN e.equipment_id AS equipment_id, m.event_id AS event_id,
              m.component AS component, m.cost_usd AS cost_usd
+      ORDER BY cost_usd DESC
+  - id: EH6
+    category: high_cost
+    question: "비용이 1000달러 이상인 유지보수 이력을 보여줘."
+    gold_cypher: |
+      MATCH (e:Equipment {project_id: 'equipment-history'})
+            -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})
+      WHERE m.cost_usd >= 1000
+      RETURN e.equipment_id AS equipment_id, m.event_id AS event_id,
+             m.event_type AS event_type, m.component AS component,
+             m.cost_usd AS cost_usd
+      ORDER BY cost_usd DESC
+  - id: EH7
+    category: replacement_technician
+    question: "replacement 유형의 정비 이력과 담당 기술자를 보여줘."
+    gold_cypher: |
+      MATCH (e:Equipment {project_id: 'equipment-history'})
+            -[:HAS_MAINTENANCE]->(m:MaintenanceEvent {project_id: 'equipment-history'})
+      MATCH (t:Technician {project_id: 'equipment-history'})
+            -[:PERFORMED]->(m)
+      WHERE m.event_type = 'replacement'
+      RETURN e.equipment_id AS equipment_id, m.event_id AS event_id,
+             m.component AS component, t.technician_id AS technician_id,
+             t.name AS technician_name, m.cost_usd AS cost_usd
       ORDER BY cost_usd DESC

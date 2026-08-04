@@ -157,6 +157,37 @@ class ResultFormatterTest(unittest.TestCase):
             {"Equipment:DMC 50H", "AnomalyClass:2"},
         )
 
+    def test_equipment_history_rows_build_relationship_evidence(self):
+        evidence = build_evidence_graph(
+            [
+                {
+                    "equipment_id": "EQ-PRESS-01",
+                    "event_id": "ME-008",
+                    "event_date": "2026-03-18",
+                    "event_type": "replacement",
+                    "component": "hydraulic_pump",
+                    "cost_usd": 4200,
+                    "technician_id": "T-01",
+                    "technician_name": "Kim",
+                }
+            ]
+        )
+        self.assertEqual(
+            {node["id"] for node in evidence["nodes"]},
+            {
+                "Equipment:EQ-PRESS-01",
+                "MaintenanceEvent:ME-008",
+                "Technician:T-01",
+            },
+        )
+        self.assertEqual(
+            {
+                relationship["type"]
+                for relationship in evidence["relationships"]
+            },
+            {"HAS_MAINTENANCE", "PERFORMED"},
+        )
+
     def test_evidence_size_is_bounded(self):
         evidence = build_evidence_graph(
             [{"part_id": str(index)} for index in range(10)],
