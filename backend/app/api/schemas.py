@@ -111,6 +111,12 @@ class DatasetUploadRequest(BaseModel):
     files: list[UploadFilePayload] = Field(min_length=1, max_length=10)
 
 
+class GraphMappingRequest(BaseModel):
+    upload_id: str = Field(min_length=36, max_length=36)
+    schema_version: str = Field(default="1.0", min_length=1, max_length=80)
+    mapping: dict[str, Any]
+
+
 class NodeIdentity(BaseModel):
     label: str
     identity_property: str

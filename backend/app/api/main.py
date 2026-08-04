@@ -15,6 +15,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from backend.app.services.bootstrap import ServiceBundle, build_service_bundle
 from backend.app.projects import ProjectRegistry
 from backend.app.ingestion import DatasetWorkspace
+from backend.app.mapping import MappingWorkspace
 from backend.app.schema_registry import SchemaRegistry
 from backend.app.services.diagnostics import (
     collect_demo_diagnostics,
@@ -27,6 +28,7 @@ from .schemas import (
     FeedbackRequest,
     FeedbackSummary,
     DatasetUploadRequest,
+    GraphMappingRequest,
     GraphSchemaResponse,
     HealthResponse,
     NodeSearchResponse,
@@ -111,6 +113,11 @@ def create_app(
     schemas = schema_registry or SchemaRegistry(PROJECT_ROOT / "schemas")
     datasets = dataset_workspace or DatasetWorkspace(
         PROJECT_ROOT / "data" / "processed" / "project_uploads"
+    )
+    mappings = MappingWorkspace(
+        PROJECT_ROOT / "data" / "processed" / "project_mappings",
+        datasets,
+        schemas,
     )
 
     @asynccontextmanager
@@ -270,6 +277,50 @@ def create_app(
             raise HTTPException(status_code=404, detail=str(error)) from error
         except ValueError as error:
             raise HTTPException(status_code=422, detail=str(error)) from error
+
+    @application.post("/api/v1/projects/{project_id}/mappings/preview")
+    def preview_mapping(project_id: str, payload: GraphMappingRequest) -> dict:
+        try:
+            projects.require(project_id)
+            return mappings.preview(
+                project_id,
+                payload.upload_id,
+                payload.mapping,
+                schema_version=payload.schema_version,
+            )
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+
+    @application.post("/api/v1/projects/{project_id}/mappings/approve")
+    def approve_mapping(project_id: str, payload: GraphMappingRequest) -> dict:
+        try:
+            projects.require(project_id)
+            result = mappings.approve(
+                project_id,
+                payload.upload_id,
+                payload.mapping,
+                schema_version=payload.schema_version,
+            )
+            projects.update(
+                project_id,
+                schema_version=payload.schema_version,
+                status="ready",
+            )
+            return result
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+
+    @application.get("/api/v1/projects/{project_id}/mappings/approved")
+    def approved_mapping(project_id: str) -> dict:
+        try:
+            projects.require(project_id)
+            return mappings.get(project_id)
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
 
     @application.post("/api/v1/query", response_model=QueryResponse)
     def query_graph(
