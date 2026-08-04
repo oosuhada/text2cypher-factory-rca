@@ -1,0 +1,37 @@
+project_id: equipment-history
+version: '1.0'
+title: Equipment Maintenance History
+nodes:
+- label: Equipment
+  identity: equipment_id
+  properties:
+    equipment_id: STRING
+    name: STRING
+    equipment_type: STRING
+- label: MaintenanceEvent
+  identity: event_id
+  properties:
+    event_id: STRING
+    event_date: STRING
+    event_type: STRING
+    component: STRING
+    downtime_hours: FLOAT
+    cost_usd: INTEGER
+    resolved: BOOLEAN
+- label: Technician
+  identity: technician_id
+  properties:
+    technician_id: STRING
+    name: STRING
+relationships:
+- type: HAS_MAINTENANCE
+  source: Equipment
+  targets:
+  - MaintenanceEvent
+- type: PERFORMED
+  source: Technician
+  targets:
+  - MaintenanceEvent
+output_rules:
+- Return maintenance evidence only from project equipment-history.
+- Do not claim causality from maintenance co-occurrence.

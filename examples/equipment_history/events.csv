@@ -1,0 +1,13 @@
+event_id,equipment_id,equipment_name,equipment_type,event_date,event_type,component,technician_id,technician_name,downtime_hours,cost_usd,resolved
+ME-001,EQ-PRESS-01,Hydraulic Press 01,press,2026-01-04,inspection,hydraulic_pump,T-01,Kim,1.5,220,true
+ME-002,EQ-CNC-02,CNC Mill 02,milling,2026-01-11,repair,spindle,T-02,Lee,7.0,3400,true
+ME-003,EQ-CONV-01,Conveyor 01,conveyor,2026-01-19,replacement,belt,T-03,Park,4.0,980,true
+ME-004,EQ-PRESS-01,Hydraulic Press 01,press,2026-02-02,repair,seal,T-01,Kim,3.5,760,true
+ME-005,EQ-CNC-02,CNC Mill 02,milling,2026-02-15,inspection,coolant_pump,T-02,Lee,2.0,310,true
+ME-006,EQ-WELD-03,Welding Robot 03,welding,2026-02-21,repair,torch,T-04,Choi,5.5,1650,true
+ME-007,EQ-CONV-01,Conveyor 01,conveyor,2026-03-05,inspection,motor,T-03,Park,1.0,180,true
+ME-008,EQ-PRESS-01,Hydraulic Press 01,press,2026-03-18,replacement,hydraulic_pump,T-01,Kim,8.0,4200,true
+ME-009,EQ-CNC-02,CNC Mill 02,milling,2026-04-03,repair,spindle,T-02,Lee,6.5,2950,true
+ME-010,EQ-WELD-03,Welding Robot 03,welding,2026-04-17,inspection,safety_sensor,T-04,Choi,1.5,260,true
+ME-011,EQ-PRESS-01,Hydraulic Press 01,press,2026-05-01,inspection,pressure_sensor,T-03,Park,2.0,450,true
+ME-012,EQ-WELD-03,Welding Robot 03,welding,2026-05-20,repair,controller,T-04,Choi,9.0,5100,false
