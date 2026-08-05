@@ -27,6 +27,7 @@ class CypherState(TypedDict, total=False):
     status: AgentStatus
     next_action: Literal["validate", "correct", "execute", "end"]
     trace: Annotated[list[dict[str, Any]], add]
+    statement_history: Annotated[list[dict[str, Any]], add]
     elapsed_ms: int
     deadline_monotonic: float
     validated_statement_sha256: str

@@ -449,6 +449,7 @@ def format_agent_result(state: CypherState) -> dict[str, Any]:
             "attempts": state.get("attempts", 0),
             "errors": state.get("errors", []),
             "trace": trace,
+            "statement_history": state.get("statement_history", []),
             "elapsed_ms": state.get("elapsed_ms", 0),
             "verified_statement_sha256": verified_hash or None,
             "execution_verified": execution_verified,

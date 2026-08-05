@@ -344,6 +344,12 @@
 
 ### 2-4. Query Studio
 
+상태: **구현·검증 완료 (2026-07-28)**
+
+검증 기록:
+
+- [`enterprise-stage2-4-query-studio.md`](./enterprise-stage2-4-query-studio.md)
+
 목표:
 
 - 질문과 모든 근거를 하나의 연속된 화면에서 확인한다.

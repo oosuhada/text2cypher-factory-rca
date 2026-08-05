@@ -307,6 +307,10 @@ class TextToCypherTest(unittest.TestCase):
         self.assertEqual(result["attempts"], 1)
         self.assertEqual(len(graph.explained), 1)
         self.assertEqual(len(graph.executed), 1)
+        self.assertEqual(
+            [item["kind"] for item in result["statement_history"]],
+            ["generated"],
+        )
         verified_hash = result["validated_statement_sha256"]
         execution_event = next(
             event
@@ -339,6 +343,10 @@ class TextToCypherTest(unittest.TestCase):
         self.assertIn(
             "correct_cypher",
             [event["step"] for event in result["trace"]],
+        )
+        self.assertEqual(
+            [item["kind"] for item in result["statement_history"]],
+            ["generated", "corrected"],
         )
 
     def test_persistent_error_never_executes(self):

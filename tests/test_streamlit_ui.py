@@ -162,6 +162,11 @@ class StreamlitIntegrationTest(unittest.TestCase):
 
         navigation.set_value("Query Studio").run(timeout=30)
         self.assertEqual(len(app.exception), 0)
+        metric_labels = {metric.label for metric in app.metric}
+        self.assertTrue(
+            {"프로젝트", "데이터", "Schema", "Prompt", "Evaluation"}
+            <= metric_labels
+        )
         self.assertTrue(
             any(box.label == "생성 모드" for box in app.selectbox)
         )
@@ -187,6 +192,12 @@ class StreamlitIntegrationTest(unittest.TestCase):
         self.assertGreaterEqual(len(app.dataframe), 2)
         self.assertGreaterEqual(len(app.expander), 1)
         self.assertGreaterEqual(len(app.code), 1)
+        self.assertTrue(
+            any(
+                button.label == "이 질문 다시 실행"
+                for button in app.button
+            )
+        )
         self.assertEqual(len(app.session_state["conversations"]), 1)
 
         app.chat_input[0].set_value(

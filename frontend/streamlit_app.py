@@ -22,6 +22,7 @@ import streamlit as st
 from backend.app.services.diagnostics import collect_demo_diagnostics
 from backend.app.services.data_intake_service import DataIntakeService
 from backend.app.services.graph_service import NODE_IDENTITIES
+from backend.app.conversations import ConversationStore
 from backend.app.jobs import PipelineJobStore
 from backend.app.ingestion import DatasetWorkspace
 from backend.app.mapping import MappingWorkspace
@@ -59,6 +60,11 @@ from frontend.project_workspace import (
     next_action_presentation,
     relative_updated_at,
     status_presentation,
+)
+from frontend.query_workspace import (
+    query_context_versions,
+    query_status_presentation,
+    statement_history,
 )
 from frontend.onboarding import (
     format_elapsed,
@@ -334,6 +340,12 @@ def get_reference_intake_archive() -> bytes:
     return DataIntakeService(PROJECT_ROOT).build_reference_archive()
 
 
+def get_conversation_store() -> ConversationStore:
+    return ConversationStore(
+        PROJECT_ROOT / "data" / "processed" / "conversations.sqlite3"
+    )
+
+
 def initialize_session() -> None:
     st.session_state.setdefault("active_page", "Home")
     st.session_state.setdefault("preview_role", Role.ADMIN.value)
@@ -350,8 +362,25 @@ def initialize_session() -> None:
     st.session_state.setdefault("intake_approval_token", None)
     st.session_state.setdefault("active_project_id", "cip-dmd")
     st.session_state.setdefault("project_conversations", {})
+    st.session_state.setdefault("conversation_loaded_projects", set())
     st.session_state.setdefault("query_filters", {})
     st.session_state.setdefault("evaluation_filters", {})
+    active_project_id = st.session_state["active_project_id"]
+    if active_project_id not in st.session_state["conversation_loaded_projects"]:
+        conversations = get_conversation_store().list(
+            active_project_id, limit=12
+        )
+        st.session_state["conversations"] = conversations
+        if conversations and not st.session_state["messages"]:
+            current = conversations[0]
+            st.session_state["active_conversation_id"] = current["id"]
+            st.session_state["messages"] = deepcopy(current["messages"])
+            st.session_state["last_result"] = deepcopy(
+                current.get("last_result")
+            )
+        st.session_state["conversation_loaded_projects"].add(
+            active_project_id
+        )
 
 
 def navigate_to_page(page: str) -> None:
@@ -438,6 +467,16 @@ def sync_active_conversation() -> None:
         messages=messages,
         last_result=st.session_state.get("last_result"),
     )
+    active = next(
+        conversation
+        for conversation in st.session_state["conversations"]
+        if conversation["id"]
+        == st.session_state["active_conversation_id"]
+    )
+    get_conversation_store().save(
+        st.session_state.get("active_project_id", "cip-dmd"),
+        active,
+    )
 
 
 def start_new_conversation() -> None:
@@ -498,16 +537,9 @@ def failure_response(question: str, error: Exception) -> dict[str, Any]:
 
 def render_response_summary(response: dict[str, Any]) -> None:
     status = response.get("status", "failed")
-    status_label = {
-        "success": "조회 완료",
-        "empty": "결과 없음",
-        "blocked": "요청 차단",
-        "failed": "처리 실패",
-        "needs_clarification": "조건 확인 필요",
-        "unsupported": "데모 범위 밖",
-    }.get(status, status)
+    presentation = query_status_presentation(status)
     st.markdown(
-        f'<span class="p3-status">{status_label}</span>',
+        f'<span class="p3-status">{presentation["label"]}</span>',
         unsafe_allow_html=True,
     )
     if status == "success":
@@ -532,6 +564,7 @@ def render_response_summary(response: dict[str, Any]) -> None:
         f"{validation.get('elapsed_ms', 0)}ms · "
         f"{response.get('provider', 'unknown')}"
     )
+    st.caption(presentation["description"])
     if response.get("fallback_reason"):
         st.warning(
             "실시간 모델 장애를 감지해 검증된 Gold 쿼리로 전환했습니다.",
@@ -545,16 +578,12 @@ def render_inline_evidence(
     *,
     expanded: bool,
 ) -> None:
-    if response.get("status") not in {"success", "empty"}:
-        return
     with st.expander(
-        "근거 바로 보기 · 결과표 / Cypher / 관계 경로",
+        "처리 근거 전체 보기 · 결과 / Cypher / 관계 경로 / 검증",
         expanded=expanded and response.get("status") == "success",
     ):
-        result_tab, graph_tab, cypher_tab, trace_tab = st.tabs(
-            ["조회 결과", "관계 경로", "Cypher", "검증 이력"]
-        )
-        with result_tab:
+        result_column, cypher_column = st.columns([1.15, 1])
+        with result_column:
             st.markdown("##### 조회 결과")
             rows = response.get("rows", [])
             if rows:
@@ -571,46 +600,65 @@ def render_inline_evidence(
                     key=f"{key_prefix}-download",
                 )
             else:
-                st.info("정상 실행됐지만 일치하는 데이터가 없습니다.")
-        with graph_tab:
-            evidence = response.get("evidence", {})
-            st.markdown("##### 실제 조회 관계")
-            if evidence.get("nodes"):
-                st.graphviz_chart(
-                    evidence_to_dot(evidence, rankdir="LR"),
-                    width="stretch",
-                )
-                st.caption(
-                    f"근거 노드 {evidence.get('node_count', 0)}개 · "
-                    f"관계 {evidence.get('relationship_count', 0)}개"
-                )
-            else:
                 st.info(
-                    "집계 질의이거나 경로 ID가 없어 그래프를 임의 생성하지 "
-                    "않습니다."
+                    "실행 결과가 없거나 정책상 쿼리를 실행하지 않았습니다."
                 )
-        with cypher_tab:
-            st.markdown("##### 생성·검증된 Cypher")
-            if response.get("cypher"):
-                st.code(response["cypher"], language="cypher")
+        with cypher_column:
+            st.markdown("##### 생성·수정 Cypher")
+            statements = statement_history(response)
+            if statements:
+                kind_copy = {
+                    "generated": "초기 생성",
+                    "corrected": "자기수정",
+                    "final": "최종 실행",
+                }
+                for index, item in enumerate(statements):
+                    label = kind_copy.get(item.get("kind"), item.get("kind"))
+                    with st.container(border=True):
+                        st.caption(
+                            f"{label} · 시도 {item.get('attempt', index + 1)}"
+                        )
+                        st.code(
+                            item.get("statement", ""),
+                            language="cypher",
+                            line_numbers=True,
+                        )
             else:
                 st.info("실행된 Cypher가 없습니다.")
-        with trace_tab:
-            validation = response.get("validation", {})
-            trace = validation.get("trace", [])
-            if trace:
-                st.dataframe(
-                    pd.DataFrame(flatten_rows_for_table(trace)),
-                    width="stretch",
-                    hide_index=True,
-                )
-            errors = validation.get("errors", [])
-            if errors:
-                st.error("\n".join(str(error) for error in errors))
-            elif trace:
-                st.success("쓰기 차단·의미 검사·EXPLAIN 검증을 통과했습니다.")
-            else:
-                st.caption("별도의 교정 없이 검증을 통과했습니다.")
+
+        evidence = response.get("evidence", {})
+        st.markdown("##### 실제 조회 관계")
+        if evidence.get("nodes"):
+            st.graphviz_chart(
+                evidence_to_dot(evidence, rankdir="LR"),
+                width="stretch",
+            )
+            st.caption(
+                f"근거 노드 {evidence.get('node_count', 0)}개 · "
+                f"관계 {evidence.get('relationship_count', 0)}개"
+            )
+        else:
+            st.info(
+                "집계 질의, 빈 결과 또는 실행 전 차단 상태이므로 "
+                "관계 경로를 임의 생성하지 않습니다."
+            )
+
+        st.markdown("##### Validation·Self-correction trace")
+        validation = response.get("validation", {})
+        trace = validation.get("trace", [])
+        if trace:
+            st.dataframe(
+                pd.DataFrame(flatten_rows_for_table(trace)),
+                width="stretch",
+                hide_index=True,
+            )
+        errors = validation.get("errors", [])
+        if errors:
+            st.error("\n".join(str(error) for error in errors))
+        elif trace:
+            st.success("쓰기 차단·의미 검사·EXPLAIN 검증을 통과했습니다.")
+        else:
+            st.caption("모델 실행 전에 질문 guard에서 종료됐습니다.")
 
 
 def render_expert_review(
@@ -696,8 +744,9 @@ def render_expert_review(
             st.error(f"전문가 검증 기록에 실패했습니다: {error}")
 
 
-def render_chat_history(services: ServiceBundle) -> None:
+def render_chat_history(services: ServiceBundle) -> str | None:
     messages = st.session_state["messages"]
+    rerun_question = None
     for index, message in enumerate(messages):
         with st.chat_message(message["role"]):
             if message["role"] == "user":
@@ -714,6 +763,14 @@ def render_chat_history(services: ServiceBundle) -> None:
                     services,
                     key_prefix=f"chat-{index}",
                 )
+                if st.button(
+                    "이 질문 다시 실행",
+                    key=f"rerun-question-{index}",
+                ):
+                    rerun_question = str(
+                        message["content"].get("question", "")
+                    )
+    return rerun_question
 
 
 def submit_question(question: str, services: ServiceBundle) -> None:
@@ -721,8 +778,20 @@ def submit_question(question: str, services: ServiceBundle) -> None:
         {"role": "user", "content": question}
     )
     try:
-        with st.spinner("스키마 확인 → Cypher 생성 → 안전성 검증 → 실행"):
+        with st.status(
+            "질의 파이프라인 실행 중",
+            expanded=True,
+        ) as status:
+            st.write("1 · 프로젝트·schema version 고정")
+            st.write("2 · 자연어 질문에서 READ-only Cypher 생성")
+            st.write("3 · 쓰기 차단·의미 검사·EXPLAIN 검증")
             response = services.query_with_fallback(question)
+            st.write("4 · 실행 결과·관계 근거 구성")
+            status.update(
+                label="질의 파이프라인 완료",
+                state="complete",
+                expanded=False,
+            )
     except Exception as error:
         response = failure_response(question, error)
     st.session_state["messages"].append(
@@ -733,10 +802,25 @@ def submit_question(question: str, services: ServiceBundle) -> None:
 
 
 def render_chat_tab(services: ServiceBundle) -> None:
+    project_id = st.session_state.get("active_project_id", "cip-dmd")
+    project = ProjectRegistry(
+        PROJECT_ROOT / "data" / "processed" / "projects.sqlite3"
+    ).require(project_id)
     st.subheader("제조 관계를 자연어로 조회")
     st.caption(
         "답변과 함께 생성된 Cypher, 결과표, 근거 경로를 확인할 수 있습니다."
     )
+    versions = query_context_versions(
+        project, st.session_state.get("last_result")
+    )
+    version_columns = st.columns(len(versions))
+    for column, version in zip(version_columns, versions):
+        column.metric(version["label"], version["value"])
+    if project["status"] != "ready":
+        st.warning(
+            f"현재 프로젝트 상태는 `{project['status']}`입니다. "
+            "Readiness gate가 끝나기 전에는 자유 질의가 차단될 수 있습니다."
+        )
     st.markdown(
         """
         <div class="p3-trust-strip">
@@ -760,7 +844,7 @@ def render_chat_tab(services: ServiceBundle) -> None:
             selected_question = question
 
     st.divider()
-    render_chat_history(services)
+    rerun_question = render_chat_history(services)
     last_result = st.session_state.get("last_result")
     if last_result and last_result.get("status") == "failed":
         if st.button(
@@ -773,7 +857,7 @@ def render_chat_tab(services: ServiceBundle) -> None:
     typed_question = st.chat_input(
         "예: 완제품 300002의 구성품과 공정 이력을 보여줘."
     )
-    question = typed_question or selected_question
+    question = typed_question or selected_question or rerun_question
     if question:
         submit_question(question, services)
         st.rerun()
@@ -2716,6 +2800,18 @@ def _switch_project(project_id: str) -> None:
     st.session_state["project_conversations"][
         previous
     ] = snapshot_project_context(st.session_state)
+    if project_id not in st.session_state["conversation_loaded_projects"]:
+        persisted = get_conversation_store().list(project_id, limit=12)
+        context = None
+        if persisted:
+            context = {
+                "conversations": persisted,
+                "active_conversation_id": persisted[0]["id"],
+                "messages": persisted[0]["messages"],
+                "last_result": persisted[0].get("last_result"),
+            }
+        st.session_state["project_conversations"][project_id] = context
+        st.session_state["conversation_loaded_projects"].add(project_id)
     restore_project_context(
         st.session_state,
         st.session_state["project_conversations"].get(project_id),
@@ -2815,9 +2911,23 @@ def render_sidebar() -> tuple[str, str, str, str]:
     conversations = st.session_state["conversations"]
     if conversations:
         st.sidebar.caption(
-            "현재 브라우저 세션의 최근 대화 · 최대 12개"
+            "프로젝트에 저장된 최근 대화 · 최대 12개"
         )
-        for conversation in conversations[:6]:
+        history_search = st.sidebar.text_input(
+            "대화 검색",
+            placeholder="질문 제목 또는 내용",
+            key=f"conversation-search-{selected_project_id}",
+        )
+        visible_conversations = (
+            get_conversation_store().list(
+                selected_project_id,
+                search=history_search,
+                limit=12,
+            )
+            if history_search.strip()
+            else conversations
+        )
+        for conversation in visible_conversations[:6]:
             is_active = (
                 conversation["id"]
                 == st.session_state["active_conversation_id"]
@@ -2836,10 +2946,11 @@ def render_sidebar() -> tuple[str, str, str, str]:
                 open_conversation(conversation["id"])
                 st.rerun()
         if st.sidebar.button(
-            "세션 기록 모두 지우기",
+            "프로젝트 대화 모두 지우기",
             key="clear-all-conversations",
             width="stretch",
         ):
+            get_conversation_store().delete_project(selected_project_id)
             st.session_state["conversations"] = []
             st.session_state["active_conversation_id"] = str(uuid4())
             st.session_state["messages"] = []
