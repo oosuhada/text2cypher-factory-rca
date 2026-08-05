@@ -178,6 +178,7 @@ class ApiContractTest(unittest.TestCase):
         )
         self.assertEqual(live.headers["x-frame-options"], "DENY")
         self.assertEqual(live.headers["cache-control"], "no-store")
+        self.assertTrue(live.headers["x-request-id"])
 
         schema = self.client.get("/api/v1/graph/schema")
         self.assertEqual(schema.status_code, 200)
@@ -219,6 +220,14 @@ class ApiContractTest(unittest.TestCase):
             },
         )
         self.assertEqual(project_query.status_code, 409)
+        self.assertEqual(
+            project_query.json()["error"]["code"], "STATE_CONFLICT"
+        )
+        self.assertFalse(project_query.json()["error"]["retryable"])
+        self.assertEqual(
+            project_query.json()["error"]["request_id"],
+            project_query.headers["x-request-id"],
+        )
         activated = self.client.post(
             "/api/v1/projects/equipment-history/activate"
         )
@@ -336,10 +345,29 @@ class ApiContractTest(unittest.TestCase):
             "/api/v1/query", json={"question": ""}
         )
         self.assertEqual(response.status_code, 422)
+        self.assertEqual(
+            response.json()["error"]["code"], "VALIDATION_ERROR"
+        )
+        self.assertEqual(
+            response.json()["error"]["category"], "request"
+        )
         whitespace = self.client.post(
             "/api/v1/query", json={"question": "   "}
         )
         self.assertEqual(whitespace.status_code, 422)
+
+    def test_openapi_exposes_structured_error_contract(self):
+        response = self.client.get("/openapi.json")
+        self.assertEqual(response.status_code, 200)
+        document = response.json()
+        schemas = document["components"]["schemas"]
+        self.assertIn("ErrorEnvelope", schemas)
+        query_responses = document["paths"]["/api/v1/query"]["post"][
+            "responses"
+        ]
+        self.assertIn("409", query_responses)
+        self.assertIn("422", query_responses)
+        self.assertIn("502", query_responses)
 
     def test_metrics_and_bounded_subgraph_contracts(self):
         metrics = self.client.get("/api/v1/metrics")

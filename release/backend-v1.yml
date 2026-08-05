@@ -1,0 +1,38 @@
+release: backend-v1
+scope: p3-required-backend
+release_gate:
+  local:
+    command: ./scripts/release_check.sh
+  fresh_environment:
+    command: ./scripts/fresh_release_gate.sh
+  ci_jobs:
+    - unit-tests
+    - web-quality
+    - packaged-e2e
+lineage_contract:
+  required_versions:
+    - source
+    - schema
+    - prompt
+    - gold
+    - evaluation
+  required_evidence:
+    - source
+    - mapping_or_connector
+    - integrity
+    - read_only
+    - graph_runtime
+security_contract:
+  generated_cypher: read-only
+  neo4j_query_mode: READ
+  committed_secret_findings: 0
+  connector_secret_storage: environment-name-only
+compatibility:
+  python: "3.13"
+  node: "24"
+  neo4j: "2026.06-community"
+  api_base_path: /api/v1
+known_quality:
+  cip_dmd_gold_execution: "15/15"
+  cip_dmd_blind_semantic_accuracy: 0.615
+  write_query_block_rate: 1.0

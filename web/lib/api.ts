@@ -29,7 +29,8 @@ async function request<T>(
   if (!response.ok) {
     const payload = await response.json().catch(() => null);
     const message =
-      payload?.detail ??
+      payload?.error?.message ??
+      (typeof payload?.detail === "string" ? payload.detail : null) ??
       `API 요청이 실패했습니다. (${response.status})`;
     throw new Error(message);
   }
