@@ -145,8 +145,8 @@ def test_three_renderer_comparison_uses_one_normalized_payload() -> None:
         "kind": "bar",
         "title": "노드 유형별 규모",
         "rows": [
-            {"category": "Part", "value": 2.0},
             {"category": "Equipment", "value": 1.0},
+            {"category": "Part", "value": 2.0},
         ],
     }
     assert metrics["express_json_bytes"] > 0

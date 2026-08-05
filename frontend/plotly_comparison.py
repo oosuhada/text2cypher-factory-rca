@@ -219,6 +219,7 @@ def _shared_case_data(
             {"category": str(row.get("label", "")), "value": float(row.get("count", 0))}
             for row in rows
         ]
+        normalized.sort(key=lambda row: (row["value"], row["category"]))
         return "bar", normalized, "노드 유형별 규모", None
     if case == "상태 구성":
         rows = runtime["status_counts"]
