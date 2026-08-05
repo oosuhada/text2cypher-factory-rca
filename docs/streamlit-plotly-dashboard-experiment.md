@@ -6,6 +6,12 @@
 인터랙티브 차트로 확장했다. 기존 데이터 서비스와 화면 정보 구조는 유지하고,
 차트 렌더링 계층만 별도 모듈로 분리했다.
 
+공개 확인 주소:
+
+```text
+https://plotly-streamlit.oosu.dev/dashboard
+```
+
 ## 구현 범위
 
 `frontend/dashboard_plotly.py`에 순수 figure builder를 구성하고
