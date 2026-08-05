@@ -9,6 +9,17 @@ import pandas as pd
 import streamlit as st
 
 from frontend.app_services import ServiceBundle
+from frontend.dashboard_plotly import (
+    build_anomaly_runs_figure,
+    build_blind_comparison_figure,
+    build_equipment_runs_figure,
+    build_node_counts_figure,
+    build_provider_counts_figure,
+    build_quality_failures_figure,
+    build_recent_latency_figure,
+    build_relationship_counts_figure,
+    build_status_counts_figure,
+)
 
 def normalize_dashboard_snapshot(
     raw_snapshot: dict[str, Any],
@@ -237,33 +248,27 @@ def render_dashboard_tab(
         left, right = st.columns(2)
         with left:
             st.markdown("##### 노드 유형")
-            st.bar_chart(
-                pd.DataFrame(snapshot["node_counts"]),
-                x="label",
-                y="count",
-                color="#0F766E",
-                horizontal=True,
+            st.plotly_chart(
+                build_node_counts_figure(snapshot["node_counts"]),
+                width="stretch",
+                key="dashboard-node-counts",
             )
         with right:
             st.markdown("##### 관계 유형")
-            st.bar_chart(
-                pd.DataFrame(snapshot["relationship_counts"]),
-                x="relationship_type",
-                y="count",
-                color="#2563EB",
-                horizontal=True,
+            st.plotly_chart(
+                build_relationship_counts_figure(snapshot["relationship_counts"]),
+                width="stretch",
+                key="dashboard-relationship-counts",
             )
     with process_tab:
         left, right = st.columns(2)
         with left:
             st.markdown("##### 장비별 공정 실행")
             if snapshot["equipment_runs"]:
-                st.bar_chart(
-                    pd.DataFrame(snapshot["equipment_runs"]),
-                    x="equipment",
-                    y="run_count",
-                    color="#7C3AED",
-                    horizontal=True,
+                st.plotly_chart(
+                    build_equipment_runs_figure(snapshot["equipment_runs"]),
+                    width="stretch",
+                    key="dashboard-equipment-runs",
                 )
             else:
                 st.info("이 스키마에는 장비별 공정 집계가 정의되지 않았습니다.")
@@ -282,23 +287,20 @@ def render_dashboard_tab(
         with left:
             st.markdown("##### 이상 유형 분포")
             if snapshot["anomaly_runs"]:
-                st.bar_chart(
-                    pd.DataFrame(snapshot["anomaly_runs"]),
-                    x="anomaly_code",
-                    y="run_count",
-                    color="#DC2626",
+                st.plotly_chart(
+                    build_anomaly_runs_figure(snapshot["anomaly_runs"]),
+                    width="stretch",
+                    key="dashboard-anomaly-runs",
                 )
             else:
                 st.info("이 스키마에는 이상 유형 집계가 정의되지 않았습니다.")
         with right:
             st.markdown("##### 품질 불합격 상위 항목")
             if snapshot["quality_failures"]:
-                st.bar_chart(
-                    pd.DataFrame(snapshot["quality_failures"]),
-                    x="feature",
-                    y="failure_count",
-                    color="#D97706",
-                    horizontal=True,
+                st.plotly_chart(
+                    build_quality_failures_figure(snapshot["quality_failures"]),
+                    width="stretch",
+                    key="dashboard-quality-failures",
                 )
             else:
                 st.info("이 스키마에는 품질 불합격 집계가 정의되지 않았습니다.")
@@ -349,19 +351,25 @@ def render_dashboard_tab(
     with status_column:
         st.markdown("##### 질의 상태")
         if runtime["status_counts"]:
-            st.bar_chart(
-                pd.DataFrame(runtime["status_counts"]),
-                x="status",
-                y="count",
-                color="#0F766E",
+            st.plotly_chart(
+                build_status_counts_figure(runtime["status_counts"]),
+                width="stretch",
+                key="dashboard-runtime-status",
             )
         else:
             st.info("아직 기록된 질의가 없습니다.")
+        if runtime["provider_counts"]:
+            st.plotly_chart(
+                build_provider_counts_figure(runtime["provider_counts"]),
+                width="stretch",
+                key="dashboard-runtime-provider",
+            )
     with recent_column:
         st.markdown("##### 최근 질의")
         if runtime["recent_queries"]:
+            recent_queries = pd.DataFrame(runtime["recent_queries"])
             st.dataframe(
-                pd.DataFrame(runtime["recent_queries"]),
+                recent_queries,
                 width="stretch",
                 hide_index=True,
                 column_config={
@@ -371,6 +379,12 @@ def render_dashboard_tab(
                     ),
                 },
             )
+            if "elapsed_ms" in recent_queries:
+                st.plotly_chart(
+                    build_recent_latency_figure(runtime["recent_queries"]),
+                    width="stretch",
+                    key="dashboard-recent-latency",
+                )
         else:
             st.info("Query Studio에서 질문을 실행하면 이력이 기록됩니다.")
 
@@ -482,11 +496,10 @@ def render_dashboard_tab(
                 ),
             },
         )
-        st.bar_chart(
-            comparison,
-            x="variant",
-            y="result_accuracy",
-            color="#2563EB",
+        st.plotly_chart(
+            build_blind_comparison_figure(comparison),
+            width="stretch",
+            key="dashboard-blind-comparison",
         )
         st.caption(
             f"모델 · {blind_evaluation['provider']} / "
