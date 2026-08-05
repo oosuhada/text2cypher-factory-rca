@@ -89,14 +89,20 @@ class PromptRegistry:
             str(document["few_shot"]["questions"])
         )
         rules = [str(rule) for rule in document.get("rules") or []]
-        context_parts = [
-            self.schemas.context(project_id),
-            (
+        context_parts = [self.schemas.context(project_id)]
+        if schema.get("isolation_mode", "property") == "property":
+            context_parts.append(
                 "Project isolation:\n"
                 f"- Restrict graph matches to project_id '{project_id}'.\n"
                 "- Never query or combine another project's records."
-            ),
-        ]
+            )
+        else:
+            context_parts.append(
+                "Project database context:\n"
+                f"- This connection is dedicated to project_id '{project_id}'.\n"
+                "- Do not add a project_id property filter unless the schema "
+                "declares that property."
+            )
         if rules:
             context_parts.append(
                 "Project-specific query rules:\n"

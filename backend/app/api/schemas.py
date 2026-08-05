@@ -70,10 +70,13 @@ class RuntimeResponse(BaseModel):
 
 ProjectStatus = Literal[
     "draft",
-    "mapping_ready",
+    "profiling",
+    "mapping_review",
     "loading",
-    "load_failed",
+    "validating",
+    "evaluation_required",
     "ready",
+    "failed",
     "archived",
 ]
 
@@ -84,7 +87,14 @@ class ProjectCreate(BaseModel):
     domain_type: str = Field(min_length=1, max_length=200)
     dataset_name: str = Field(min_length=1, max_length=200)
     schema_version: str | None = Field(default=None, max_length=80)
-    status: ProjectStatus = "draft"
+    status: Literal["draft"] = "draft"
+    description: str = Field(default="", max_length=2000)
+    industry: str = Field(default="manufacturing", min_length=1, max_length=200)
+    owner: str = Field(default="", max_length=200)
+    security_classification: str = Field(
+        default="internal", min_length=1, max_length=80
+    )
+    source_type: Literal["file", "neo4j"] = "file"
 
 
 class ProjectUpdate(BaseModel):
@@ -96,7 +106,13 @@ class ProjectUpdate(BaseModel):
         default=None, min_length=1, max_length=200
     )
     schema_version: str | None = Field(default=None, max_length=80)
-    status: ProjectStatus | None = None
+    status: Literal["archived"] | None = None
+    description: str | None = Field(default=None, max_length=2000)
+    industry: str | None = Field(default=None, min_length=1, max_length=200)
+    owner: str | None = Field(default=None, max_length=200)
+    security_classification: str | None = Field(
+        default=None, min_length=1, max_length=80
+    )
 
 
 class ProjectResponse(BaseModel):
@@ -106,6 +122,16 @@ class ProjectResponse(BaseModel):
     dataset_name: str
     schema_version: str | None
     status: ProjectStatus
+    description: str = ""
+    industry: str = "manufacturing"
+    owner: str = ""
+    security_classification: str = "internal"
+    source_type: Literal["file", "neo4j"] = "file"
+    source_version: str | None = None
+    connector_id: str | None = None
+    prompt_version: str | None = None
+    gold_version: str | None = None
+    evaluation_version: str | None = None
     created_at: str
     updated_at: str
     is_active: bool = False
@@ -114,6 +140,7 @@ class ProjectResponse(BaseModel):
 class ProjectReadinessResponse(BaseModel):
     project_id: str
     lifecycle_status: ProjectStatus
+    source_type: Literal["file", "neo4j"]
     upload_count: int
     mapping_approved: bool
     schema_available: bool
@@ -121,7 +148,21 @@ class ProjectReadinessResponse(BaseModel):
     relationship_count: int
     can_query: bool
     can_load: bool
-    next_action: Literal["upload", "map", "load", "query"]
+    eligible_for_ready: bool
+    next_action: Literal[
+        "upload",
+        "connect",
+        "map",
+        "load",
+        "validate",
+        "evaluate",
+        "activate",
+        "query",
+    ]
+    checks: dict[str, dict[str, Any]]
+    versions: dict[str, str | None]
+    artifacts: dict[str, dict[str, Any]]
+    transitions: list[dict[str, Any]]
 
 
 class UploadFilePayload(BaseModel):
@@ -142,6 +183,29 @@ class GraphMappingRequest(BaseModel):
 class ProjectLoadRequest(BaseModel):
     upload_id: str = Field(min_length=36, max_length=36)
     confirm_project_id: str = Field(min_length=3, max_length=63)
+
+
+class Neo4jConnectorRequest(BaseModel):
+    uri: str = Field(min_length=8, max_length=500)
+    database: str = Field(default="neo4j", min_length=1, max_length=100)
+    username: str = Field(default="neo4j", min_length=1, max_length=100)
+    password_env: str = Field(min_length=3, max_length=128)
+
+
+class Neo4jConnectorResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    connector_id: str
+    project_id: str
+    kind: Literal["neo4j"]
+    uri: str
+    database: str
+    username: str
+    password_env: str
+    status: Literal["validated", "approved"]
+    schema_fingerprint: str
+    counts: dict[str, int]
+    validated_at: str
 
 
 class NodeIdentity(BaseModel):

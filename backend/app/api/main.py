@@ -6,14 +6,20 @@ from contextlib import asynccontextmanager
 import os
 from pathlib import Path
 from threading import Lock
-from typing import Callable
+from typing import Callable, Any
 
 from fastapi import FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
 from backend.app.services.bootstrap import ServiceBundle, build_service_bundle
-from backend.app.projects import ProjectRegistry
+from neo4j import GraphDatabase, READ_ACCESS
+
+from backend.app.projects import (
+    Neo4jConnectorService,
+    ProjectReadinessService,
+    ProjectRegistry,
+)
 from backend.app.ingestion import DatasetWorkspace
 from backend.app.mapping import MappingWorkspace
 from backend.app.etl.generic_loader import GenericGraphLoader
@@ -25,6 +31,7 @@ from backend.app.services.diagnostics import (
 from backend.app.services.project_load_service import (
     ProjectGraphLoadService,
 )
+from backend.app.etl.cli import password_from_keychain
 
 from .schemas import (
     FeedbackRecord,
@@ -32,6 +39,8 @@ from .schemas import (
     FeedbackSummary,
     DatasetUploadRequest,
     GraphMappingRequest,
+    Neo4jConnectorRequest,
+    Neo4jConnectorResponse,
     ProjectLoadRequest,
     GraphSchemaResponse,
     HealthResponse,
@@ -107,6 +116,8 @@ def create_app(
     schema_registry: SchemaRegistry | None = None,
     dataset_workspace: DatasetWorkspace | None = None,
     project_graph_loader: ProjectGraphLoadService | None = None,
+    connector_service: Neo4jConnectorService | None = None,
+    readiness_service: ProjectReadinessService | None = None,
 ) -> FastAPI:
     projects = project_registry or ProjectRegistry(
         Path(
@@ -119,6 +130,13 @@ def create_app(
     projects.ensure_default()
     schemas = schema_registry or SchemaRegistry(PROJECT_ROOT / "schemas")
 
+    connector_root = (
+        PROJECT_ROOT / "data" / "processed" / "project_connectors"
+    )
+    connectors = connector_service or Neo4jConnectorService(
+        connector_root, projects, schemas
+    )
+
     def project_bundle_factory(project_id: str) -> ServiceBundle:
         return build_service_bundle(
             project_root=PROJECT_ROOT,
@@ -126,6 +144,7 @@ def create_app(
             model_name=os.getenv("P3_API_MODEL") or None,
             project_id=project_id,
             schema_context=schemas.context(project_id),
+            neo4j_connection=connectors.connection(project_id),
         )
 
     registry = ServiceRegistry(
@@ -153,11 +172,78 @@ def create_app(
         )
     )
 
+    def direct_graph_counts(project_id: str) -> dict[str, int]:
+        if bundle_factory is not None:
+            bundle = registry.get(project_id)
+            if bundle.graph is None:
+                return {"nodes": 0, "relationships": 0}
+            return bundle.graph.graph_counts(project_id)
+        connection = connectors.connection(project_id) or {}
+        username = connection.get("username") or os.getenv(
+            "NEO4J_USERNAME", "neo4j"
+        )
+        password = (
+            connection.get("password")
+            or os.getenv("NEO4J_PASSWORD")
+            or password_from_keychain(username)
+        )
+        if not password:
+            raise RuntimeError("Neo4j 인증정보를 찾을 수 없습니다.")
+        driver = GraphDatabase.driver(
+            connection.get("uri")
+            or os.getenv("NEO4J_URI", "neo4j://localhost:7687"),
+            auth=(username, password),
+        )
+        database = connection.get("database") or os.getenv(
+            "NEO4J_DATABASE", "neo4j"
+        )
+        try:
+            with driver.session(
+                database=database,
+                default_access_mode=READ_ACCESS,
+            ) as session:
+                if project_id == "cip-dmd" or connection:
+                    row = session.run(
+                        """
+                        MATCH (n)
+                        WITH count(n) AS nodes
+                        OPTIONAL MATCH ()-[r]->()
+                        RETURN nodes, count(r) AS relationships
+                        """
+                    ).single()
+                else:
+                    row = session.run(
+                        """
+                        MATCH (n {project_id: $project_id})
+                        WITH count(n) AS nodes
+                        OPTIONAL MATCH ()-[r {project_id: $project_id}]->()
+                        RETURN nodes, count(r) AS relationships
+                        """,
+                        project_id=project_id,
+                    ).single()
+            return {
+                "nodes": int(row["nodes"]) if row else 0,
+                "relationships": int(row["relationships"]) if row else 0,
+            }
+        finally:
+            driver.close()
+
+    readiness = readiness_service or ProjectReadinessService(
+        PROJECT_ROOT,
+        projects,
+        schemas,
+        datasets,
+        mappings,
+        graph_counter=direct_graph_counts,
+    )
+
     @asynccontextmanager
     async def lifespan(application: FastAPI):
         application.state.registry = registry
         application.state.projects = projects
         application.state.schemas = schemas
+        application.state.connectors = connectors
+        application.state.readiness = readiness
         yield
         registry.close()
 
@@ -206,8 +292,18 @@ def create_app(
             project_id or projects.active_project_id() or "cip-dmd"
         )
         try:
-            projects.require(resolved_project_id)
+            report = readiness.inspect(resolved_project_id)
+            if not report["can_query"]:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=(
+                        "프로젝트가 질의 준비 상태가 아닙니다. "
+                        f"next_action={report['next_action']}"
+                    ),
+                )
             bundle = registry.get(resolved_project_id)
+        except HTTPException:
+            raise
         except (KeyError, ValueError) as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         except Exception as error:
@@ -269,60 +365,28 @@ def create_app(
     )
     def project_readiness(project_id: str) -> dict:
         try:
-            project = projects.require(project_id)
-            bundle = registry.get(project_id)
-            if bundle.graph is None:
-                raise RuntimeError(
-                    "그래프 탐색 서비스가 구성되지 않았습니다."
-                )
-            counts = bundle.graph.graph_counts(project_id)
-            upload_count = len(datasets.list(project_id))
-            try:
-                mappings.get(project_id)
-                mapping_approved = True
-            except KeyError:
-                mapping_approved = False
-            try:
-                schemas.load(project_id)
-                schema_available = True
-            except KeyError:
-                schema_available = False
-            can_query = (
-                project["status"] == "ready"
-                and counts["nodes"] > 0
-            )
-            can_load = (
-                mapping_approved
-                and os.getenv("P3_ENABLE_UI_LOAD", "0") == "1"
-            )
-            next_action = (
-                "query"
-                if can_query
-                else "load"
-                if mapping_approved
-                else "map"
-                if upload_count
-                else "upload"
-            )
-            return {
-                "project_id": project_id,
-                "lifecycle_status": project["status"],
-                "upload_count": upload_count,
-                "mapping_approved": mapping_approved,
-                "schema_available": schema_available,
-                "node_count": counts["nodes"],
-                "relationship_count": counts["relationships"],
-                "can_query": can_query,
-                "can_load": can_load,
-                "next_action": next_action,
-            }
+            return readiness.inspect(project_id)
         except (KeyError, ValueError) as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         except Exception as error:
             raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"프로젝트 준비 상태 확인 실패: {error}",
             ) from error
+
+    @application.post(
+        "/api/v1/projects/{project_id}/readiness/promote",
+        response_model=ProjectReadinessResponse,
+    )
+    def promote_project(project_id: str) -> dict[str, Any]:
+        try:
+            result = readiness.promote(project_id)
+            registry.close(project_id)
+            return result
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except ValueError as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
 
     @application.patch(
         "/api/v1/projects/{project_id}",
@@ -357,14 +421,59 @@ def create_app(
     )
     def profile_dataset(project_id: str, payload: DatasetUploadRequest) -> dict:
         try:
-            projects.require(project_id)
-            return datasets.profile_upload(
+            project = projects.require(project_id)
+            if project["source_type"] != "file":
+                raise ValueError(
+                    "file 프로젝트에서만 파일을 업로드할 수 있습니다."
+                )
+            if project["status"] in {"loading", "validating", "archived"}:
+                raise ValueError(
+                    f"{project['status']} 상태에서는 새 업로드를 시작할 수 없습니다."
+                )
+            if project["status"] != "profiling":
+                projects.transition(
+                    project_id,
+                    "profiling",
+                    reason="dataset_profile_started",
+                )
+            result = datasets.profile_upload(
                 project_id,
                 [item.model_dump() for item in payload.files],
             )
+            # MappingWorkspace uses upload_id as the default immutable
+            # source_version, so the registry must link the same lineage key.
+            source_version = str(result["upload_id"])
+            projects.update(project_id, source_version=source_version)
+            projects.record_artifact(
+                project_id,
+                "source",
+                version=source_version,
+                fingerprint=result.get("source_sha256"),
+                metadata={
+                    "upload_id": result["upload_id"],
+                    "file_count": len(result.get("files", [])),
+                },
+            )
+            projects.transition(
+                project_id,
+                "mapping_review",
+                reason="dataset_profile_completed",
+            )
+            registry.close(project_id)
+            return result
         except KeyError as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         except ValueError as error:
+            try:
+                current = projects.get(project_id)
+            except ValueError:
+                current = None
+            if current and current["status"] == "profiling":
+                projects.transition(
+                    project_id,
+                    "failed",
+                    reason="dataset_profile_failed",
+                )
             raise HTTPException(status_code=422, detail=str(error)) from error
 
     @application.get("/api/v1/projects/{project_id}/uploads")
@@ -404,7 +513,11 @@ def create_app(
     @application.post("/api/v1/projects/{project_id}/mappings/approve")
     def approve_mapping(project_id: str, payload: GraphMappingRequest) -> dict:
         try:
-            projects.require(project_id)
+            project = projects.require(project_id)
+            if project["status"] != "mapping_review":
+                raise ValueError(
+                    "mapping_review 상태에서만 mapping을 승인할 수 있습니다."
+                )
             result = mappings.approve(
                 project_id,
                 payload.upload_id,
@@ -414,7 +527,21 @@ def create_app(
             projects.update(
                 project_id,
                 schema_version=payload.schema_version,
-                status="mapping_ready",
+            )
+            schema = schemas.load(project_id)
+            projects.record_artifact(
+                project_id,
+                "mapping",
+                version=payload.schema_version,
+                metadata={"upload_id": payload.upload_id},
+            )
+            projects.record_artifact(
+                project_id,
+                "schema",
+                version=payload.schema_version,
+                metadata={
+                    "source_version": schema.get("source_version")
+                },
             )
             registry.close(project_id)
             return result
@@ -450,19 +577,70 @@ def create_app(
                 detail="적재 승인용 confirm_project_id가 일치하지 않습니다.",
             )
         try:
-            projects.require(project_id)
-            projects.update(project_id, status="loading")
+            project = projects.require(project_id)
+            if project["status"] != "mapping_review":
+                raise ValueError(
+                    "mapping_review 상태에서만 적재를 시작할 수 있습니다."
+                )
+            projects.transition(
+                project_id, "loading", reason="graph_load_started"
+            )
             registry.close()
             result = graph_loader.load(project_id, payload.upload_id)
-            projects.update(project_id, status="ready")
+            projects.transition(
+                project_id, "validating", reason="graph_load_completed"
+            )
+            integrity = result["integrity"]
+            integrity_ok = (
+                integrity.get("project_scope_applied") is True
+                and int(integrity.get("scoped_node_count", 0)) > 0
+            )
+            projects.record_artifact(
+                project_id,
+                "load",
+                version=payload.upload_id,
+                metadata={"report_path": result.get("report_path")},
+            )
+            projects.record_artifact(
+                project_id,
+                "integrity",
+                version=payload.upload_id,
+                status="verified" if integrity_ok else "failed",
+                metadata=integrity,
+            )
+            projects.record_artifact(
+                project_id,
+                "read_only",
+                version="reader-v1",
+                status="verified",
+                metadata=result.get("access", {"reader_mode": "READ"}),
+            )
+            if not integrity_ok:
+                projects.transition(
+                    project_id, "failed", reason="integrity_gate_failed"
+                )
+                raise ValueError("적재 무결성 gate를 통과하지 못했습니다.")
+            projects.transition(
+                project_id,
+                "evaluation_required",
+                reason="integrity_gate_passed",
+            )
             return result
         except KeyError as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         except ValueError as error:
-            projects.update(project_id, status="load_failed")
+            current = projects.get(project_id)
+            if current and current["status"] not in {"failed", "archived"}:
+                projects.transition(
+                    project_id, "failed", reason="graph_load_validation_failed"
+                )
             raise HTTPException(status_code=422, detail=str(error)) from error
         except Exception as error:
-            projects.update(project_id, status="load_failed")
+            current = projects.get(project_id)
+            if current and current["status"] not in {"failed", "archived"}:
+                projects.transition(
+                    project_id, "failed", reason="graph_load_failed"
+                )
             raise HTTPException(
                 status_code=502, detail=f"프로젝트 그래프 적재 실패: {error}"
             ) from error
@@ -475,27 +653,17 @@ def create_app(
             or "cip-dmd"
         )
         try:
-            project = projects.require(requested_project_id)
-            bundle = registry.get(requested_project_id)
-            if (
-                requested_project_id != "cip-dmd"
-                and (
-                    project["status"] != "ready"
-                    or bundle.graph is None
-                    or bundle.graph.graph_counts(requested_project_id)[
-                        "nodes"
-                    ]
-                    == 0
-                )
-            ):
+            projects.require(requested_project_id)
+            report = readiness.inspect(requested_project_id)
+            if not report["can_query"]:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail=(
-                        "선택한 프로젝트에는 적재된 그래프 데이터가 "
-                        "없습니다. Data → Schema → Load 단계를 먼저 "
-                        "완료하세요."
+                        "선택한 프로젝트가 readiness gate를 통과하지 "
+                        f"못했습니다. next_action={report['next_action']}"
                     ),
                 )
+            bundle = registry.get(requested_project_id)
             result = bundle.query_with_fallback(payload.question.strip())
             result["project_id"] = requested_project_id
             return result
@@ -508,6 +676,48 @@ def create_app(
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail=f"질의 처리에 실패했습니다: {error}",
             ) from error
+
+    @application.post(
+        "/api/v1/projects/{project_id}/connectors/neo4j/validate",
+        response_model=Neo4jConnectorResponse,
+        status_code=status.HTTP_201_CREATED,
+    )
+    def validate_neo4j_connector(
+        project_id: str,
+        payload: Neo4jConnectorRequest,
+    ) -> dict[str, Any]:
+        try:
+            result = connectors.validate(
+                project_id, **payload.model_dump()
+            )
+            registry.close(project_id)
+            return result
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+        except Exception as error:
+            raise HTTPException(
+                status_code=502,
+                detail=f"Neo4j connector 검증 실패: {error}",
+            ) from error
+
+    @application.post(
+        "/api/v1/projects/{project_id}/connectors/neo4j/{connector_id}/approve",
+        response_model=Neo4jConnectorResponse,
+    )
+    def approve_neo4j_connector(
+        project_id: str,
+        connector_id: str,
+    ) -> dict[str, Any]:
+        try:
+            result = connectors.approve(project_id, connector_id)
+            registry.close(project_id)
+            return result
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
 
     @application.get("/api/v1/metrics")
     def metrics(project_id: str | None = None) -> dict:
