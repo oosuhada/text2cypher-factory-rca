@@ -73,6 +73,10 @@ React 구현은 `https://dashboard.oosu.dev/visualization-compare/echarts`에서
 - KPI 카드 3열·2열·1열 반응형 재배치
 - Plotly card와 Figure 높이 불일치로 발생하던 축 clipping 제거
 - 루트 query 기반 3개 구현 비교·기술 선택 페이지
+- 세 구현 모두 Runtime, renderer surface, layout owner를 같은 위치에 표시
+- Figure/option build, serialized payload, browser ready를 차트 위 공통 성능 strip으로 정렬
+- 각 구현별 DataFrame/Data contract 연결, styling, responsive Board, selection,
+  brush·cross-filter, 차트·필드 전환, 저장 layout·역할 context의 구현 상태 비교
 - 세 렌더러 동시 실제 출력과 동일 payload 검증
 - Figure build 시간·직렬화 크기·브라우저 ready 중앙값 표시
 - React ECharts 인증 없는 전용 embed route

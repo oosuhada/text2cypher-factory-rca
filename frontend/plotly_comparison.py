@@ -267,8 +267,8 @@ def _figures_for_case(
     started = perf_counter()
     graph_objects_figure = graph_objects_builder()
     graph_objects_ms = (perf_counter() - started) * 1000
-    express_figure.update_layout(height=360)
-    graph_objects_figure.update_layout(height=360)
+    express_figure.update_layout(height=390)
+    graph_objects_figure.update_layout(height=390)
     payload = {"kind": kind, "title": title, "rows": normalized}
     metrics = {
         "express_build_ms": round(express_ms, 2),
@@ -280,7 +280,14 @@ def _figures_for_case(
     return express_figure, graph_objects_figure, metrics, payload, None
 
 
-def _metric_strip(label: str, build_ms: float | str, payload_bytes: int | str, client_ms: float | str) -> str:
+def _metric_strip(
+    label: str,
+    *,
+    runtime: str,
+    build_ms: float | str,
+    payload_bytes: int | str,
+    client_ms: float | str,
+) -> str:
     def value(value: float | int | str, suffix: str = "") -> str:
         if isinstance(value, str):
             return value
@@ -288,11 +295,83 @@ def _metric_strip(label: str, build_ms: float | str, payload_bytes: int | str, c
 
     return (
         f'<div class="p3-renderer-metrics" aria-label="{label} metrics">'
-        f'<span><small>Figure build</small><b>{value(build_ms, " ms")}</b></span>'
+        f'<span><small>Runtime</small><b>{runtime}</b></span>'
+        f'<span><small>Figure / option build</small><b>{value(build_ms, " ms")}</b></span>'
         f'<span><small>Serialized</small><b>{value(payload_bytes, " B")}</b></span>'
         f'<span><small>Browser ready</small><b>{value(client_ms, " ms")}</b></span>'
         "</div>"
     )
+
+
+def _renderer_header(
+    *,
+    step: str,
+    title: str,
+    summary: str,
+    renderer: str,
+    layout_owner: str,
+    variant: str = "",
+) -> str:
+    variant_class = f" {variant}" if variant else ""
+    return (
+        f'<div class="p3-live-renderer-head{variant_class}">'
+        f'<span>{step}</span><strong>{title}</strong><small>{summary}</small>'
+        '<dl class="p3-renderer-context">'
+        f'<div><dt>Renderer</dt><dd>{renderer}</dd></div>'
+        f'<div><dt>Layout owner</dt><dd>{layout_owner}</dd></div>'
+        "</dl></div>"
+    )
+
+
+def _capability_panel(
+    label: str,
+    rows: tuple[tuple[str, str, str], ...],
+) -> str:
+    row_html = "".join(
+        (
+            '<li>'
+            f'<span>{feature}</span>'
+            f'<b class="is-{tone}">{status}</b>'
+            "</li>"
+        )
+        for feature, status, tone in rows
+    )
+    return (
+        f'<section class="p3-capability-panel" aria-label="{label} capability matrix">'
+        '<header><strong>현재 구현 기준</strong><small>가능 · 제한 · 미구현</small></header>'
+        f"<ul>{row_html}</ul></section>"
+    )
+
+
+PLOTLY_EXPRESS_CAPABILITIES = (
+    ("DataFrame → 차트", "가능", "yes"),
+    ("차트 내부 스타일", "제한", "limited"),
+    ("반응형 Board layout", "제한", "limited"),
+    ("Click selection", "제한", "limited"),
+    ("Brush · cross-filter", "미구현", "no"),
+    ("차트·필드 전환", "미구현", "no"),
+    ("저장 layout · 역할 context", "미구현", "no"),
+)
+
+PLOTLY_GRAPH_OBJECTS_CAPABILITIES = (
+    ("DataFrame → 차트", "가능", "yes"),
+    ("차트 내부 스타일", "가능", "yes"),
+    ("반응형 Board layout", "제한", "limited"),
+    ("Click selection", "별도 연결", "limited"),
+    ("Brush · cross-filter", "별도 연결", "limited"),
+    ("차트·필드 전환", "미구현", "no"),
+    ("저장 layout · 역할 context", "미구현", "no"),
+)
+
+REACT_ECHARTS_CAPABILITIES = (
+    ("Data contract → 차트", "구현됨", "yes"),
+    ("차트 내부 스타일", "구현됨", "yes"),
+    ("반응형 Board layout", "구현됨", "yes"),
+    ("Click selection", "구현됨", "yes"),
+    ("Brush · cross-filter", "구현됨", "yes"),
+    ("차트·필드 전환", "구현됨", "yes"),
+    ("저장 layout · 역할 context", "구현됨", "yes"),
+)
 
 
 def _load_benchmark(case: str) -> dict[str, Any]:
@@ -337,7 +416,23 @@ def _render_live_three_way(snapshot: dict[str, Any]) -> None:
         express_column, graph_objects_column, echarts_column = st.columns(3)
         with express_column:
             st.markdown(
-                '<div class="p3-live-renderer-head"><span>EXPERIMENT 01</span><strong>Plotly Express + Streamlit</strong><small>최소 코드 기준선</small></div>',
+                _renderer_header(
+                    step="EXPERIMENT 01",
+                    title="Plotly Express + Streamlit",
+                    summary="최소 코드 기준선",
+                    renderer="Plotly SVG",
+                    layout_owner="Streamlit columns",
+                ),
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                _metric_strip(
+                    "Plotly Express",
+                    runtime="Python · Streamlit",
+                    build_ms=metrics["express_build_ms"],
+                    payload_bytes=metrics["express_json_bytes"],
+                    client_ms=express_ready,
+                ),
                 unsafe_allow_html=True,
             )
             st.plotly_chart(
@@ -347,17 +442,29 @@ def _render_live_three_way(snapshot: dict[str, Any]) -> None:
                 config=DEFAULT_CONFIG,
             )
             st.markdown(
-                _metric_strip(
-                    "Plotly Express",
-                    metrics["express_build_ms"],
-                    metrics["express_json_bytes"],
-                    express_ready,
-                ),
+                _capability_panel("Plotly Express", PLOTLY_EXPRESS_CAPABILITIES),
                 unsafe_allow_html=True,
             )
         with graph_objects_column:
             st.markdown(
-                '<div class="p3-live-renderer-head is-polished"><span>EXPERIMENT 02</span><strong>Plotly Graph Objects + Streamlit</strong><small>trace와 layout 직접 제어</small></div>',
+                _renderer_header(
+                    step="EXPERIMENT 02",
+                    title="Plotly Graph Objects + Streamlit",
+                    summary="trace와 layout 직접 제어",
+                    renderer="Plotly SVG",
+                    layout_owner="Streamlit columns",
+                    variant="is-polished",
+                ),
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                _metric_strip(
+                    "Plotly Graph Objects",
+                    runtime="Python · Streamlit",
+                    build_ms=metrics["graph_objects_build_ms"],
+                    payload_bytes=metrics["graph_objects_json_bytes"],
+                    client_ms=go_ready,
+                ),
                 unsafe_allow_html=True,
             )
             render_dashboard_figure(
@@ -365,27 +472,37 @@ def _render_live_three_way(snapshot: dict[str, Any]) -> None:
                 key=f"plotly-graph-objects-live-{case}",
             )
             st.markdown(
-                _metric_strip(
+                _capability_panel(
                     "Plotly Graph Objects",
-                    metrics["graph_objects_build_ms"],
-                    metrics["graph_objects_json_bytes"],
-                    go_ready,
+                    PLOTLY_GRAPH_OBJECTS_CAPABILITIES,
                 ),
                 unsafe_allow_html=True,
             )
         with echarts_column:
             st.markdown(
-                '<div class="p3-live-renderer-head is-selected"><span>FINAL PRODUCT</span><strong>React + Apache ECharts</strong><small>독립 제품 runtime</small></div>',
+                _renderer_header(
+                    step="FINAL PRODUCT",
+                    title="React + Apache ECharts",
+                    summary="제품 Dashboard runtime",
+                    renderer="ECharts Canvas",
+                    layout_owner="React grid runtime",
+                    variant="is-selected",
+                ),
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                _metric_strip(
+                    "React ECharts",
+                    runtime="React · Browser",
+                    build_ms="Client-side",
+                    payload_bytes=metrics["shared_payload_bytes"],
+                    client_ms=echarts_ready,
+                ),
                 unsafe_allow_html=True,
             )
             st.iframe(embed_url, height=390)
             st.markdown(
-                _metric_strip(
-                    "React ECharts",
-                    "Client",
-                    metrics["shared_payload_bytes"],
-                    echarts_ready,
-                ),
+                _capability_panel("React ECharts", REACT_ECHARTS_CAPABILITIES),
                 unsafe_allow_html=True,
             )
 

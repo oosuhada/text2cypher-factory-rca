@@ -74,6 +74,11 @@ class StreamlitPageArchitectureTest(unittest.TestCase):
         self.assertIn("React + Apache ECharts", source)
         self.assertIn("React + ECharts를 최종 Dashboard로 선택", source)
         self.assertIn("p3-decision-table", source)
+        self.assertIn("Runtime", source)
+        self.assertIn("Layout owner", source)
+        self.assertIn("PLOTLY_EXPRESS_CAPABILITIES", source)
+        self.assertIn("PLOTLY_GRAPH_OBJECTS_CAPABILITIES", source)
+        self.assertIn("REACT_ECHARTS_CAPABILITIES", source)
 
     def test_legacy_pages_redirect_to_canonical_workspaces(self):
         expected_redirects = {
