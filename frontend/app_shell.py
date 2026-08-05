@@ -43,15 +43,19 @@ def render_app_shell(app_title: str) -> None:
           border-radius: 14px;
         }
         div[data-testid="stPlotlyChart"] {
-          overflow: hidden;
-          border: 1px solid #DCDCDD;
+          overflow: visible;
           border-radius: 12px;
-          padding: .25rem .35rem .1rem;
+          padding: 0;
           background: #FFFFFF;
-          box-shadow: 0 1px 2px rgba(15, 23, 42, .035);
+          box-shadow: 0 0 0 1px #DCDCDD, 0 1px 2px rgba(15, 23, 42, .035);
         }
         div[data-testid="stPlotlyChart"]:hover {
-          border-color: #B8C1CC;
+          box-shadow: 0 0 0 1px #B8C1CC, 0 1px 2px rgba(15, 23, 42, .045);
+        }
+        div[data-testid="stPlotlyChart"] .js-plotly-plot,
+        div[data-testid="stPlotlyChart"] .plot-container,
+        div[data-testid="stPlotlyChart"] .svg-container {
+          border-radius: 12px;
         }
         .p3-plotly-compare-link {
           width: fit-content;
@@ -136,6 +140,325 @@ def render_app_shell(app_title: str) -> None:
           color: #5F6B7B;
           font-size: .72rem;
           line-height: 1.45;
+        }
+        .p3-method-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: .7rem;
+          margin: .8rem 0 1.25rem;
+        }
+        .p3-method-card {
+          min-width: 0;
+          border: 1px solid #DCDCDD;
+          border-radius: 12px;
+          padding: .9rem;
+          background: #FFFFFF;
+        }
+        .p3-method-card.is-selected {
+          border-color: #0F766E;
+          background: linear-gradient(145deg, #FFFFFF 0%, #F0FDFA 100%);
+          box-shadow: 0 0 0 1px rgba(15,118,110,.15);
+        }
+        .p3-method-card header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: .5rem;
+        }
+        .p3-method-card header span {
+          color: #5F6B7B;
+          font-size: .64rem;
+          font-weight: 800;
+          letter-spacing: .08em;
+        }
+        .p3-method-card header b {
+          border-radius: 999px;
+          padding: .18rem .46rem;
+          color: #5F6B7B;
+          background: #F2F4F6;
+          font-size: .64rem;
+        }
+        .p3-method-card.is-selected header b {
+          color: #115E59;
+          background: #CCFBF1;
+        }
+        .p3-method-card h3 {
+          margin: .7rem 0 .35rem;
+          color: #263238;
+          font-size: 1rem;
+          letter-spacing: -.02em;
+        }
+        .p3-method-card p {
+          min-height: 3.9em;
+          margin: 0;
+          color: #5F6B7B;
+          font-size: .75rem;
+          line-height: 1.45;
+        }
+        .p3-method-card ul {
+          display: grid;
+          gap: .3rem;
+          margin: .75rem 0 0;
+          padding: .7rem 0 0 1rem;
+          border-top: 1px solid #ECEDEF;
+          color: #3A4950;
+          font-size: .72rem;
+          line-height: 1.4;
+        }
+        .p3-experiment-heading {
+          display: flex;
+          align-items: center;
+          gap: .7rem;
+          margin: 1.1rem 0 .55rem;
+          border-left: 3px solid #5F6B7B;
+          padding: .55rem .7rem;
+          background: #F7F8F9;
+        }
+        .p3-experiment-heading.is-polished {
+          border-left-color: #0F766E;
+          background: #F0FDFA;
+        }
+        .p3-experiment-heading > span {
+          color: #5F6B7B;
+          font-size: .62rem;
+          font-weight: 850;
+          letter-spacing: .08em;
+          white-space: nowrap;
+        }
+        .p3-experiment-heading div {
+          display: flex;
+          min-width: 0;
+          flex-direction: column;
+          gap: .1rem;
+        }
+        .p3-experiment-heading strong {
+          color: #263238;
+          font-size: .9rem;
+        }
+        .p3-experiment-heading small {
+          overflow: hidden;
+          color: #5F6B7B;
+          font-size: .68rem;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .p3-react-runtime {
+          margin: 1.5rem 0;
+          border: 1px solid #DCDCDD;
+          border-radius: 14px;
+          padding: 1rem;
+          background: #FFFFFF;
+        }
+        .p3-react-runtime > header,
+        .p3-decision-panel > header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+        }
+        .p3-react-runtime header small,
+        .p3-decision-panel header small {
+          color: #0F766E;
+          font-size: .64rem;
+          font-weight: 850;
+          letter-spacing: .08em;
+        }
+        .p3-react-runtime h2,
+        .p3-decision-panel h2 {
+          margin: .2rem 0 0;
+          color: #263238;
+          font-size: 1.15rem;
+          letter-spacing: -.025em;
+        }
+        .p3-react-runtime-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: .55rem;
+          margin: 1rem 0;
+        }
+        .p3-react-runtime-grid article {
+          min-width: 0;
+          border: 1px solid #ECEDEF;
+          border-radius: 9px;
+          padding: .7rem;
+          background: #F7F8F9;
+        }
+        .p3-react-runtime-grid b {
+          display: block;
+          margin-bottom: .2rem;
+          color: #263238;
+          font-size: .75rem;
+        }
+        .p3-react-runtime-grid span {
+          color: #5F6B7B;
+          font-size: .69rem;
+          line-height: 1.4;
+        }
+        .p3-react-board-preview {
+          overflow: hidden;
+          border: 1px solid #DCDCDD;
+          border-radius: 4px;
+          background: #FFFFFF;
+        }
+        .p3-react-board-head {
+          display: flex;
+          min-height: 2.35rem;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+          border-bottom: 1px solid #DCDCDD;
+          padding: 0 .7rem;
+          color: #3A4950;
+          background: #F7F8F9;
+          font-size: .72rem;
+          font-weight: 800;
+        }
+        .p3-react-board-head div {
+          display: flex;
+          align-items: center;
+          gap: .35rem;
+        }
+        .p3-react-board-head i,
+        .p3-react-board-head b {
+          border: 1px solid #DCDCDD;
+          border-radius: 3px;
+          padding: .16rem .35rem;
+          color: #5F6B7B;
+          background: #FFFFFF;
+          font-size: .6rem;
+          font-style: normal;
+        }
+        .p3-react-board-head i {
+          color: #0C1C74;
+          background: rgba(12,28,116,.06);
+        }
+        .p3-react-board-head em {
+          color: #5F6B7B;
+          font-style: normal;
+          letter-spacing: .08em;
+        }
+        .p3-react-board-body {
+          display: grid;
+          min-height: 240px;
+          grid-template-columns: 180px minmax(0, 1fr);
+        }
+        .p3-react-board-body aside {
+          display: flex;
+          flex-direction: column;
+          gap: .35rem;
+          border-right: 1px solid #ECEDEF;
+          padding: .8rem;
+          background: #FAFBFC;
+        }
+        .p3-react-board-body aside strong {
+          color: #5F6B7B;
+          font-size: .62rem;
+          letter-spacing: .06em;
+          text-transform: uppercase;
+        }
+        .p3-react-board-body aside span {
+          color: #263238;
+          font-size: .82rem;
+          font-weight: 800;
+        }
+        .p3-react-board-body aside small {
+          color: #B91C1C;
+          font-size: .68rem;
+        }
+        .p3-react-chart-schematic {
+          position: relative;
+          min-width: 0;
+          padding: 1rem;
+          background: linear-gradient(#FFFFFF,#FFFFFF) padding-box;
+        }
+        .p3-react-chart-schematic svg {
+          position: absolute;
+          inset: 20px 18px 18px;
+          width: calc(100% - 36px);
+          height: calc(100% - 38px);
+        }
+        .p3-react-chart-gridline {
+          position: absolute;
+          right: 18px;
+          left: 18px;
+          height: 1px;
+          background: #ECEDEF;
+        }
+        .p3-react-chart-gridline.is-1 {top: 28%;}
+        .p3-react-chart-gridline.is-2 {top: 52%;}
+        .p3-react-chart-gridline.is-3 {top: 76%;}
+        .p3-react-board-preview footer {
+          display: flex;
+          flex-wrap: wrap;
+          gap: .4rem;
+          border-top: 1px solid #ECEDEF;
+          padding: .5rem .7rem;
+          background: #F7F8F9;
+        }
+        .p3-react-board-preview footer span {
+          border-radius: 999px;
+          padding: .18rem .42rem;
+          color: #5F6B7B;
+          background: #FFFFFF;
+          font-size: .62rem;
+        }
+        .p3-react-preview-note {
+          margin: .55rem 0 0;
+          color: #5F6B7B;
+          font-size: .68rem;
+        }
+        .p3-decision-panel {
+          margin: 1.5rem 0 .5rem;
+          border: 1px solid #0F766E;
+          border-radius: 14px;
+          padding: 1rem;
+          background: linear-gradient(145deg, #FFFFFF 0%, #F0FDFA 100%);
+        }
+        .p3-decision-panel > header > strong {
+          border-radius: 999px;
+          padding: .28rem .6rem;
+          color: #115E59;
+          background: #CCFBF1;
+          font-size: .66rem;
+          letter-spacing: .05em;
+        }
+        .p3-decision-table-wrap {
+          overflow-x: auto;
+          margin: 1rem 0 .7rem;
+          border: 1px solid #DCDCDD;
+          border-radius: 8px;
+          background: #FFFFFF;
+        }
+        .p3-decision-table {
+          width: 100%;
+          min-width: 760px;
+          border-collapse: collapse;
+          color: #3A4950;
+          font-size: .72rem;
+        }
+        .p3-decision-table th,
+        .p3-decision-table td {
+          border-bottom: 1px solid #ECEDEF;
+          padding: .55rem .65rem;
+          text-align: left;
+          vertical-align: top;
+        }
+        .p3-decision-table th {
+          color: #5F6B7B;
+          background: #F7F8F9;
+          font-size: .68rem;
+          white-space: nowrap;
+        }
+        .p3-decision-table tbody tr:last-child td {border-bottom: 0;}
+        .p3-decision-table td:first-child {font-weight: 750;}
+        .p3-decision-table .is-good {color: #15803D;font-weight: 750;}
+        .p3-decision-table .is-mid {color: #B45309;font-weight: 750;}
+        .p3-decision-table .is-selected {color: #115E59;font-weight: 850;background: #F0FDFA;}
+        .p3-decision-panel > p {
+          margin: 0;
+          color: #3A4950;
+          font-size: .76rem;
+          line-height: 1.55;
         }
         div[data-testid="stChatMessage"] {
           border: 1px solid #E2E8F0;
@@ -311,9 +634,67 @@ def render_app_shell(app_title: str) -> None:
           .p3-workflow {grid-template-columns:repeat(2,minmax(0,1fr));}
           .p3-plotly-comparison-hero {grid-template-columns:1fr;}
           .p3-comparison-notes {grid-template-columns:repeat(2,minmax(0,1fr));}
+          .p3-method-grid {grid-template-columns:1fr;}
+          .p3-method-card p {min-height:0;}
+          .p3-react-runtime-grid {grid-template-columns:repeat(2,minmax(0,1fr));}
+          .p3-react-board-body {grid-template-columns:1fr;}
+          .p3-react-board-body aside {border-right:0;border-bottom:1px solid #ECEDEF;}
+        }
+        @media (max-width: 1320px) {
+          .st-key-dashboard-runtime-grid [data-testid="stHorizontalBlock"] {
+            flex-wrap: wrap;
+          }
+          .st-key-dashboard-runtime-grid [data-testid="stColumn"] {
+            flex: 1 1 100% !important;
+            width: 100% !important;
+            min-width: 100% !important;
+          }
+        }
+        @media (max-width: 1100px) {
+          .st-key-dashboard-structure-grid [data-testid="stHorizontalBlock"],
+          .st-key-dashboard-process-grid [data-testid="stHorizontalBlock"],
+          .st-key-dashboard-quality-grid [data-testid="stHorizontalBlock"] {
+            flex-wrap: wrap;
+          }
+          .st-key-dashboard-structure-grid [data-testid="stColumn"],
+          .st-key-dashboard-process-grid [data-testid="stColumn"],
+          .st-key-dashboard-quality-grid [data-testid="stColumn"] {
+            flex: 1 1 100% !important;
+            width: 100% !important;
+            min-width: 100% !important;
+          }
+          .st-key-dashboard-primary-metrics [data-testid="stHorizontalBlock"],
+          .st-key-dashboard-integrity-metrics [data-testid="stHorizontalBlock"],
+          .st-key-dashboard-runtime-metrics [data-testid="stHorizontalBlock"],
+          .st-key-dashboard-usage-metrics [data-testid="stHorizontalBlock"] {
+            flex-wrap: wrap;
+          }
+          .st-key-dashboard-primary-metrics [data-testid="stColumn"],
+          .st-key-dashboard-runtime-metrics [data-testid="stColumn"] {
+            flex: 1 1 calc(33.333% - .7rem) !important;
+            width: calc(33.333% - .7rem) !important;
+            min-width: 150px !important;
+          }
+          .st-key-dashboard-integrity-metrics [data-testid="stColumn"],
+          .st-key-dashboard-usage-metrics [data-testid="stColumn"] {
+            flex: 1 1 calc(50% - .7rem) !important;
+            width: calc(50% - .7rem) !important;
+            min-width: 170px !important;
+          }
         }
         @media (max-width: 560px) {
           .p3-comparison-notes {grid-template-columns:1fr;}
+          .p3-react-runtime > header,
+          .p3-decision-panel > header {align-items:flex-start;flex-direction:column;}
+          .p3-react-runtime-grid {grid-template-columns:1fr;}
+          .st-key-dashboard-primary-metrics [data-testid="stColumn"],
+          .st-key-dashboard-integrity-metrics [data-testid="stColumn"],
+          .st-key-dashboard-runtime-metrics [data-testid="stColumn"],
+          .st-key-dashboard-usage-metrics [data-testid="stColumn"] {
+            flex: 1 1 100% !important;
+            width: 100% !important;
+            min-width: 100% !important;
+          }
         }
         </style>
         """,

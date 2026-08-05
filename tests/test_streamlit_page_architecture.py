@@ -59,6 +59,16 @@ class StreamlitPageArchitectureTest(unittest.TestCase):
         self.assertIn("frontend.workspaces.", console)
         self.assertNotIn("frontend.pages.", entrypoint + router + console)
 
+    def test_visualization_decision_page_covers_all_three_implementations(self):
+        source = (FRONTEND_ROOT / "plotly_comparison.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("Plotly Express + Streamlit", source)
+        self.assertIn("Plotly Graph Objects + Streamlit", source)
+        self.assertIn("React + Apache ECharts", source)
+        self.assertIn("React + ECharts를 최종 Dashboard로 선택", source)
+        self.assertIn("p3-decision-table", source)
+
     def test_legacy_pages_redirect_to_canonical_workspaces(self):
         expected_redirects = {
             "audit.py": "audit_logs",

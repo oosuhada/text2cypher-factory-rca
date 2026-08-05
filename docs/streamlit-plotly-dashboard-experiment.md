@@ -12,7 +12,8 @@
 https://plotly-streamlit.oosu.dev/?workspace=dashboard
 ```
 
-기본 Plotly Express와 개선된 제품 스타일을 같은 데이터로 비교하는 주소:
+Plotly Express, Plotly Graph Objects와 현재 React + ECharts 제품을 비교하고
+최종 기술 선택 근거를 확인하는 주소:
 
 ```text
 https://plotly-streamlit.oosu.dev/?compare=plotly-ui
@@ -20,7 +21,7 @@ https://plotly-streamlit.oosu.dev/?compare=plotly-ui
 
 ## 구현 범위
 
-`frontend/dashboard_plotly.py`에 순수 figure builder를 구성하고
+`frontend/dashboard_plotly.py`에 Plotly Graph Objects 기반 순수 figure builder를 구성하고
 `frontend/pages/dashboard.py`에서 `st.plotly_chart`로 렌더링한다.
 
 | # | 차트 | 표현 방식 |
@@ -56,7 +57,23 @@ https://plotly-streamlit.oosu.dev/?compare=plotly-ui
 - 제품형 hover tooltip
 - 발표에 불필요한 Plotly logo·Modebar 제거
 - 빈 데이터 전용 안내 상태
-- 루트 query 기반 Before/After 비교 페이지
+- 1024px 이하 차트 Board 1열 전환
+- KPI 카드 3열·2열·1열 반응형 재배치
+- Plotly card와 Figure 높이 불일치로 발생하던 축 clipping 제거
+- 루트 query 기반 3개 구현 비교·기술 선택 페이지
+
+## 기술 선택 결론
+
+| 구현 | 검증한 목적 | 결론 |
+|---|---|---|
+| Plotly Express + Streamlit | 최소 코드로 데이터 연결과 차트 생성 속도 확인 | 연결성 PoC에 유지 |
+| Plotly Graph Objects + Streamlit | trace, hover, semantic color와 margin 직접 제어 | 분석·내부 보고에 유지 |
+| React + Apache ECharts | Board grid, Inspector, selection·brush cross-filter, 역할·Object context 통합 | 최종 사용자 Dashboard로 선택 |
+
+Plotly 자체의 표현력은 충분하지만 최종 제품의 핵심 요구사항은 개별 Figure보다
+Dashboard layout, Board 상태 계약, cross-filter, 저장된 view와 AI 시각화 전환이다.
+이 요구사항은 이미 React + ECharts runtime에 구현되어 있으므로 최종 제품은 해당
+구조를 사용하고 Streamlit Plotly는 실험·진단 화면으로 범위를 제한한다.
 
 ## 검증
 
@@ -71,7 +88,8 @@ python -m pytest tests/test_dashboard_plotly.py -q
 - 빈 입력이 안전한 empty-state figure를 반환
 - 공통 투명 canvas, grid, bar corner와 hover template 적용
 - Donut 합계 annotation과 semantic 색상 적용
-- 비교 페이지가 동일 snapshot에서 기본·개선 Figure를 함께 렌더링
+- 비교 페이지가 동일 snapshot에서 Plotly Express·Graph Objects 결과를 렌더링
+- React + ECharts 구현 범위와 최종 선택 기준표 표시
 
 추가로 `streamlit.testing.v1.AppTest`에 실제 Dashboard snapshot을 주입해 전체
 화면을 렌더링했다.
@@ -90,5 +108,10 @@ targeted Streamlit tests: 20 passed
 cross-surface release gate: PASS
 comparison page exceptions: 0
 comparison page failed requests: 0
+1440px chart label clipping: 0
+1024px chart label clipping: 0
+768px chart label clipping: 0
+1024px structure/runtime columns: full-width stacked
+768px KPI cards: 2 columns
 ```
 

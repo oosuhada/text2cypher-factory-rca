@@ -96,6 +96,9 @@ def test_polished_figures_use_product_visual_defaults() -> None:
     assert figure.layout.plot_bgcolor == "rgba(0,0,0,0)"
     assert figure.layout.barcornerradius == 4
     assert figure.layout.xaxis.gridcolor == "#ECEDEF"
+    assert figure.layout.xaxis.title.text is None
+    assert figure.layout.yaxis.title.text is None
+    assert isinstance(figure.data[0], go.Bar)
     assert figure.data[0].hovertemplate.endswith("<extra></extra>")
     assert PLOTLY_CHART_CONFIG["displayModeBar"] is False
     assert PLOTLY_CHART_CONFIG["displaylogo"] is False
@@ -113,4 +116,16 @@ def test_status_donut_contains_total_and_semantic_colors() -> None:
     assert "6" in figure.layout.annotations[0].text
     assert list(figure.data[0].marker.colors) == ["#29A634", "#DB0714"]
     assert figure.data[0].hole == 0.68
+    assert list(figure.data[0].labels) == ["성공", "차단"]
+    assert figure.data[0].textinfo == "none"
+
+
+def test_graph_objects_are_used_for_the_custom_plotly_experiment() -> None:
+    bar = build_node_counts_figure([{"label": "Part", "count": 12}])
+    donut = build_status_counts_figure([{"status": "success", "count": 2}])
+    line = build_recent_latency_figure([{"elapsed_ms": 120}])
+
+    assert isinstance(bar.data[0], go.Bar)
+    assert isinstance(donut.data[0], go.Pie)
+    assert isinstance(line.data[0], go.Scatter)
 

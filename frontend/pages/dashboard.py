@@ -205,7 +205,7 @@ def render_dashboard_tab(
     )
     st.markdown(
         '<a class="p3-workspace-link p3-plotly-compare-link" '
-        'href="/?compare=plotly-ui" target="_self">기본 Plotly와 개선 UI 비교 →</a>',
+        'href="/?compare=plotly-ui" target="_self">시각화 기술 선택 근거 보기 →</a>',
         unsafe_allow_html=True,
     )
     if snapshot is None:
@@ -224,99 +224,104 @@ def render_dashboard_tab(
 
     totals = snapshot["totals"]
     evaluation = snapshot["evaluation"]
-    metric_columns = st.columns(6)
-    metric_columns[0].metric("전체 노드", f"{totals['nodes']:,}")
-    metric_columns[1].metric(
-        "전체 관계", f"{totals['relationships']:,}"
-    )
-    metric_columns[2].metric("스키마", evaluation["schema_version"])
-    metric_columns[3].metric(
-        "Gold 실행", f"{evaluation['gold_execution_success_rate']:.0%}"
-    )
-    metric_columns[4].metric(
-        "읽기 전용", f"{evaluation['read_only_compliance_rate']:.0%}"
-    )
-    metric_columns[5].metric("자동 테스트", evaluation["unit_test_count"])
+    with st.container(key="dashboard-primary-metrics"):
+        metric_columns = st.columns(6)
+        metric_columns[0].metric("전체 노드", f"{totals['nodes']:,}")
+        metric_columns[1].metric(
+            "전체 관계", f"{totals['relationships']:,}"
+        )
+        metric_columns[2].metric("스키마", evaluation["schema_version"])
+        metric_columns[3].metric(
+            "Gold 실행", f"{evaluation['gold_execution_success_rate']:.0%}"
+        )
+        metric_columns[4].metric(
+            "읽기 전용", f"{evaluation['read_only_compliance_rate']:.0%}"
+        )
+        metric_columns[5].metric("자동 테스트", evaluation["unit_test_count"])
 
     st.markdown("#### 데이터 무결성")
     integrity = snapshot["integrity"]
-    integrity_columns = st.columns(5)
-    integrity_columns[0].metric(
-        "Genealogy 완전성", f"{integrity['genealogy_rate']:.1%}"
-    )
-    integrity_columns[1].metric(
-        "완전 연결 제품", f"{integrity['complete_genealogy']:,}"
-    )
-    integrity_columns[2].metric(
-        "불완전 연결", f"{integrity['incomplete_genealogy']:,}"
-    )
-    integrity_columns[3].metric(
-        "고아 공정/측정",
-        f"{integrity['orphan_process_runs']} / "
-        f"{integrity['orphan_measurements']}",
-    )
-    integrity_columns[4].metric(
-        "품질 불합격", f"{integrity['quality_failure_count']:,}"
-    )
+    with st.container(key="dashboard-integrity-metrics"):
+        integrity_columns = st.columns(5)
+        integrity_columns[0].metric(
+            "Genealogy 완전성", f"{integrity['genealogy_rate']:.1%}"
+        )
+        integrity_columns[1].metric(
+            "완전 연결 제품", f"{integrity['complete_genealogy']:,}"
+        )
+        integrity_columns[2].metric(
+            "불완전 연결", f"{integrity['incomplete_genealogy']:,}"
+        )
+        integrity_columns[3].metric(
+            "고아 공정/측정",
+            f"{integrity['orphan_process_runs']} / "
+            f"{integrity['orphan_measurements']}",
+        )
+        integrity_columns[4].metric(
+            "품질 불합격", f"{integrity['quality_failure_count']:,}"
+        )
 
     structure_tab, process_tab, quality_tab = st.tabs(
         ["그래프 구조", "공정·장비", "이상·품질"]
     )
     with structure_tab:
-        left, right = st.columns(2)
-        with left:
-            st.markdown("##### 노드 유형")
-            render_dashboard_figure(
-                build_node_counts_figure(snapshot["node_counts"]),
-                key="dashboard-node-counts",
-            )
-        with right:
-            st.markdown("##### 관계 유형")
-            render_dashboard_figure(
-                build_relationship_counts_figure(snapshot["relationship_counts"]),
-                key="dashboard-relationship-counts",
-            )
+        with st.container(key="dashboard-structure-grid"):
+            left, right = st.columns(2)
+            with left:
+                st.markdown("##### 노드 유형")
+                render_dashboard_figure(
+                    build_node_counts_figure(snapshot["node_counts"]),
+                    key="dashboard-node-counts",
+                )
+            with right:
+                st.markdown("##### 관계 유형")
+                render_dashboard_figure(
+                    build_relationship_counts_figure(snapshot["relationship_counts"]),
+                    key="dashboard-relationship-counts",
+                )
     with process_tab:
-        left, right = st.columns(2)
-        with left:
-            st.markdown("##### 장비별 공정 실행")
-            if snapshot["equipment_runs"]:
-                render_dashboard_figure(
-                    build_equipment_runs_figure(snapshot["equipment_runs"]),
-                    key="dashboard-equipment-runs",
-                )
-            else:
-                st.info("이 스키마에는 장비별 공정 집계가 정의되지 않았습니다.")
-        with right:
-            st.markdown("##### 장비 상세")
-            if snapshot["equipment_runs"]:
-                st.dataframe(
-                    pd.DataFrame(snapshot["equipment_runs"]),
-                    width="stretch",
-                    hide_index=True,
-                )
-            else:
-                st.info("표시할 장비 집계가 없습니다.")
+        with st.container(key="dashboard-process-grid"):
+            left, right = st.columns(2)
+            with left:
+                st.markdown("##### 장비별 공정 실행")
+                if snapshot["equipment_runs"]:
+                    render_dashboard_figure(
+                        build_equipment_runs_figure(snapshot["equipment_runs"]),
+                        key="dashboard-equipment-runs",
+                    )
+                else:
+                    st.info("이 스키마에는 장비별 공정 집계가 정의되지 않았습니다.")
+            with right:
+                st.markdown("##### 장비 상세")
+                if snapshot["equipment_runs"]:
+                    st.dataframe(
+                        pd.DataFrame(snapshot["equipment_runs"]),
+                        width="stretch",
+                        hide_index=True,
+                    )
+                else:
+                    st.info("표시할 장비 집계가 없습니다.")
     with quality_tab:
-        left, right = st.columns(2)
-        with left:
-            st.markdown("##### 이상 유형 분포")
-            if snapshot["anomaly_runs"]:
-                render_dashboard_figure(
-                    build_anomaly_runs_figure(snapshot["anomaly_runs"]),
-                    key="dashboard-anomaly-runs",
-                )
-            else:
-                st.info("이 스키마에는 이상 유형 집계가 정의되지 않았습니다.")
-        with right:
-            st.markdown("##### 품질 불합격 상위 항목")
-            if snapshot["quality_failures"]:
-                render_dashboard_figure(
-                    build_quality_failures_figure(snapshot["quality_failures"]),
-                    key="dashboard-quality-failures",
-                )
-            else:
-                st.info("이 스키마에는 품질 불합격 집계가 정의되지 않았습니다.")
+        with st.container(key="dashboard-quality-grid"):
+            left, right = st.columns(2)
+            with left:
+                st.markdown("##### 이상 유형 분포")
+                if snapshot["anomaly_runs"]:
+                    render_dashboard_figure(
+                        build_anomaly_runs_figure(snapshot["anomaly_runs"]),
+                        key="dashboard-anomaly-runs",
+                    )
+                else:
+                    st.info("이 스키마에는 이상 유형 집계가 정의되지 않았습니다.")
+            with right:
+                st.markdown("##### 품질 불합격 상위 항목")
+                if snapshot["quality_failures"]:
+                    render_dashboard_figure(
+                        build_quality_failures_figure(snapshot["quality_failures"]),
+                        key="dashboard-quality-failures",
+                    )
+                else:
+                    st.info("이 스키마에는 품질 불합격 집계가 정의되지 않았습니다.")
 
     st.markdown("#### Agent 품질과 런타임")
     runtime = snapshot["runtime"]
@@ -324,79 +329,82 @@ def render_dashboard_tab(
     def rate_text(value: float | None) -> str:
         return "—" if value is None else f"{value:.0%}"
 
-    runtime_columns = st.columns(6)
-    runtime_columns[0].metric("누적 질의", runtime["query_count"])
-    runtime_columns[1].metric(
-        "런타임 성공률", rate_text(runtime["success_rate"])
-    )
-    runtime_columns[2].metric(
-        "평균 응답시간", f"{runtime['average_elapsed_ms']:.0f}ms"
-    )
-    runtime_columns[3].metric(
-        "자기수정 시도", runtime["correction_count"]
-    )
-    runtime_columns[4].metric(
-        "자기수정 성공률",
-        rate_text(runtime["correction_success_rate"]),
-    )
-    blind_accuracy = evaluation.get("blind_result_accuracy")
-    runtime_columns[5].metric(
-        "Blind 의미값 정확도",
-        "평가 전" if blind_accuracy is None else f"{blind_accuracy:.0%}",
-    )
+    with st.container(key="dashboard-runtime-metrics"):
+        runtime_columns = st.columns(6)
+        runtime_columns[0].metric("누적 질의", runtime["query_count"])
+        runtime_columns[1].metric(
+            "런타임 성공률", rate_text(runtime["success_rate"])
+        )
+        runtime_columns[2].metric(
+            "평균 응답시간", f"{runtime['average_elapsed_ms']:.0f}ms"
+        )
+        runtime_columns[3].metric(
+            "자기수정 시도", runtime["correction_count"]
+        )
+        runtime_columns[4].metric(
+            "자기수정 성공률",
+            rate_text(runtime["correction_success_rate"]),
+        )
+        blind_accuracy = evaluation.get("blind_result_accuracy")
+        runtime_columns[5].metric(
+            "Blind 의미값 정확도",
+            "평가 전" if blind_accuracy is None else f"{blind_accuracy:.0%}",
+        )
 
-    usage_columns = st.columns(4)
-    usage_columns[0].metric(
-        "모델 호출", f"{runtime['model_call_count']:,}"
-    )
-    usage_columns[1].metric(
-        "입력 토큰", f"{runtime['input_tokens']:,}"
-    )
-    usage_columns[2].metric(
-        "출력 토큰", f"{runtime['output_tokens']:,}"
-    )
-    usage_columns[3].metric(
-        "추정 모델 비용",
-        f"${runtime['estimated_cost_usd']:.4f}",
-    )
+    with st.container(key="dashboard-usage-metrics"):
+        usage_columns = st.columns(4)
+        usage_columns[0].metric(
+            "모델 호출", f"{runtime['model_call_count']:,}"
+        )
+        usage_columns[1].metric(
+            "입력 토큰", f"{runtime['input_tokens']:,}"
+        )
+        usage_columns[2].metric(
+            "출력 토큰", f"{runtime['output_tokens']:,}"
+        )
+        usage_columns[3].metric(
+            "추정 모델 비용",
+            f"${runtime['estimated_cost_usd']:.4f}",
+        )
 
-    status_column, recent_column = st.columns([1, 2])
-    with status_column:
-        st.markdown("##### 질의 상태")
-        if runtime["status_counts"]:
-            render_dashboard_figure(
-                build_status_counts_figure(runtime["status_counts"]),
-                key="dashboard-runtime-status",
-            )
-        else:
-            st.info("아직 기록된 질의가 없습니다.")
-        if runtime["provider_counts"]:
-            render_dashboard_figure(
-                build_provider_counts_figure(runtime["provider_counts"]),
-                key="dashboard-runtime-provider",
-            )
-    with recent_column:
-        st.markdown("##### 최근 질의")
-        if runtime["recent_queries"]:
-            recent_queries = pd.DataFrame(runtime["recent_queries"])
-            st.dataframe(
-                recent_queries,
-                width="stretch",
-                hide_index=True,
-                column_config={
-                    "question": st.column_config.TextColumn(width="large"),
-                    "elapsed_ms": st.column_config.NumberColumn(
-                        "elapsed_ms", format="%d ms"
-                    ),
-                },
-            )
-            if "elapsed_ms" in recent_queries:
+    with st.container(key="dashboard-runtime-grid"):
+        status_column, recent_column = st.columns([1, 2])
+        with status_column:
+            st.markdown("##### 질의 상태")
+            if runtime["status_counts"]:
                 render_dashboard_figure(
-                    build_recent_latency_figure(runtime["recent_queries"]),
-                    key="dashboard-recent-latency",
+                    build_status_counts_figure(runtime["status_counts"]),
+                    key="dashboard-runtime-status",
                 )
-        else:
-            st.info("Query Studio에서 질문을 실행하면 이력이 기록됩니다.")
+            else:
+                st.info("아직 기록된 질의가 없습니다.")
+            if runtime["provider_counts"]:
+                render_dashboard_figure(
+                    build_provider_counts_figure(runtime["provider_counts"]),
+                    key="dashboard-runtime-provider",
+                )
+        with recent_column:
+            st.markdown("##### 최근 질의")
+            if runtime["recent_queries"]:
+                recent_queries = pd.DataFrame(runtime["recent_queries"])
+                st.dataframe(
+                    recent_queries,
+                    width="stretch",
+                    hide_index=True,
+                    column_config={
+                        "question": st.column_config.TextColumn(width="large"),
+                        "elapsed_ms": st.column_config.NumberColumn(
+                            "elapsed_ms", format="%d ms"
+                        ),
+                    },
+                )
+                if "elapsed_ms" in recent_queries:
+                    render_dashboard_figure(
+                        build_recent_latency_figure(runtime["recent_queries"]),
+                        key="dashboard-recent-latency",
+                    )
+            else:
+                st.info("Query Studio에서 질문을 실행하면 이력이 기록됩니다.")
 
     st.markdown("#### 도메인 전문가 검증")
     feedback_service = getattr(services, "feedback", None)

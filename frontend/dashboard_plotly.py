@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import Any, Iterable, Literal
 
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 
 
@@ -76,7 +75,7 @@ def style_dashboard_figure(
             "size": 11,
             "color": PLOTLY_NEUTRAL["ink"],
         },
-        margin={"l": 14, "r": 18, "t": 18, "b": 20, "pad": 0},
+        margin={"l": 14, "r": 18, "t": 18, "b": 14, "pad": 0},
         hoverlabel={
             "bgcolor": PLOTLY_NEUTRAL["surface"],
             "bordercolor": PLOTLY_NEUTRAL["border"],
@@ -114,6 +113,8 @@ def style_dashboard_figure(
     }
     figure.update_xaxes(**axis_common)
     figure.update_yaxes(**axis_common)
+    figure.update_xaxes(title_text=None)
+    figure.update_yaxes(title_text=None)
     if orientation == "horizontal":
         figure.update_xaxes(
             showgrid=True,
@@ -170,23 +171,26 @@ def _horizontal_bar(
     if frame.empty or category not in frame or value not in frame:
         return _empty_figure()
     frame = frame.sort_values(value, ascending=True).tail(14)
-    figure = px.bar(
-        frame,
-        x=value,
-        y=category,
-        orientation="h",
-        hover_data=hover_data or [],
-        labels={category: category_label, value: value_label},
-        text=value,
+    custom_columns = [column for column in (hover_data or []) if column in frame]
+    customdata = frame[custom_columns].to_numpy() if custom_columns else None
+    hover_lines = [f"<b>%{{y}}</b>", f"{value_label} %{{x:,.0f}}"]
+    hover_lines.extend(
+        f"{column} %{{customdata[{index}]}}"
+        for index, column in enumerate(custom_columns)
     )
-    figure.update_traces(
-        marker={"color": PLOTLY_SERIES[0], "line": {"width": 0}},
-        texttemplate="%{x:,.0f}",
-        textposition="outside",
-        cliponaxis=False,
-        hovertemplate=(
-            f"<b>%{{y}}</b><br>{value_label} %{{x:,.0f}}<extra></extra>"
-        ),
+    figure = go.Figure(
+        go.Bar(
+            x=frame[value],
+            y=frame[category],
+            orientation="h",
+            marker={"color": PLOTLY_SERIES[0], "line": {"width": 0}},
+            text=frame[value],
+            texttemplate="%{x:,.0f}",
+            textposition="outside",
+            cliponaxis=False,
+            customdata=customdata,
+            hovertemplate="<br>".join(hover_lines) + "<extra></extra>",
+        )
     )
     height = max(260, min(390, 25 * len(frame) + 96))
     style_dashboard_figure(
@@ -195,7 +199,7 @@ def _horizontal_bar(
         orientation="horizontal",
         value_tickformat=",~s",
     )
-    figure.update_layout(margin={"l": 12, "r": 44, "t": 18, "b": 20})
+    figure.update_layout(margin={"l": 12, "r": 44, "t": 18, "b": 12})
     return figure
 
 
@@ -236,19 +240,17 @@ def build_anomaly_runs_figure(rows: Iterable[dict[str, Any]] | None) -> go.Figur
     if frame.empty or not {"anomaly_code", "run_count"}.issubset(frame.columns):
         return _empty_figure()
     frame = frame.sort_values("run_count", ascending=False).head(10)
-    figure = px.bar(
-        frame,
-        x="anomaly_code",
-        y="run_count",
-        labels={"anomaly_code": "이상 유형", "run_count": "실행 수"},
-        text="run_count",
-    )
-    figure.update_traces(
-        marker={"color": PLOTLY_SERIES[1], "line": {"width": 0}},
-        texttemplate="%{y:,.0f}",
-        textposition="outside",
-        cliponaxis=False,
-        hovertemplate="<b>%{x}</b><br>실행 수 %{y:,.0f}<extra></extra>",
+    figure = go.Figure(
+        go.Bar(
+            x=frame["anomaly_code"],
+            y=frame["run_count"],
+            marker={"color": PLOTLY_SERIES[1], "line": {"width": 0}},
+            text=frame["run_count"],
+            texttemplate="%{y:,.0f}",
+            textposition="outside",
+            cliponaxis=False,
+            hovertemplate="<b>%{x}</b><br>실행 수 %{y:,.0f}<extra></extra>",
+        )
     )
     style_dashboard_figure(
         figure,
@@ -280,22 +282,28 @@ def build_status_counts_figure(rows: Iterable[dict[str, Any]] | None) -> go.Figu
         PLOTLY_STATUS_COLORS.get(str(status), PLOTLY_SERIES[index % len(PLOTLY_SERIES)])
         for index, status in enumerate(frame["status"])
     ]
-    figure = px.pie(
-        frame,
-        names="status",
-        values="count",
-        hole=0.68,
-    )
-    figure.update_traces(
-        marker={
-            "colors": colors,
-            "line": {"color": PLOTLY_NEUTRAL["surface"], "width": 3},
-        },
-        textposition="inside",
-        textinfo="percent",
-        textfont={"size": 10},
-        hovertemplate="<b>%{label}</b><br>%{value:,.0f}건 · %{percent}<extra></extra>",
-        sort=False,
+    status_labels = {
+        "success": "성공",
+        "blocked": "차단",
+        "empty": "빈 결과",
+        "needs_clarification": "추가 확인",
+        "unsupported": "미지원",
+        "error": "오류",
+    }
+    labels = [status_labels.get(str(status), str(status)) for status in frame["status"]]
+    figure = go.Figure(
+        go.Pie(
+            labels=labels,
+            values=frame["count"],
+            hole=0.68,
+            marker={
+                "colors": colors,
+                "line": {"color": PLOTLY_NEUTRAL["surface"], "width": 3},
+            },
+            textinfo="none",
+            hovertemplate="<b>%{label}</b><br>%{value:,.0f}건 · %{percent}<extra></extra>",
+            sort=False,
+        )
     )
     figure.add_annotation(
         text=(
@@ -309,7 +317,7 @@ def build_status_counts_figure(rows: Iterable[dict[str, Any]] | None) -> go.Figu
     )
     style_dashboard_figure(
         figure,
-        height=300,
+        height=322,
         orientation="none",
         show_legend=True,
     )
@@ -317,13 +325,13 @@ def build_status_counts_figure(rows: Iterable[dict[str, Any]] | None) -> go.Figu
         legend={
             "orientation": "h",
             "yanchor": "top",
-            "y": -0.02,
+            "y": -0.04,
             "xanchor": "center",
             "x": 0.5,
             "font": {"size": 9, "color": PLOTLY_NEUTRAL["muted"]},
             "title": None,
         },
-        margin={"l": 6, "r": 6, "t": 8, "b": 48},
+        margin={"l": 8, "r": 8, "t": 8, "b": 70},
     )
     return figure
 
@@ -344,27 +352,23 @@ def build_recent_latency_figure(rows: Iterable[dict[str, Any]] | None) -> go.Fig
         return _empty_figure()
     frame = frame.reset_index(drop=True).copy()
     frame["sequence"] = frame.index + 1
-    hover = [column for column in ("question", "status", "provider") if column in frame]
-    figure = px.line(
-        frame,
-        x="sequence",
-        y="elapsed_ms",
-        markers=True,
-        hover_data=hover,
-        labels={"sequence": "최근 실행 순서", "elapsed_ms": "응답시간 (ms)"},
-    )
-    figure.update_traces(
-        line={"color": PLOTLY_SERIES[0], "width": 3, "shape": "spline"},
-        marker={
-            "size": 7,
-            "color": PLOTLY_NEUTRAL["surface"],
-            "line": {"color": PLOTLY_SERIES[0], "width": 2},
-        },
-        fill="tozeroy",
-        fillcolor=_rgba(PLOTLY_SERIES[0], 0.08),
-        hovertemplate=(
-            "<b>최근 실행 %{x}</b><br>응답시간 %{y:,.0f} ms<extra></extra>"
-        ),
+    figure = go.Figure(
+        go.Scatter(
+            x=frame["sequence"],
+            y=frame["elapsed_ms"],
+            mode="lines+markers",
+            line={"color": PLOTLY_SERIES[0], "width": 3, "shape": "spline"},
+            marker={
+                "size": 7,
+                "color": PLOTLY_NEUTRAL["surface"],
+                "line": {"color": PLOTLY_SERIES[0], "width": 2},
+            },
+            fill="tozeroy",
+            fillcolor=_rgba(PLOTLY_SERIES[0], 0.08),
+            hovertemplate=(
+                "<b>최근 실행 %{x}</b><br>응답시간 %{y:,.0f} ms<extra></extra>"
+            ),
+        )
     )
     style_dashboard_figure(
         figure,
@@ -397,28 +401,19 @@ def build_blind_comparison_figure(comparison: pd.DataFrame) -> go.Figure:
         "schema_compliance_rate": "Schema 준수",
         "read_only_compliance_rate": "읽기 전용",
     }
-    melted = comparison.melt(
-        id_vars=["variant"],
-        value_vars=rate_columns,
-        var_name="metric",
-        value_name="rate",
-    )
-    melted["metric_label"] = melted["metric"].map(metric_labels)
-    figure = px.bar(
-        melted,
-        x="variant",
-        y="rate",
-        color="metric_label",
-        barmode="group",
-        labels={"variant": "Variant", "rate": "비율", "metric_label": "지표"},
-        color_discrete_sequence=list(PLOTLY_SERIES),
-    )
-    figure.update_traces(
-        marker_line_width=0,
-        hovertemplate=(
-            "<b>%{x}</b><br>%{fullData.name} %{y:.0%}<extra></extra>"
-        ),
-    )
+    figure = go.Figure()
+    for index, column in enumerate(rate_columns):
+        figure.add_trace(
+            go.Bar(
+                name=metric_labels[column],
+                x=comparison["variant"],
+                y=comparison[column],
+                marker={"color": PLOTLY_SERIES[index % len(PLOTLY_SERIES)]},
+                hovertemplate=(
+                    "<b>%{x}</b><br>%{fullData.name} %{y:.0%}<extra></extra>"
+                ),
+            )
+        )
     style_dashboard_figure(
         figure,
         height=330,
@@ -438,6 +433,6 @@ def build_blind_comparison_figure(comparison: pd.DataFrame) -> go.Figure:
             "font": {"size": 9, "color": PLOTLY_NEUTRAL["muted"]},
             "title": None,
         },
-        margin={"l": 14, "r": 16, "t": 48, "b": 24},
+        margin={"l": 14, "r": 16, "t": 48, "b": 14},
     )
     return figure
