@@ -9,7 +9,7 @@
 공개 확인 주소:
 
 ```text
-https://plotly-streamlit.oosu.dev/dashboard
+https://plotly-streamlit.oosu.dev/?workspace=dashboard
 ```
 
 ## 구현 범위
