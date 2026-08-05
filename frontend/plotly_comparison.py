@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
+import json
+import os
 from pathlib import Path
-from typing import Any, Callable
+from time import perf_counter
+from typing import Any
+from urllib.parse import quote
 
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+import streamlit.components.v1 as components
 
 from frontend.dashboard_plotly import (
     build_node_counts_figure,
@@ -28,6 +33,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 REACT_ECHARTS_URL = (
     "https://dashboard.oosu.dev/app/projects/manufacturing-demo-project"
 )
+REACT_ECHARTS_EMBED_URL = os.getenv(
+    "P3_REACT_ECHARTS_EMBED_URL",
+    "https://dashboard.oosu.dev/visualization-compare/echarts",
+).rstrip("/")
+BENCHMARK_PATH = Path(__file__).with_name("visualization_renderer_benchmark.json")
 DEFAULT_CONFIG = {
     "displaylogo": True,
     "displayModeBar": "hover",
@@ -197,32 +207,109 @@ def _render_react_echarts_runtime() -> None:
     )
 
 
-def _case_builders(
+def _shared_case_data(
     snapshot: dict[str, Any],
     case: str,
-) -> tuple[str, go.Figure | None, go.Figure | None, str | None]:
+) -> tuple[str, list[dict[str, Any]], str, str | None]:
     runtime = snapshot["runtime"]
     if case == "범주 비교":
         rows = snapshot["node_counts"]
         if not rows:
-            return case, None, None, "현재 프로젝트에는 노드 유형 집계가 없습니다."
-        return case, _default_node_counts(rows), build_node_counts_figure(rows), None
+            return "bar", [], "노드 유형별 규모", "현재 프로젝트에는 노드 유형 집계가 없습니다."
+        normalized = [
+            {"category": str(row.get("label", "")), "value": float(row.get("count", 0))}
+            for row in rows
+        ]
+        return "bar", normalized, "노드 유형별 규모", None
     if case == "상태 구성":
         rows = runtime["status_counts"]
         if not rows:
-            return case, None, None, "Query Studio 실행 이력이 없어 상태 구성을 비교할 수 없습니다."
-        return case, _default_status_counts(rows), build_status_counts_figure(rows), None
+            return "donut", [], "질의 상태 구성", "Query Studio 실행 이력이 없어 상태 구성을 비교할 수 없습니다."
+        normalized = [
+            {"category": str(row.get("status", "")), "value": float(row.get("count", 0))}
+            for row in rows
+        ]
+        return "donut", normalized, "질의 상태 구성", None
     rows = runtime["recent_queries"]
     if not rows or not any("elapsed_ms" in row for row in rows):
-        return case, None, None, "응답시간이 포함된 최근 질의가 없어 시간 추세를 비교할 수 없습니다."
-    return case, _default_latency(rows), build_recent_latency_figure(rows), None
+        return "line", [], "최근 질의 응답시간", "응답시간이 포함된 최근 질의가 없어 시간 추세를 비교할 수 없습니다."
+    normalized = [
+        {"category": str(index + 1), "value": float(row.get("elapsed_ms", 0))}
+        for index, row in enumerate(rows)
+    ]
+    return "line", normalized, "최근 질의 응답시간", None
 
 
-def _render_plotly_experiments(snapshot: dict[str, Any]) -> None:
-    st.markdown("## 동일 데이터로 확인한 두 번의 Plotly 실험")
+def _figures_for_case(
+    snapshot: dict[str, Any],
+    case: str,
+) -> tuple[go.Figure | None, go.Figure | None, dict[str, float | int], dict[str, Any] | None, str | None]:
+    kind, normalized, title, error = _shared_case_data(snapshot, case)
+    if error:
+        return None, None, {}, None, error
+
+    if case == "범주 비교":
+        source_rows = snapshot["node_counts"]
+        express_builder = lambda: _default_node_counts(source_rows)
+        graph_objects_builder = lambda: build_node_counts_figure(source_rows)
+    elif case == "상태 구성":
+        source_rows = snapshot["runtime"]["status_counts"]
+        express_builder = lambda: _default_status_counts(source_rows)
+        graph_objects_builder = lambda: build_status_counts_figure(source_rows)
+    else:
+        source_rows = snapshot["runtime"]["recent_queries"]
+        express_builder = lambda: _default_latency(source_rows)
+        graph_objects_builder = lambda: build_recent_latency_figure(source_rows)
+
+    started = perf_counter()
+    express_figure = express_builder()
+    express_ms = (perf_counter() - started) * 1000
+    started = perf_counter()
+    graph_objects_figure = graph_objects_builder()
+    graph_objects_ms = (perf_counter() - started) * 1000
+    express_figure.update_layout(height=360)
+    graph_objects_figure.update_layout(height=360)
+    payload = {"kind": kind, "title": title, "rows": normalized}
+    metrics = {
+        "express_build_ms": round(express_ms, 2),
+        "graph_objects_build_ms": round(graph_objects_ms, 2),
+        "express_json_bytes": len(express_figure.to_json().encode("utf-8")),
+        "graph_objects_json_bytes": len(graph_objects_figure.to_json().encode("utf-8")),
+        "shared_payload_bytes": len(json.dumps(payload, ensure_ascii=False).encode("utf-8")),
+    }
+    return express_figure, graph_objects_figure, metrics, payload, None
+
+
+def _metric_strip(label: str, build_ms: float | str, payload_bytes: int | str, client_ms: float | str) -> str:
+    def value(value: float | int | str, suffix: str = "") -> str:
+        if isinstance(value, str):
+            return value
+        return f"{value:,.1f}{suffix}" if isinstance(value, float) else f"{value:,}{suffix}"
+
+    return (
+        f'<div class="p3-renderer-metrics" aria-label="{label} metrics">'
+        f'<span><small>Figure build</small><b>{value(build_ms, " ms")}</b></span>'
+        f'<span><small>Serialized</small><b>{value(payload_bytes, " B")}</b></span>'
+        f'<span><small>Browser ready</small><b>{value(client_ms, " ms")}</b></span>'
+        "</div>"
+    )
+
+
+def _load_benchmark(case: str) -> dict[str, Any]:
+    if not BENCHMARK_PATH.exists():
+        return {}
+    try:
+        payload = json.loads(BENCHMARK_PATH.read_text(encoding="utf-8"))
+        return dict(payload.get("cases", {}).get(case, {}))
+    except (OSError, ValueError, TypeError):
+        return {}
+
+
+def _render_live_three_way(snapshot: dict[str, Any]) -> None:
+    st.markdown("## 동일 데이터 · 동일 차트 의도 · 세 렌더러 실제 출력")
     st.caption(
-        "두 차트 모두 같은 Dashboard snapshot과 같은 시각화 의도를 사용합니다. "
-        "차이는 Plotly Express 기본 생성과 Graph Objects 직접 구성 방식입니다."
+        "Plotly Express와 Plotly Graph Objects는 Streamlit에서 실제 렌더링하고, "
+        "React + ECharts는 공개 React 앱의 전용 임베드 route에 같은 JSON payload를 전달합니다."
     )
     case = st.radio(
         "비교할 데이터",
@@ -230,35 +317,81 @@ def _render_plotly_experiments(snapshot: dict[str, Any]) -> None:
         horizontal=True,
         key="visualization-experiment-case",
     )
-    case, express_figure, graph_objects_figure, error = _case_builders(snapshot, case)
-    if error:
-        st.info(error)
+    express_figure, graph_objects_figure, metrics, payload, error = _figures_for_case(snapshot, case)
+    if error or payload is None or express_figure is None or graph_objects_figure is None:
+        st.info(error or "비교 데이터를 준비하지 못했습니다.")
         return
-    assert express_figure is not None and graph_objects_figure is not None
 
-    with st.container(key="plotly-express-experiment"):
-        st.markdown(
-            '<div class="p3-experiment-heading"><span>EXPERIMENT 01</span><div><strong>Plotly Express</strong><small>빠른 기준선 · 기본 layout</small></div></div>',
-            unsafe_allow_html=True,
-        )
-        st.plotly_chart(
-            express_figure,
-            width="stretch",
-            key=f"plotly-express-{case}",
-            config=DEFAULT_CONFIG,
-        )
-        st.caption("장점: 데이터프레임에서 즉시 생성 · 한계: 기본 margin, title, legend와 Streamlit layout 의존")
+    benchmark = _load_benchmark(case)
+    express_ready = benchmark.get("plotly_express_ready_ms", "측정 전")
+    go_ready = benchmark.get("plotly_graph_objects_ready_ms", "측정 전")
+    echarts_ready = benchmark.get("react_echarts_ready_ms", "Live")
+    encoded_payload = quote(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+    embed_url = f"{REACT_ECHARTS_EMBED_URL}?payload={encoded_payload}"
 
-    with st.container(key="plotly-graph-objects-experiment"):
-        st.markdown(
-            '<div class="p3-experiment-heading is-polished"><span>EXPERIMENT 02</span><div><strong>Plotly Graph Objects</strong><small>trace·hover·semantic style 직접 제어</small></div></div>',
-            unsafe_allow_html=True,
+    with st.container(key="renderer-live-grid"):
+        express_column, graph_objects_column, echarts_column = st.columns(3)
+        with express_column:
+            st.markdown(
+                '<div class="p3-live-renderer-head"><span>EXPERIMENT 01</span><strong>Plotly Express + Streamlit</strong><small>최소 코드 기준선</small></div>',
+                unsafe_allow_html=True,
+            )
+            st.plotly_chart(
+                express_figure,
+                width="stretch",
+                key=f"plotly-express-live-{case}",
+                config=DEFAULT_CONFIG,
+            )
+            st.markdown(
+                _metric_strip(
+                    "Plotly Express",
+                    metrics["express_build_ms"],
+                    metrics["express_json_bytes"],
+                    express_ready,
+                ),
+                unsafe_allow_html=True,
+            )
+        with graph_objects_column:
+            st.markdown(
+                '<div class="p3-live-renderer-head is-polished"><span>EXPERIMENT 02</span><strong>Plotly Graph Objects + Streamlit</strong><small>trace와 layout 직접 제어</small></div>',
+                unsafe_allow_html=True,
+            )
+            render_dashboard_figure(
+                graph_objects_figure,
+                key=f"plotly-graph-objects-live-{case}",
+            )
+            st.markdown(
+                _metric_strip(
+                    "Plotly Graph Objects",
+                    metrics["graph_objects_build_ms"],
+                    metrics["graph_objects_json_bytes"],
+                    go_ready,
+                ),
+                unsafe_allow_html=True,
+            )
+        with echarts_column:
+            st.markdown(
+                '<div class="p3-live-renderer-head is-selected"><span>FINAL PRODUCT</span><strong>React + Apache ECharts</strong><small>독립 제품 runtime</small></div>',
+                unsafe_allow_html=True,
+            )
+            components.iframe(embed_url, height=390, scrolling=False)
+            st.markdown(
+                _metric_strip(
+                    "React ECharts",
+                    "Client",
+                    metrics["shared_payload_bytes"],
+                    echarts_ready,
+                ),
+                unsafe_allow_html=True,
+            )
+
+    if benchmark:
+        st.caption(
+            "Browser ready는 공개 URL에서 새 브라우저 context로 반복 측정한 중앙값입니다. "
+            f"측정: {benchmark.get('runs', '—')}회 · viewport {benchmark.get('viewport', '—')} · {benchmark.get('measured_at', '—')}"
         )
-        render_dashboard_figure(
-            graph_objects_figure,
-            key=f"plotly-graph-objects-{case}",
-        )
-        st.caption("개선: 차트 내부 표현과 의미 색상 · 잔존 한계: Streamlit widget·column·Dashboard interaction 구조")
+    else:
+        st.caption("Browser ready 기준값은 배포 후 공개 URL에서 반복 측정해 갱신됩니다. React 카드 내부에는 현재 iframe의 live ready 시간이 표시됩니다.")
 
 
 def render_visualization_decision(
@@ -282,7 +415,7 @@ def render_visualization_decision(
     )
     st.caption(f"현재 프로젝트 · {project_id} · 동일 Dashboard snapshot 기준")
     _render_decision_overview()
-    _render_plotly_experiments(snapshot)
+    _render_live_three_way(snapshot)
     _render_react_echarts_runtime()
     _render_decision_matrix()
 
@@ -291,6 +424,15 @@ def render_plotly_comparison_route() -> None:
     """Resolve the active project and render the visualization decision route."""
 
     initialize_session()
+    st.markdown(
+        """
+        <style>
+          [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"] { display: none !important; }
+          .block-container { max-width: 1600px !important; padding-left: 2rem !important; padding-right: 2rem !important; }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
     project_id = str(
         st.query_params.get("project_id")
         or st.session_state.get("active_project_id", "cip-dmd")

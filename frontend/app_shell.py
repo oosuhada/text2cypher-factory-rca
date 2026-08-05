@@ -141,6 +141,66 @@ def render_app_shell(app_title: str) -> None:
           font-size: .72rem;
           line-height: 1.45;
         }
+        .p3-live-renderer-head {
+          display: flex;
+          min-height: 76px;
+          flex-direction: column;
+          justify-content: center;
+          gap: .18rem;
+          border: 1px solid #DCDCDD;
+          border-bottom: 0;
+          border-radius: 10px 10px 0 0;
+          padding: .72rem .85rem;
+          background: #F7F8F9;
+        }
+        .p3-live-renderer-head span {
+          color: #5F6B7B;
+          font-size: .62rem;
+          font-weight: 800;
+          letter-spacing: .09em;
+        }
+        .p3-live-renderer-head strong {color:#3A4950;font-size:.9rem;}
+        .p3-live-renderer-head small {color:#697586;font-size:.68rem;}
+        .p3-live-renderer-head.is-polished {background:#F4F6FC;}
+        .p3-live-renderer-head.is-polished span {color:#0C1C74;}
+        .p3-live-renderer-head.is-selected {border-color:#99D8CF;background:#F0FDFA;}
+        .p3-live-renderer-head.is-selected span {color:#0F766E;}
+        .st-key-renderer-live-grid div[data-testid="stPlotlyChart"] {
+          min-height: 360px;
+          border-radius: 0 0 10px 10px;
+        }
+        .st-key-renderer-live-grid iframe {
+          display:block;
+          width:100%;
+          border:0;
+          background:#FFFFFF;
+        }
+        .p3-renderer-metrics {
+          display:grid;
+          grid-template-columns:repeat(3,minmax(0,1fr));
+          overflow:hidden;
+          margin:.55rem 0 1rem;
+          border:1px solid #DCDCDD;
+          border-radius:8px;
+          background:#FFFFFF;
+        }
+        .p3-renderer-metrics span {
+          display:flex;
+          min-width:0;
+          flex-direction:column;
+          gap:.18rem;
+          padding:.55rem .6rem;
+          border-right:1px solid #ECEDEF;
+        }
+        .p3-renderer-metrics span:last-child {border-right:0;}
+        .p3-renderer-metrics small,
+        .p3-renderer-metrics b {
+          overflow:hidden;
+          text-overflow:ellipsis;
+          white-space:nowrap;
+        }
+        .p3-renderer-metrics small {color:#697586;font-size:.58rem;}
+        .p3-renderer-metrics b {color:#3A4950;font-size:.73rem;}
         .p3-method-grid {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -639,6 +699,12 @@ def render_app_shell(app_title: str) -> None:
           .p3-react-runtime-grid {grid-template-columns:repeat(2,minmax(0,1fr));}
           .p3-react-board-body {grid-template-columns:1fr;}
           .p3-react-board-body aside {border-right:0;border-bottom:1px solid #ECEDEF;}
+          .st-key-renderer-live-grid [data-testid="stHorizontalBlock"] {flex-wrap:wrap;}
+          .st-key-renderer-live-grid [data-testid="stColumn"] {
+            flex:1 1 100% !important;
+            width:100% !important;
+            min-width:100% !important;
+          }
         }
         @media (max-width: 1320px) {
           .st-key-dashboard-runtime-grid [data-testid="stHorizontalBlock"] {

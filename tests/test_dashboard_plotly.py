@@ -15,6 +15,7 @@ from frontend.dashboard_plotly import (
     build_relationship_counts_figure,
     build_status_counts_figure,
 )
+from frontend.plotly_comparison import _figures_for_case
 
 
 def test_dashboard_builds_more_than_three_plotly_figures() -> None:
@@ -118,6 +119,39 @@ def test_status_donut_contains_total_and_semantic_colors() -> None:
     assert figure.data[0].hole == 0.68
     assert list(figure.data[0].labels) == ["성공", "차단"]
     assert figure.data[0].textinfo == "none"
+
+
+def test_three_renderer_comparison_uses_one_normalized_payload() -> None:
+    snapshot = {
+        "totals": {"nodes": 3, "relationships": 2},
+        "node_counts": [
+            {"label": "Part", "count": 2},
+            {"label": "Equipment", "count": 1},
+        ],
+        "relationship_counts": [],
+        "equipment_runs": [],
+        "anomaly_runs": [],
+        "quality_failures": [],
+        "integrity": {},
+        "evaluation": {},
+        "runtime": {"status_counts": [], "recent_queries": []},
+    }
+    express, graph_objects, metrics, payload, error = _figures_for_case(snapshot, "범주 비교")
+
+    assert error is None
+    assert isinstance(express, go.Figure)
+    assert isinstance(graph_objects, go.Figure)
+    assert payload == {
+        "kind": "bar",
+        "title": "노드 유형별 규모",
+        "rows": [
+            {"category": "Part", "value": 2.0},
+            {"category": "Equipment", "value": 1.0},
+        ],
+    }
+    assert metrics["express_json_bytes"] > 0
+    assert metrics["graph_objects_json_bytes"] > 0
+    assert metrics["shared_payload_bytes"] > 0
 
 
 def test_graph_objects_are_used_for_the_custom_plotly_experiment() -> None:

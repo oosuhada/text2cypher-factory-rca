@@ -12,8 +12,8 @@
 https://plotly-streamlit.oosu.dev/?workspace=dashboard
 ```
 
-Plotly Express, Plotly Graph Objects와 현재 React + ECharts 제품을 비교하고
-최종 기술 선택 근거를 확인하는 주소:
+동일 데이터와 동일 차트 의도를 Plotly Express, Plotly Graph Objects,
+React + ECharts로 실제 렌더링하고 최종 기술 선택 근거를 확인하는 주소:
 
 ```text
 https://plotly-streamlit.oosu.dev/?compare=plotly-ui
@@ -23,6 +23,18 @@ https://plotly-streamlit.oosu.dev/?compare=plotly-ui
 
 `frontend/dashboard_plotly.py`에 Plotly Graph Objects 기반 순수 figure builder를 구성하고
 `frontend/pages/dashboard.py`에서 `st.plotly_chart`로 렌더링한다.
+
+비교 페이지는 Dashboard snapshot을 하나의 `category/value` payload로 정규화한 뒤
+세 렌더러에 그대로 전달한다.
+
+1. Plotly Express + Streamlit
+2. Plotly Graph Objects + Streamlit
+3. React + Apache ECharts 공개 embed route
+
+React 구현은 `https://dashboard.oosu.dev/visualization-compare/echarts`에서
+인증 없이 실제 ECharts Canvas를 렌더링한다. iframe 내부에는 현재 chart ready
+시간과 payload 크기를 표시하고, 비교 페이지에는 Figure 생성 시간, 직렬화 크기와
+공개 URL 반복 측정 중앙값을 함께 표시한다.
 
 | # | 차트 | 표현 방식 |
 |---:|---|---|
@@ -61,6 +73,9 @@ https://plotly-streamlit.oosu.dev/?compare=plotly-ui
 - KPI 카드 3열·2열·1열 반응형 재배치
 - Plotly card와 Figure 높이 불일치로 발생하던 축 clipping 제거
 - 루트 query 기반 3개 구현 비교·기술 선택 페이지
+- 세 렌더러 동시 실제 출력과 동일 payload 검증
+- Figure build 시간·직렬화 크기·브라우저 ready 중앙값 표시
+- React ECharts 인증 없는 전용 embed route
 
 ## 기술 선택 결론
 
@@ -88,7 +103,8 @@ python -m pytest tests/test_dashboard_plotly.py -q
 - 빈 입력이 안전한 empty-state figure를 반환
 - 공통 투명 canvas, grid, bar corner와 hover template 적용
 - Donut 합계 annotation과 semantic 색상 적용
-- 비교 페이지가 동일 snapshot에서 Plotly Express·Graph Objects 결과를 렌더링
+- 비교 페이지가 동일 snapshot에서 Express·Graph Objects·ECharts 결과를 동시에 렌더링
+- React iframe payload와 두 Plotly trace가 같은 category/value를 사용하는지 검증
 - React + ECharts 구현 범위와 최종 선택 기준표 표시
 
 추가로 `streamlit.testing.v1.AppTest`에 실제 Dashboard snapshot을 주입해 전체

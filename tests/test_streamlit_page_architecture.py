@@ -56,6 +56,12 @@ class StreamlitPageArchitectureTest(unittest.TestCase):
         self.assertIn('st.navigation(pages, position="hidden")', router)
         self.assertIn("render_plotly_comparison_route", console)
         self.assertIn('st.query_params.get("compare") == "plotly-ui"', console)
+        comparison = (FRONTEND_ROOT / "plotly_comparison.py").read_text(encoding="utf-8")
+        self.assertIn("REACT_ECHARTS_EMBED_URL", comparison)
+        self.assertIn("components.iframe(embed_url", comparison)
+        self.assertIn("Plotly Express + Streamlit", comparison)
+        self.assertIn("Plotly Graph Objects + Streamlit", comparison)
+        self.assertIn("React + Apache ECharts", comparison)
         self.assertIn("frontend.workspaces.", console)
         self.assertNotIn("frontend.pages.", entrypoint + router + console)
 
