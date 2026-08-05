@@ -22,6 +22,7 @@ import streamlit as st
 from backend.app.services.diagnostics import collect_demo_diagnostics
 from backend.app.services.data_intake_service import DataIntakeService
 from backend.app.services.graph_service import NODE_IDENTITIES
+from backend.app.jobs import PipelineJobStore
 from backend.app.ingestion import DatasetWorkspace
 from backend.app.mapping import MappingWorkspace
 from backend.app.projects import ProjectRegistry
@@ -58,6 +59,13 @@ from frontend.project_workspace import (
     next_action_presentation,
     relative_updated_at,
     status_presentation,
+)
+from frontend.onboarding import (
+    format_elapsed,
+    job_elapsed_seconds,
+    job_status_presentation,
+    onboarding_progress,
+    profile_quality_warnings,
 )
 
 
@@ -1760,40 +1768,218 @@ def render_data_health_tab(
     render_data_intake_workflow()
 
 
+def get_pipeline_job_store() -> PipelineJobStore:
+    return PipelineJobStore(
+        PROJECT_ROOT / "data" / "processed" / "pipeline_jobs.sqlite3"
+    )
+
+
+def render_onboarding_stage(project: dict[str, Any]) -> None:
+    progress = onboarding_progress(project["status"])
+    st.progress(progress["percent"], text=f"온보딩 {progress['percent']}%")
+    columns = st.columns(len(progress["steps"]))
+    for column, step in zip(columns, progress["steps"]):
+        marker = {
+            "complete": "✓",
+            "active": "●",
+            "pending": "○",
+        }[step["state"]]
+        column.caption(f"{marker} {step['label']}")
+
+
+def render_pipeline_jobs(project_id: str) -> None:
+    jobs = get_pipeline_job_store().list(project_id, limit=8)
+    st.markdown("#### 작업 상태")
+    if not jobs:
+        render_view_state(
+            ViewState.EMPTY,
+            page="Pipeline",
+            detail="업로드·연결·매핑·적재 작업을 시작하면 여기에 기록됩니다.",
+        )
+        return
+    store = get_pipeline_job_store()
+    for job in jobs:
+        status = job_status_presentation(job["status"])
+        with st.expander(
+            f"{status['label']} · {job['kind']} · "
+            f"{job['job_id'][:8]} · 시도 {job['attempt']}",
+            expanded=job["status"] in {"queued", "running", "failed"},
+        ):
+            st.progress(
+                int(job["progress"]),
+                text=f"{job['current_step']} · {job['message']}",
+            )
+            metrics = st.columns(5)
+            metrics[0].metric("상태", status["label"])
+            metrics[1].metric("진행률", f"{job['progress']}%")
+            metrics[2].metric(
+                "처리량",
+                (
+                    f"{job['processed_rows']:,}/"
+                    f"{job['total_rows']:,}"
+                    if job["total_rows"]
+                    else f"{job['processed_rows']:,}"
+                ),
+            )
+            metrics[3].metric("현재 단계", job["current_step"])
+            metrics[4].metric(
+                "경과시간",
+                format_elapsed(job_elapsed_seconds(job)),
+            )
+            if job.get("error"):
+                st.error(job["error"])
+            logs = store.logs(job["job_id"])
+            if logs:
+                st.dataframe(
+                    pd.DataFrame(logs),
+                    width="stretch",
+                    hide_index=True,
+                )
+            action_columns = st.columns([1, 1, 4])
+            if job["status"] in {"queued", "running"}:
+                if action_columns[0].button(
+                    "취소",
+                    key=f"cancel-job-{job['job_id']}",
+                ):
+                    try:
+                        store.cancel(job["job_id"])
+                        st.rerun()
+                    except ValueError as error:
+                        st.warning(str(error))
+            if job["status"] in {"failed", "cancelled"}:
+                if action_columns[1].button(
+                    "재시도 등록",
+                    key=f"retry-job-{job['job_id']}",
+                ):
+                    store.retry(job["job_id"])
+                    st.rerun()
+    if st.button("작업 상태 새로고침", key=f"refresh-jobs-{project_id}"):
+        st.rerun()
+
+
+def _profile_uploaded_files(
+    project: dict[str, Any],
+    files: list[Any],
+) -> dict[str, Any]:
+    project_id = project["project_id"]
+    payload = [
+        {
+            "filename": file.name,
+            "content_base64": base64.b64encode(file.getvalue()).decode(),
+        }
+        for file in files
+    ]
+    api = FactoryGraphApiClient()
+    try:
+        if api.live():
+            return api.profile_project_files(project_id, payload)
+    finally:
+        api.close()
+
+    registry = ProjectRegistry(
+        PROJECT_ROOT / "data" / "processed" / "projects.sqlite3"
+    )
+    current = registry.require(project_id)
+    if current["status"] != "profiling":
+        registry.transition(
+            project_id, "profiling", reason="ui_profile_started"
+        )
+    datasets = DatasetWorkspace(
+        PROJECT_ROOT / "data" / "processed" / "project_uploads"
+    )
+    try:
+        result = datasets.profile_upload(project_id, payload)
+        registry.update(project_id, source_version=result["upload_id"])
+        registry.record_artifact(
+            project_id,
+            "source",
+            version=result["upload_id"],
+            fingerprint=result.get("source_sha256"),
+            metadata={
+                "upload_id": result["upload_id"],
+                "file_count": len(result.get("files", [])),
+            },
+        )
+        registry.transition(
+            project_id,
+            "mapping_review",
+            reason="ui_profile_completed",
+        )
+        return result
+    except Exception:
+        if registry.require(project_id)["status"] == "profiling":
+            registry.transition(
+                project_id, "failed", reason="ui_profile_failed"
+            )
+        raise
+
+
 def render_generic_dataset_upload() -> None:
     project_id = st.session_state.get("active_project_id", "cip-dmd")
+    projects = ProjectRegistry(
+        PROJECT_ROOT / "data" / "processed" / "projects.sqlite3"
+    )
+    project = projects.require(project_id)
+    if notice := st.session_state.pop("project_created_notice", None):
+        st.success(
+            f"`{notice}` 프로젝트를 만들었습니다. 첫 데이터 소스를 등록하세요."
+        )
     st.markdown("#### 프로젝트 데이터 온보딩")
     st.caption(
-        f"`{project_id}` 워크스페이스에 CSV/JSON을 올려 구조를 확인합니다. "
-        "업로드만으로 Neo4j가 변경되지는 않습니다."
+        f"`{project_id}` · {project['source_type']} 소스 · "
+        "승인 전에는 운영 Neo4j가 변경되지 않습니다."
     )
+    render_onboarding_stage(project)
+    if project["source_type"] == "neo4j":
+        render_neo4j_source_connection(project)
+        render_pipeline_jobs(project_id)
+        return
+
     files = st.file_uploader(
-        "CSV 또는 JSON (파일당 10MB, 최대 10개)",
-        type=("csv", "json"),
+        "파일을 끌어 놓거나 선택하세요 (CSV/JSON/XLSX/ZIP)",
+        type=("csv", "json", "xlsx", "zip"),
         accept_multiple_files=True,
         key=f"project-upload-{project_id}",
+        help="파일당 10MB, 한 번에 최대 10개. ZIP은 안전 검사 후 펼칩니다.",
     )
     if st.button(
-        "업로드 및 컬럼 프로파일링",
+        "업로드·정제·프로파일링",
         disabled=not files,
         width="stretch",
         key=f"profile-upload-{project_id}",
     ):
+        store = get_pipeline_job_store()
+        job = store.create(
+            project_id,
+            "profile",
+            message=f"{len(files)}개 원본 파일 검증 대기",
+        )
         try:
-            datasets = DatasetWorkspace(
-                PROJECT_ROOT / "data" / "processed" / "project_uploads"
+            store.start(
+                job["job_id"],
+                "extract",
+                "파일 해시·확장자·압축 경로를 검증합니다.",
             )
-            result = datasets.profile_upload(
-                project_id,
-                [
-                    {
-                        "filename": file.name,
-                        "content_base64": base64.b64encode(
-                            file.getvalue()
-                        ).decode(),
-                    }
-                    for file in files
-                ],
+            store.update(
+                job["job_id"],
+                current_step="profile",
+                progress=45,
+                message="정규화된 테이블의 타입·결측·ID 후보를 분석합니다.",
+            )
+            result = _profile_uploaded_files(project, files)
+            total_rows = sum(
+                int(file.get("row_count", 0)) for file in result["files"]
+            )
+            store.succeed(
+                job["job_id"],
+                step="profile_complete",
+                message="데이터 프로파일과 lineage 저장을 완료했습니다.",
+                result={
+                    "upload_id": result["upload_id"],
+                    "file_count": len(result["files"]),
+                },
+                processed_rows=total_rows,
+                total_rows=total_rows,
             )
             st.session_state["latest_project_upload"] = result
             st.success(
@@ -1801,9 +1987,38 @@ def render_generic_dataset_upload() -> None:
                 f"upload {result['upload_id'][:8]}"
             )
         except Exception as error:
+            store.fail(
+                job["job_id"], step="profile", error=str(error)
+            )
             st.error(f"프로파일링 실패: {error}")
-    latest = st.session_state.get("latest_project_upload")
-    if latest and latest.get("project_id") == project_id:
+    datasets = DatasetWorkspace(
+        PROJECT_ROOT / "data" / "processed" / "project_uploads"
+    )
+    uploads = datasets.list(project_id)
+    latest = (
+        st.session_state.get("latest_project_upload")
+        if st.session_state.get("latest_project_upload", {}).get(
+            "project_id"
+        )
+        == project_id
+        else uploads[0]
+        if uploads
+        else None
+    )
+    if latest:
+        warnings = profile_quality_warnings(latest)
+        summary = st.columns(4)
+        summary[0].metric("원본 파일", len(latest.get("sources", [])))
+        summary[1].metric("정규화 테이블", len(latest["files"]))
+        summary[2].metric(
+            "전체 행",
+            f"{sum(file['row_count'] for file in latest['files']):,}",
+        )
+        summary[3].metric("품질 경고", len(warnings))
+        if warnings:
+            st.warning("\n".join(f"- {warning}" for warning in warnings))
+        else:
+            st.success("ID 후보와 컬럼 품질 기본 검사를 통과했습니다.")
         for file in latest["files"]:
             with st.expander(
                 f"{file['filename']} · {file['row_count']}행 "
@@ -1814,6 +2029,24 @@ def render_generic_dataset_upload() -> None:
                     width="stretch",
                     hide_index=True,
                 )
+                source_path = (
+                    PROJECT_ROOT
+                    / "data"
+                    / "processed"
+                    / "project_uploads"
+                    / project_id
+                    / latest["upload_id"]
+                    / "source"
+                    / file["filename"]
+                )
+                try:
+                    sample_rows = pd.read_csv(source_path, nrows=20)
+                    st.caption("샘플 20행")
+                    st.dataframe(
+                        sample_rows, width="stretch", hide_index=True
+                    )
+                except Exception:
+                    st.caption("샘플은 Pipeline dry-run에서 확인합니다.")
         if st.button(
             "Pipeline에서 매핑 검토 →",
             type="primary",
@@ -1821,6 +2054,88 @@ def render_generic_dataset_upload() -> None:
         ):
             navigate_to_page("Pipeline")
             st.rerun()
+    render_pipeline_jobs(project_id)
+
+
+def render_neo4j_source_connection(project: dict[str, Any]) -> None:
+    st.markdown("##### 기존 Neo4j 연결")
+    st.info(
+        "비밀번호 값은 저장하지 않습니다. 서버 환경변수 이름만 등록하고 "
+        "스키마 introspection·샘플 READ 질의를 통과해야 승인할 수 있습니다."
+    )
+    with st.form(f"neo4j-source-{project['project_id']}"):
+        uri = st.text_input("URI", placeholder="neo4j://graph.internal:7687")
+        database = st.text_input("Database", value="neo4j")
+        username = st.text_input("Username", value="neo4j")
+        password_env = st.text_input(
+            "비밀번호 환경변수", placeholder="FACTORY_NEO4J_PASSWORD"
+        )
+        submitted = st.form_submit_button(
+            "연결·스키마 검증",
+            type="primary",
+            width="stretch",
+        )
+    if submitted:
+        store = get_pipeline_job_store()
+        job = store.create(
+            project["project_id"],
+            "neo4j_connect",
+            message="Neo4j 연결 검증 대기",
+        )
+        api = FactoryGraphApiClient()
+        try:
+            store.start(
+                job["job_id"], "connect", "연결과 READ 권한을 확인합니다."
+            )
+            result = api.validate_neo4j_connector(
+                project["project_id"],
+                {
+                    "uri": uri,
+                    "database": database,
+                    "username": username,
+                    "password_env": password_env,
+                },
+            )
+            store.update(
+                job["job_id"],
+                current_step="introspection",
+                progress=70,
+                message="라벨·관계·속성과 샘플 건수를 확인했습니다.",
+            )
+            store.succeed(
+                job["job_id"],
+                step="validated",
+                message="Neo4j 연결 검증이 완료됐습니다.",
+                result=result,
+            )
+            st.session_state["validated_connector"] = result
+        except Exception as error:
+            store.fail(job["job_id"], step="connect", error=str(error))
+            st.error(str(error))
+        finally:
+            api.close()
+    connector = st.session_state.get("validated_connector")
+    if connector and connector.get("project_id") == project["project_id"]:
+        st.success(
+            f"연결 검증 완료 · 노드 {connector['counts'].get('nodes', 0):,} · "
+            f"관계 {connector['counts'].get('relationships', 0):,}"
+        )
+        if st.button(
+            "검증된 연결 승인",
+            key=f"approve-connector-{connector['connector_id']}",
+            type="primary",
+        ):
+            api = FactoryGraphApiClient()
+            try:
+                approved = api.approve_neo4j_connector(
+                    project["project_id"], connector["connector_id"]
+                )
+                st.session_state["validated_connector"] = approved
+                st.success("연결 승인과 프로젝트 스키마 등록을 완료했습니다.")
+            except Exception as error:
+                st.error(str(error))
+            finally:
+                api.close()
 
 
 def render_evidence_tab() -> None:
@@ -2598,7 +2913,10 @@ def render_sidebar() -> tuple[str, str, str, str]:
 
 def render_schema_studio() -> None:
     render_page_header("Pipeline")
-    st.caption("업로드한 컬럼을 그래프 노드·관계로 매핑하고 승인합니다.")
+    st.caption(
+        "프로파일 → 매핑 dry-run → 명시적 승인 → 격리 적재 → "
+        "무결성 검증 순서로 진행합니다."
+    )
     projects = ProjectRegistry(
         PROJECT_ROOT / "data" / "processed" / "projects.sqlite3"
     )
@@ -2612,6 +2930,15 @@ def render_schema_studio() -> None:
         if active_project in project_ids
         else 0,
     )
+    project = projects.require(project_id)
+    render_onboarding_stage(project)
+    render_pipeline_jobs(project_id)
+    if project["source_type"] == "neo4j":
+        st.info(
+            "이 프로젝트는 기존 Neo4j 연결형입니다. Data Sources에서 "
+            "연결 검증·승인을 완료하면 스키마가 자동 등록됩니다."
+        )
+        return
     datasets = DatasetWorkspace(
         PROJECT_ROOT / "data" / "processed" / "project_uploads"
     )
@@ -2666,6 +2993,10 @@ def render_schema_studio() -> None:
         "Graph mapping (JSON)",
         value=json.dumps(template, ensure_ascii=False, indent=2),
         height=360,
+        help=(
+            "노드의 identity와 속성, 관계의 시작·끝 키를 정의합니다. "
+            "승인 전 dry-run은 운영 Neo4j를 변경하지 않습니다."
+        ),
     )
     schemas = SchemaRegistry(PROJECT_ROOT / "schemas")
     mappings = MappingWorkspace(
@@ -2673,29 +3004,232 @@ def render_schema_studio() -> None:
         datasets,
         schemas,
     )
-    left, right = st.columns(2)
+    preview_column, approve_column = st.columns(2)
     try:
         mapping = json.loads(mapping_text)
-        if left.button("매핑 미리보기", width="stretch"):
-            st.session_state["mapping_preview"] = mappings.preview(
-                project_id, upload_id, mapping
+        if preview_column.button(
+            "1 · ETL dry-run",
+            width="stretch",
+            key=f"mapping-preview-{project_id}-{upload_id}",
+        ):
+            store = get_pipeline_job_store()
+            job = store.create(
+                project_id,
+                "mapping_dry_run",
+                message="매핑 검증과 ETL dry-run 대기",
             )
-        if right.button("검토 후 승인", type="primary", width="stretch"):
-            st.session_state["mapping_preview"] = mappings.approve(
-                project_id, upload_id, mapping
+            try:
+                store.start(
+                    job["job_id"],
+                    "mapping_validation",
+                    "컬럼·identity·관계 키를 검증합니다.",
+                )
+                api = FactoryGraphApiClient()
+                try:
+                    if api.live():
+                        preview = api.preview_mapping(
+                            project_id,
+                            upload_id=upload_id,
+                            schema_version="1.0",
+                            mapping=mapping,
+                        )
+                    else:
+                        preview = mappings.preview(
+                            project_id,
+                            upload_id,
+                            mapping,
+                            schema_version="1.0",
+                        )
+                finally:
+                    api.close()
+                dry_run = preview.get("dry_run", {})
+                total_rows = sum(
+                    int(value)
+                    for value in preview.get(
+                        "estimated_node_rows", {}
+                    ).values()
+                ) + sum(
+                    int(value)
+                    for value in preview.get(
+                        "estimated_relationship_rows", {}
+                    ).values()
+                )
+                store.update(
+                    job["job_id"],
+                    current_step="dry_run",
+                    progress=80,
+                    processed_rows=total_rows,
+                    total_rows=total_rows,
+                    message=(
+                        "노드·관계 투영과 격리 레코드 검사를 완료했습니다."
+                    ),
+                )
+                store.succeed(
+                    job["job_id"],
+                    step="dry_run_complete",
+                    message=(
+                        f"ETL dry-run {dry_run.get('status', 'PASS')} · "
+                        "운영 그래프 변경 없음"
+                    ),
+                    result={
+                        "upload_id": upload_id,
+                        "dry_run": dry_run,
+                    },
+                    processed_rows=total_rows,
+                    total_rows=total_rows,
+                )
+                st.session_state["mapping_preview"] = preview
+                st.success(
+                    "ETL dry-run을 마쳤습니다. 운영 Neo4j는 변경되지 않았습니다."
+                )
+            except Exception as error:
+                store.fail(
+                    job["job_id"], step="mapping_validation", error=str(error)
+                )
+                st.error(f"매핑 dry-run 실패: {error}")
+        preview = st.session_state.get("mapping_preview")
+        preview_matches = bool(
+            preview
+            and preview.get("project_id") == project_id
+            and preview.get("upload_id") == upload_id
+        )
+        if approve_column.button(
+            "2 · 검토한 매핑 승인",
+            type="primary",
+            width="stretch",
+            disabled=not preview_matches,
+            key=f"mapping-approve-{project_id}-{upload_id}",
+        ):
+            store = get_pipeline_job_store()
+            job = store.create(
+                project_id,
+                "mapping_approval",
+                message="매핑 승인 대기",
             )
-            projects.update(project_id, schema_version="1.0", status="ready")
-            st.success("매핑과 schema manifest를 승인·저장했습니다.")
+            try:
+                store.start(
+                    job["job_id"],
+                    "approval",
+                    "검토한 매핑과 스키마 버전을 고정합니다.",
+                )
+                api = FactoryGraphApiClient()
+                try:
+                    if api.live():
+                        approved = api.approve_mapping(
+                            project_id,
+                            upload_id=upload_id,
+                            schema_version="1.0",
+                            mapping=mapping,
+                        )
+                    else:
+                        approved = mappings.approve(
+                            project_id,
+                            upload_id,
+                            mapping,
+                            schema_version="1.0",
+                        )
+                        projects.update(project_id, schema_version="1.0")
+                        projects.record_artifact(
+                            project_id,
+                            "mapping",
+                            version="1.0",
+                            metadata={"upload_id": upload_id},
+                        )
+                        projects.record_artifact(
+                            project_id,
+                            "schema",
+                            version="1.0",
+                            metadata={"source_version": upload_id},
+                        )
+                finally:
+                    api.close()
+                store.succeed(
+                    job["job_id"],
+                    step="approved",
+                    message="매핑·스키마 승인본을 저장했습니다.",
+                    result={"upload_id": upload_id, "schema_version": "1.0"},
+                )
+                st.session_state["mapping_preview"] = approved
+                st.success(
+                    "매핑과 schema manifest를 승인했습니다. "
+                    "아직 운영 그래프에는 적재하지 않았습니다."
+                )
+            except Exception as error:
+                store.fail(job["job_id"], step="approval", error=str(error))
+                st.error(f"매핑 승인 실패: {error}")
     except (ValueError, KeyError, json.JSONDecodeError) as error:
         st.error(f"매핑을 검증할 수 없습니다: {error}")
-    if st.session_state.get("mapping_preview"):
-        preview = st.session_state["mapping_preview"]
-        st.json(preview["manifest"])
+    preview = st.session_state.get("mapping_preview")
+    if (
+        preview
+        and preview.get("project_id") == project_id
+        and preview.get("upload_id") == upload_id
+    ):
+        st.markdown("### Dry-run 결과")
+        dry_run = preview.get("dry_run", {})
+        dry_metrics = st.columns(4)
+        dry_metrics[0].metric("판정", dry_run.get("status", "—"))
+        dry_metrics[1].metric(
+            "예상 노드",
+            f"{sum(preview.get('estimated_node_rows', {}).values()):,}",
+        )
+        dry_metrics[2].metric(
+            "예상 관계",
+            f"{sum(preview.get('estimated_relationship_rows', {}).values()):,}",
+        )
+        dry_metrics[3].metric(
+            "격리 후보",
+            f"{int(dry_run.get('isolation_count', 0)):,}",
+        )
+        dry_tabs = st.tabs(["노드", "관계", "격리·Lineage", "Schema"])
+        with dry_tabs[0]:
+            st.dataframe(
+                pd.DataFrame(
+                    [
+                        {"label": label, **values}
+                        for label, values in dry_run.get("nodes", {}).items()
+                    ]
+                ),
+                width="stretch",
+                hide_index=True,
+            )
+        with dry_tabs[1]:
+            st.dataframe(
+                pd.DataFrame(
+                    [
+                        {"type": relation_type, **values}
+                        for relation_type, values in dry_run.get(
+                            "relationships", {}
+                        ).items()
+                    ]
+                ),
+                width="stretch",
+                hide_index=True,
+            )
+        with dry_tabs[2]:
+            if dry_run.get("isolation_examples"):
+                st.dataframe(
+                    pd.DataFrame(dry_run["isolation_examples"]),
+                    width="stretch",
+                    hide_index=True,
+                )
+            else:
+                st.success("격리해야 할 레코드가 없습니다.")
+            st.json(dry_run.get("lineage", {}))
+        with dry_tabs[3]:
+            st.json(preview["manifest"])
         st.caption(
             f"예상 노드 입력: {preview['estimated_node_rows']} · "
             f"예상 관계 입력: {preview['estimated_relationship_rows']}"
         )
-        if preview.get("status") == "approved":
+        approved_mapping = None
+        try:
+            candidate = mappings.get(project_id)
+            if candidate.get("upload_id") == upload_id:
+                approved_mapping = candidate
+        except KeyError:
+            pass
+        if approved_mapping:
             st.markdown("### Neo4j 적재 승인")
             st.warning(
                 "승인된 매핑을 현재 프로젝트 범위로 실제 적재합니다. "
@@ -2716,17 +3250,102 @@ def render_schema_studio() -> None:
                 ),
                 key=f"mapping-load-{project_id}",
             ):
+                store = get_pipeline_job_store()
+                total_rows = sum(
+                    int(value)
+                    for value in preview.get(
+                        "estimated_node_rows", {}
+                    ).values()
+                ) + sum(
+                    int(value)
+                    for value in preview.get(
+                        "estimated_relationship_rows", {}
+                    ).values()
+                )
+                job = store.create(
+                    project_id,
+                    "graph_load",
+                    message="승인된 그래프 적재 대기",
+                    total_rows=total_rows,
+                )
                 api = FactoryGraphApiClient()
                 try:
+                    store.start(
+                        job["job_id"],
+                        "load",
+                        "프로젝트 격리 범위로 노드·관계를 적재합니다.",
+                    )
                     result = api.load_project_graph(project_id, upload_id)
+                    store.update(
+                        job["job_id"],
+                        current_step="integrity",
+                        progress=90,
+                        processed_rows=total_rows,
+                        total_rows=total_rows,
+                        message=(
+                            "원본·적재 건수, 고아 관계, 프로젝트 범위를 검증합니다."
+                        ),
+                    )
+                    store.succeed(
+                        job["job_id"],
+                        step="integrity_complete",
+                        message="적재와 무결성 gate를 통과했습니다.",
+                        result=result,
+                        processed_rows=total_rows,
+                        total_rows=total_rows,
+                    )
                     st.session_state["project_load_result"] = result
                     st.success("프로젝트 격리 적재와 무결성 확인을 완료했습니다.")
                 except Exception as error:
+                    store.fail(job["job_id"], step="load", error=str(error))
                     st.error(f"그래프 적재 실패: {error}")
                 finally:
                     api.close()
     if st.session_state.get("project_load_result"):
-        st.json(st.session_state["project_load_result"])
+        result = st.session_state["project_load_result"]
+        st.markdown("### 무결성·Readiness")
+        integrity = result.get("integrity", {})
+        metrics = st.columns(4)
+        metrics[0].metric(
+            "프로젝트 범위",
+            "PASS" if integrity.get("project_scope_applied") else "FAIL",
+        )
+        metrics[1].metric(
+            "적재 노드", f"{int(integrity.get('scoped_node_count', 0)):,}"
+        )
+        metrics[2].metric(
+            "교차 프로젝트 관계",
+            f"{int(integrity.get('cross_project_relationship_count', 0)):,}",
+        )
+        metrics[3].metric(
+            "Reader 복구",
+            "PASS" if result.get("reader_mode_restored", True) else "확인 필요",
+        )
+        api = FactoryGraphApiClient()
+        try:
+            if api.live():
+                readiness = api.project_readiness(project_id)
+                st.dataframe(
+                    pd.DataFrame(
+                        [
+                            {"gate": name, **check}
+                            for name, check in readiness.get(
+                                "checks", {}
+                            ).items()
+                        ]
+                    ),
+                    width="stretch",
+                    hide_index=True,
+                )
+                if readiness.get("ready"):
+                    st.success("이 프로젝트는 자유 질의 준비가 완료됐습니다.")
+                else:
+                    st.info(
+                        "무결성 검증은 통과했습니다. Gold/Blind 평가와 "
+                        "prompt 승인이 완료되면 Query Studio가 열립니다."
+                    )
+        finally:
+            api.close()
 
 
 def main() -> None:

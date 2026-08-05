@@ -16,6 +16,7 @@ data/processed/expert_feedback.jsonl
 data/processed/intake_load.lock
 data/processed/intake_runs/
 data/processed/projects.sqlite3
+data/processed/pipeline_jobs.sqlite3
 data/processed/project_uploads/
 data/processed/project_mappings/
 data/processed/project_connectors/
