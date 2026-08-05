@@ -311,9 +311,13 @@ def _render_live_three_way(snapshot: dict[str, Any]) -> None:
         "Plotly Express와 Plotly Graph Objects는 Streamlit에서 실제 렌더링하고, "
         "React + ECharts는 공개 React 앱의 전용 임베드 route에 같은 JSON payload를 전달합니다."
     )
+    case_options = ("범주 비교", "상태 구성", "시간 추세")
+    case_keys = {"category": "범주 비교", "status": "상태 구성", "latency": "시간 추세"}
+    requested_case = case_keys.get(str(st.query_params.get("renderer_case", "category")), "범주 비교")
     case = st.radio(
         "비교할 데이터",
-        options=("범주 비교", "상태 구성", "시간 추세"),
+        options=case_options,
+        index=case_options.index(requested_case),
         horizontal=True,
         key="visualization-experiment-case",
     )
