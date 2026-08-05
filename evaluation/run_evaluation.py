@@ -23,6 +23,8 @@ from backend.app.agent.model import (
     OpenAICypherModel,
     has_vertex_credentials,
 )
+from backend.app.agent.prompt_registry import PromptContract, PromptRegistry
+from backend.app.agent.semantic_validation import build_domain_validator
 from backend.app.etl.cli import password_from_keychain
 from backend.app.schema_registry import SchemaRegistry
 from evaluation.evaluator import (
@@ -139,7 +141,8 @@ def run_evaluation(
     provider,
     model_name,
     project_config,
-    schema_context,
+    prompt_contract: PromptContract,
+    semantic_validator,
 ) -> dict:
     resolved_provider = provider
     if provider == "auto":
@@ -168,21 +171,20 @@ def run_evaluation(
         Path(project_config["gold"]["questions_path"])
     )
     graph = Neo4jReadGraph(driver, database=database)
-    semantic_validator = (
-        validate_domain_semantics
-        if project_config["project_id"] == "cip-dmd"
-        else lambda _question, _statement: []
-    )
     variant_reports = {}
     for variant in VARIANTS:
         model = (
-            OpenAICypherModel(model=resolved_model)
+            OpenAICypherModel(
+                model=resolved_model,
+                timeout_seconds=prompt_contract.timeout_seconds,
+            )
             if resolved_provider == "openai"
             else GeminiCypherModel(
                 model=resolved_model,
                 location=os.getenv(
                     "GOOGLE_VERTEX_LOCATION", "us-central1"
                 ),
+                timeout_seconds=prompt_contract.timeout_seconds,
             )
         )
         results = []
@@ -200,9 +202,13 @@ def run_evaluation(
                 graph,
                 examples,
                 variant,
-                schema_context=schema_context,
+                schema_context=prompt_contract.schema_context,
                 semantic_validator=semantic_validator,
                 project_id=project_config["project_id"],
+                max_attempts=prompt_contract.max_attempts,
+                few_shot_count=prompt_contract.few_shot_count,
+                timeout_seconds=prompt_contract.timeout_seconds,
+                metadata=prompt_contract.metadata(),
             )
             results.append(result)
             print(
@@ -245,6 +251,7 @@ def run_evaluation(
         "source_version": project_config["source_version"],
         "prompt_version": project_config["prompt_version"],
         "evaluation_fingerprint": project_config["fingerprint"],
+        "prompt_fingerprint": prompt_contract.fingerprint,
         "provider": resolved_provider,
         "model": resolved_model,
         "evaluated_at": datetime.now(timezone.utc).isoformat(),
@@ -356,6 +363,9 @@ def update_dashboard_metrics(report: dict) -> Path:
             "blind_execution_success_rate": final_metrics[
                 "execution_success_rate"
             ],
+            "blind_unverified_execution_count": final_metrics[
+                "unverified_execution_count"
+            ],
             "blind_schema_compliance_rate": final_metrics[
                 "schema_compliance_rate"
             ],
@@ -422,9 +432,14 @@ def main() -> None:
         Path(project_config["blind"]["questions_path"])
     )
     expected_root = Path(project_config["blind"]["snapshots_path"])
-    schema_context = SchemaRegistry(
+    prompt_contract = PromptRegistry(PROJECT_ROOT).load(args.project)
+    schema_manifest = SchemaRegistry(
         PROJECT_ROOT / "schemas"
-    ).context(args.project)
+    ).load(args.project)
+    semantic_validator = build_domain_validator(
+        schema_manifest,
+        include_cip_rules=prompt_contract.domain_validator == "cip-dmd",
+    )
     username, password = database_credentials()
     database = os.getenv("NEO4J_DATABASE", "neo4j")
     with GraphDatabase.driver(
@@ -446,7 +461,8 @@ def main() -> None:
             args.provider,
             args.model,
             project_config,
-            schema_context,
+            prompt_contract,
+            semantic_validator,
         )
     run_path, latest_path, markdown_path = write_report(report)
     metrics_path = update_dashboard_metrics(report)

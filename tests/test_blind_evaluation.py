@@ -176,6 +176,7 @@ class BlindEvaluationTest(unittest.TestCase):
                     "difference_type": "exact",
                     "schema_compliant": True,
                     "read_only_compliant": True,
+                    "execution_verified": True,
                     "empty_handled": None,
                     "correction_succeeded": None,
                     "evidence_displayed": True,
@@ -192,6 +193,7 @@ class BlindEvaluationTest(unittest.TestCase):
                     "difference_type": "wrong_value_or_rowset",
                     "schema_compliant": False,
                     "read_only_compliant": True,
+                    "execution_verified": None,
                     "empty_handled": None,
                     "correction_succeeded": None,
                     "evidence_displayed": False,
@@ -202,6 +204,7 @@ class BlindEvaluationTest(unittest.TestCase):
         )
         self.assertEqual(summary["result_accuracy"], 0.5)
         self.assertEqual(summary["read_only_compliance_rate"], 1.0)
+        self.assertEqual(summary["unverified_execution_count"], 0)
         self.assertEqual(summary["average_elapsed_ms"], 20)
         self.assertEqual(
             summary["failure_counts"], {"wrong_value_or_rowset": 1}

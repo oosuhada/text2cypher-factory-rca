@@ -1,4 +1,5 @@
 from pathlib import Path
+from time import sleep
 import unittest
 
 from backend.app.agent.examples import GoldExampleStore
@@ -14,7 +15,10 @@ from backend.app.security.read_only import (
     detect_write_request,
     validate_read_only,
 )
-from backend.app.agent.semantic_validation import validate_domain_semantics
+from backend.app.agent.semantic_validation import (
+    build_domain_validator,
+    validate_domain_semantics,
+)
 
 
 class FakeReadGraph:
@@ -31,6 +35,40 @@ class FakeReadGraph:
     def execute(self, statement: str) -> list[dict]:
         self.executed.append(statement)
         return [{"part_id": "300002"}]
+
+
+class RaisingModel:
+    def generate(self, *_args):
+        raise RuntimeError("provider unavailable")
+
+    def correct(self, *_args):
+        raise RuntimeError("provider unavailable")
+
+
+class SlowModel:
+    def generate(self, *_args):
+        sleep(0.01)
+        return "RETURN 1 AS count"
+
+    def correct(self, *_args):
+        return "RETURN 1 AS count"
+
+
+class RaisingGraph(FakeReadGraph):
+    def __init__(self, *, explain=False, execute=False):
+        super().__init__()
+        self.raise_explain = explain
+        self.raise_execute = execute
+
+    def explain(self, statement):
+        if self.raise_explain:
+            raise RuntimeError("database unavailable")
+        return super().explain(statement)
+
+    def execute(self, statement):
+        if self.raise_execute:
+            raise RuntimeError("database unavailable")
+        return super().execute(statement)
 
 
 class FakeChat:
@@ -142,6 +180,59 @@ class TextToCypherTest(unittest.TestCase):
             any(error.startswith("QUESTION_ALIGNMENT") for error in errors)
         )
 
+    def test_schema_domain_validator_rejects_translated_storage_value(self):
+        validator = build_domain_validator(
+            {
+                "domain_values": {
+                    "Equipment.equipment_type": [
+                        "press",
+                        "milling",
+                    ]
+                }
+            }
+        )
+        errors = validator(
+            "프레스 설비의 정비 건수를 알려줘.",
+            "MATCH (e:Equipment {equipment_type: '프레스'}) RETURN e",
+        )
+        self.assertTrue(errors)
+        self.assertIn("'press'", errors[0])
+
+    def test_schema_domain_validator_is_label_aware(self):
+        validator = build_domain_validator(
+            {
+                "domain_values": {
+                    "Process.name": ["assembly"],
+                    "Equipment.name": ["DMC 50H"],
+                }
+            }
+        )
+        errors = validator(
+            "조립 공정을 보여줘.",
+            "MATCH (p:Process {name: 'assembly'}) RETURN p.name",
+        )
+        self.assertEqual(errors, [])
+
+    def test_user_supplied_unknown_id_is_allowed_to_return_empty(self):
+        validator = build_domain_validator(
+            {
+                "nodes": [
+                    {
+                        "label": "Equipment",
+                        "identity": "equipment_id",
+                    }
+                ],
+                "domain_values": {
+                    "Equipment.equipment_id": ["known-equipment"],
+                }
+            }
+        )
+        errors = validator(
+            "존재하지 않는 장비 ZZZ-999를 보여줘.",
+            "MATCH (e:Equipment {equipment_id: 'ZZZ-999'}) RETURN e",
+        )
+        self.assertEqual(errors, [])
+
     def test_domain_semantics_rejects_equipment_to_anomaly_topology(self):
         statements = (
             "MATCH (run:ProcessRun)-[:RUN_ON]->(equipment:Equipment) "
@@ -216,6 +307,17 @@ class TextToCypherTest(unittest.TestCase):
         self.assertEqual(result["attempts"], 1)
         self.assertEqual(len(graph.explained), 1)
         self.assertEqual(len(graph.executed), 1)
+        verified_hash = result["validated_statement_sha256"]
+        execution_event = next(
+            event
+            for event in result["trace"]
+            if event["step"] == "execute_cypher"
+        )
+        self.assertTrue(verified_hash)
+        self.assertEqual(
+            execution_event["verified_statement_sha256"],
+            verified_hash,
+        )
 
     def test_syntax_error_is_corrected_and_revalidated(self):
         graph = FakeReadGraph()
@@ -276,6 +378,64 @@ class TextToCypherTest(unittest.TestCase):
         result = agent.invoke("압력 실패 데이터를 삭제해줘")
         self.assertEqual(result["status"], "blocked")
         self.assertEqual(result["attempts"], 0)
+        self.assertEqual(graph.executed, [])
+
+    def test_model_failure_returns_failed_contract_without_execution(self):
+        graph = FakeReadGraph()
+        agent = TextToCypherAgent(
+            RaisingModel(),
+            graph,
+            self.examples_path,
+        )
+        result = agent.invoke("부품 하나를 보여줘")
+        self.assertEqual(result["status"], "failed")
+        self.assertTrue(result["errors"][0].startswith("MODEL_ERROR"))
+        self.assertEqual(graph.explained, [])
+        self.assertEqual(graph.executed, [])
+
+    def test_explain_failure_never_executes(self):
+        graph = RaisingGraph(explain=True)
+        agent = TextToCypherAgent(
+            SequenceCypherModel(["RETURN 1 AS count"]),
+            graph,
+            self.examples_path,
+            max_attempts=1,
+        )
+        result = agent.invoke("전체 건수를 알려줘")
+        self.assertEqual(result["status"], "failed")
+        self.assertTrue(result["errors"][0].startswith("EXPLAIN_ERROR"))
+        self.assertEqual(graph.executed, [])
+
+    def test_execution_failure_returns_failed_contract(self):
+        graph = RaisingGraph(execute=True)
+        agent = TextToCypherAgent(
+            SequenceCypherModel(["RETURN 1 AS count"]),
+            graph,
+            self.examples_path,
+        )
+        result = agent.invoke("전체 건수를 알려줘")
+        self.assertEqual(result["status"], "failed")
+        self.assertTrue(result["errors"][0].startswith("EXECUTION_ERROR"))
+        self.assertFalse(
+            next(
+                event
+                for event in result["trace"]
+                if event["step"] == "execute_cypher"
+            )["executed"]
+        )
+
+    def test_pipeline_timeout_after_generation_never_executes(self):
+        graph = FakeReadGraph()
+        agent = TextToCypherAgent(
+            SlowModel(),
+            graph,
+            self.examples_path,
+            timeout_seconds=0.001,
+        )
+        result = agent.invoke("전체 건수를 알려줘")
+        self.assertEqual(result["status"], "failed")
+        self.assertTrue(result["errors"][0].startswith("PIPELINE_TIMEOUT"))
+        self.assertEqual(graph.explained, [])
         self.assertEqual(graph.executed, [])
 
 

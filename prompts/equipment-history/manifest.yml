@@ -1,0 +1,13 @@
+project_id: equipment-history
+prompt_version: text2cypher-v1
+schema_version: "1.0"
+few_shot:
+  questions: evaluation/equipment-history_gold.yml
+  count: 6
+max_attempts: 3
+timeout_seconds: 30
+domain_validator: equipment-history
+rules:
+  - Translate Korean equipment types to stored English values such as press, milling, conveyor, or welding.
+  - Use only inspection, repair, or replacement for MaintenanceEvent.event_type.
+  - Do not infer causality from maintenance co-occurrence.

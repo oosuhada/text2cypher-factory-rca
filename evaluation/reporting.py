@@ -21,8 +21,8 @@ def render_metrics_markdown(report: dict[str, Any]) -> str:
         "## Variant 비교",
         "",
         "| Variant | 의미값 정확도 | 엄격 정확도 | 실행 성공률 | "
-        "상태 Macro F1 |",
-        "|---|---:|---:|---:|---:|",
+        "미검증 실행 | 상태 Macro F1 |",
+        "|---|---:|---:|---:|---:|---:|",
     ]
     for row in report["comparison"]:
         classification = row["status_classification"]
@@ -31,6 +31,7 @@ def render_metrics_markdown(report: dict[str, Any]) -> str:
             f"{_percent(row['result_accuracy'])} | "
             f"{_percent(row['strict_result_accuracy'])} | "
             f"{_percent(row['execution_success_rate'])} | "
+            f"{row.get('unverified_execution_count', 0)} | "
             f"{_percent(classification['macro_f1'])} |"
         )
     final = report["variants"]["self_correction"]["metrics"]

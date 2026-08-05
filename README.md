@@ -12,6 +12,7 @@ PPT 대조 후 수정 근거는 [방향 수정 기록](./docs/direction-correcti
 - [P3 요구사항 Baseline·Gap Matrix](./docs/p3-requirements-traceability.md)
 - [엔터프라이즈 트랙 1-1~1-3 구현·검증](./docs/enterprise-stage1-1-3-validation.md)
 - [엔터프라이즈 트랙 1-4~1-5 구현·검증](./docs/enterprise-stage1-4-5-validation.md)
+- [엔터프라이즈 트랙 1-6 구현·검증](./docs/enterprise-stage1-6-validation.md)
 - 플랫폼 공통 API·Registry·스키마·ETL·다중 도메인:
   [`platform-stage1~11`](./docs/platform-stage1-shared-api.md)
 - 제품 리팩터링·Data Intake·Graph Explorer·HITL·배포:

@@ -404,14 +404,17 @@ def build_evidence_graph(
 def format_agent_result(state: CypherState) -> dict[str, Any]:
     records = state.get("records", [])
     status = state.get("status", "failed")
-    return {
-        "question": state.get("question", ""),
-        "answer": _answer_for(state),
-        "status": status,
-        "cypher": state.get("statement", ""),
-        "rows": records,
-        "row_count": len(records),
-        "evidence": build_evidence_graph(records)
+    metadata = state.get("metadata", {})
+    verified_hash = state.get("validated_statement_sha256", "")
+    trace = state.get("trace", [])
+    execution_verified = any(
+        event.get("step") == "execute_cypher"
+        and event.get("executed") is True
+        and event.get("verified_statement_sha256") == verified_hash
+        for event in trace
+    )
+    evidence = (
+        build_evidence_graph(records)
         if status == "success"
         else {
             "nodes": [],
@@ -425,12 +428,30 @@ def format_agent_result(state: CypherState) -> dict[str, Any]:
             },
             "source_row_count": len(records),
             "visualized_row_count": 0,
-        },
+        }
+    )
+    evidence["provenance"] = {
+        "project_id": metadata.get("project_id"),
+        "schema_version": metadata.get("schema_version"),
+        "prompt_version": metadata.get("prompt_version"),
+        "verified_statement_sha256": verified_hash or None,
+    }
+    return {
+        "question": state.get("question", ""),
+        "answer": _answer_for(state),
+        "status": status,
+        "cypher": state.get("statement", ""),
+        "rows": records,
+        "row_count": len(records),
+        "metadata": metadata,
+        "evidence": evidence,
         "validation": {
             "attempts": state.get("attempts", 0),
             "errors": state.get("errors", []),
-            "trace": state.get("trace", []),
+            "trace": trace,
             "elapsed_ms": state.get("elapsed_ms", 0),
+            "verified_statement_sha256": verified_hash or None,
+            "execution_verified": execution_verified,
         },
         "caveat": (
             "연결 관계와 집계를 기반으로 한 검토 후보이며 "

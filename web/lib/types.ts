@@ -37,12 +37,23 @@ export type QueryResponse = {
   cypher: string;
   rows: Record<string, unknown>[];
   row_count: number;
+  metadata: {
+    project_id?: string;
+    schema_version?: string;
+    source_version?: string;
+    prompt_version?: string;
+    evaluation_version?: string;
+    prompt_template_sha256?: string;
+    prompt_fingerprint?: string;
+  };
   evidence: Evidence;
   validation: {
     attempts: number;
     errors: string[];
     trace: Record<string, unknown>[];
     elapsed_ms: number;
+    verified_statement_sha256?: string | null;
+    execution_verified?: boolean;
   };
   usage: Record<string, number>;
   caveat?: string | null;
