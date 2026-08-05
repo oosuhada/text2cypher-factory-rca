@@ -132,6 +132,7 @@ class ProjectUpdate(BaseModel):
     security_classification: str | None = Field(
         default=None, min_length=1, max_length=80
     )
+    favorite: bool | None = None
 
 
 class ProjectResponse(BaseModel):
@@ -151,6 +152,7 @@ class ProjectResponse(BaseModel):
     prompt_version: str | None = None
     gold_version: str | None = None
     evaluation_version: str | None = None
+    favorite: bool = False
     created_at: str
     updated_at: str
     is_active: bool = False

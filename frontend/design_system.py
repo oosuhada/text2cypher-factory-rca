@@ -88,7 +88,7 @@ NAVIGATION_ITEMS: Final[tuple[NavigationItem, ...]] = (
         "Overview",
         "프로젝트 생성, 검색, 전환과 준비 상태",
         ALL_ROLES,
-        "foundation",
+        "available",
         "2-2",
     ),
     NavigationItem(

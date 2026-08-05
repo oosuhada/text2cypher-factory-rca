@@ -284,6 +284,12 @@
 
 ### 2-2. Home·Projects Workspace
 
+상태: **구현·검증 완료 (2026-07-28)**
+
+검증 기록:
+
+- [`enterprise-stage2-2-home-projects.md`](./enterprise-stage2-2-home-projects.md)
+
 목표:
 
 - 사용자가 현재 프로젝트와 시스템 상태를 즉시 이해하고 전환한다.

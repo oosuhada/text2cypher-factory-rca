@@ -104,3 +104,11 @@ class ProjectRegistryTest(unittest.TestCase):
                 domain_type="x",
                 dataset_name="x",
             )
+
+    def test_favorite_is_persisted_without_changing_lifecycle(self):
+        self.registry.ensure_default()
+        updated = self.registry.update("cip-dmd", favorite=True)
+        self.assertEqual(updated["favorite"], 1)
+        self.assertEqual(updated["status"], "ready")
+        reopened = ProjectRegistry(self.registry.path)
+        self.assertEqual(reopened.require("cip-dmd")["favorite"], 1)
