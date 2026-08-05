@@ -42,6 +42,101 @@ def render_app_shell(app_title: str) -> None:
           padding: .8rem 1rem;
           border-radius: 14px;
         }
+        div[data-testid="stPlotlyChart"] {
+          overflow: hidden;
+          border: 1px solid #DCDCDD;
+          border-radius: 12px;
+          padding: .25rem .35rem .1rem;
+          background: #FFFFFF;
+          box-shadow: 0 1px 2px rgba(15, 23, 42, .035);
+        }
+        div[data-testid="stPlotlyChart"]:hover {
+          border-color: #B8C1CC;
+        }
+        .p3-plotly-compare-link {
+          width: fit-content;
+          min-height: 2.2rem;
+          margin: .15rem 0 .9rem;
+          padding: .45rem .7rem;
+          color: #0F766E !important;
+          background: #F0FDFA;
+        }
+        .p3-plotly-comparison-hero {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          align-items: end;
+          gap: 1rem;
+          margin: .25rem 0 1rem;
+          border: 1px solid #DCDCDD;
+          border-radius: 14px;
+          padding: 1.15rem 1.25rem;
+          background: linear-gradient(135deg, #FFFFFF 0%, #F0FDFA 100%);
+        }
+        .p3-plotly-comparison-hero h1 {
+          margin: .25rem 0 .4rem;
+          font-size: 1.7rem;
+          letter-spacing: -.035em;
+        }
+        .p3-plotly-comparison-hero p {
+          max-width: 760px;
+          margin: 0;
+          color: #5F6B7B;
+          font-size: .88rem;
+          line-height: 1.55;
+        }
+        .p3-plotly-comparison-hero small {
+          color: #0F766E;
+          font-size: .72rem;
+          font-weight: 800;
+          letter-spacing: .08em;
+          text-transform: uppercase;
+        }
+        .p3-compare-label {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          min-height: 2rem;
+          margin: .2rem 0 .45rem;
+          border-bottom: 1px solid #E5E7EB;
+          color: #3A4950;
+          font-size: .84rem;
+          font-weight: 750;
+        }
+        .p3-compare-label span {
+          border-radius: 999px;
+          padding: .16rem .48rem;
+          color: #5F6B7B;
+          background: #F2F4F6;
+          font-size: .66rem;
+          font-weight: 800;
+        }
+        .p3-compare-label.is-polished span {
+          color: #115E59;
+          background: #CCFBF1;
+        }
+        .p3-comparison-notes {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: .55rem;
+          margin: .75rem 0 1rem;
+        }
+        .p3-comparison-notes article {
+          border: 1px solid #DCDCDD;
+          border-radius: 10px;
+          padding: .75rem;
+          background: #FFFFFF;
+        }
+        .p3-comparison-notes strong {
+          display: block;
+          margin-bottom: .22rem;
+          color: #3A4950;
+          font-size: .78rem;
+        }
+        .p3-comparison-notes span {
+          color: #5F6B7B;
+          font-size: .72rem;
+          line-height: 1.45;
+        }
         div[data-testid="stChatMessage"] {
           border: 1px solid #E2E8F0;
           border-radius: 14px;
@@ -214,6 +309,11 @@ def render_app_shell(app_title: str) -> None:
           .p3-feature-grid {grid-template-columns: repeat(2, minmax(0, 1fr));}
           .p3-landing-hero {grid-template-columns:1fr;padding:1.5rem;}
           .p3-workflow {grid-template-columns:repeat(2,minmax(0,1fr));}
+          .p3-plotly-comparison-hero {grid-template-columns:1fr;}
+          .p3-comparison-notes {grid-template-columns:repeat(2,minmax(0,1fr));}
+        }
+        @media (max-width: 560px) {
+          .p3-comparison-notes {grid-template-columns:1fr;}
         }
         </style>
         """,

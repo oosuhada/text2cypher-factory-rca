@@ -12,6 +12,7 @@ from frontend.common_ui import (
 )
 from frontend.design_system import ui_text
 from frontend.navigation import render_page_header
+from frontend.plotly_comparison import render_plotly_comparison_route
 from frontend.runtime import (
     SERVICE_BUNDLE_VERSION,
     clear_service_cache,
@@ -35,6 +36,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 def render_internal_console() -> None:
+    if st.query_params.get("compare") == "plotly-ui":
+        render_plotly_comparison_route()
+        return
     initialize_session()
     page, provider, model_name, project_id = render_sidebar_shell(
         project_root=PROJECT_ROOT,

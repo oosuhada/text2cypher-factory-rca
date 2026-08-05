@@ -54,6 +54,8 @@ class StreamlitPageArchitectureTest(unittest.TestCase):
         )
         self.assertIn("build_hidden_navigation", entrypoint)
         self.assertIn('st.navigation(pages, position="hidden")', router)
+        self.assertIn("render_plotly_comparison_route", console)
+        self.assertIn('st.query_params.get("compare") == "plotly-ui"', console)
         self.assertIn("frontend.workspaces.", console)
         self.assertNotIn("frontend.pages.", entrypoint + router + console)
 

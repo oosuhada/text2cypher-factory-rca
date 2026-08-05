@@ -10,6 +10,7 @@ import streamlit as st
 
 from frontend.app_services import ServiceBundle
 from frontend.dashboard_plotly import (
+    PLOTLY_CHART_CONFIG,
     build_anomaly_runs_figure,
     build_blind_comparison_figure,
     build_equipment_runs_figure,
@@ -20,6 +21,18 @@ from frontend.dashboard_plotly import (
     build_relationship_counts_figure,
     build_status_counts_figure,
 )
+
+
+def render_dashboard_figure(figure, *, key: str) -> None:
+    """Render one Plotly figure with the dashboard's product-level defaults."""
+
+    st.plotly_chart(
+        figure,
+        width="stretch",
+        key=key,
+        theme=None,
+        config=PLOTLY_CHART_CONFIG,
+    )
 
 def normalize_dashboard_snapshot(
     raw_snapshot: dict[str, Any],
@@ -190,6 +203,11 @@ def render_dashboard_tab(
         "모든 위젯은 현재 프로젝트와 동일한 provider·상태·기간 범위를 "
         "사용합니다. 그래프 수치는 Neo4j, 품질 수치는 승인된 평가 산출물에서 조회합니다."
     )
+    st.markdown(
+        '<a class="p3-workspace-link p3-plotly-compare-link" '
+        'href="/?compare=plotly-ui" target="_self">기본 Plotly와 개선 UI 비교 →</a>',
+        unsafe_allow_html=True,
+    )
     if snapshot is None:
         try:
             snapshot = services.dashboard.snapshot()
@@ -248,16 +266,14 @@ def render_dashboard_tab(
         left, right = st.columns(2)
         with left:
             st.markdown("##### 노드 유형")
-            st.plotly_chart(
+            render_dashboard_figure(
                 build_node_counts_figure(snapshot["node_counts"]),
-                width="stretch",
                 key="dashboard-node-counts",
             )
         with right:
             st.markdown("##### 관계 유형")
-            st.plotly_chart(
+            render_dashboard_figure(
                 build_relationship_counts_figure(snapshot["relationship_counts"]),
-                width="stretch",
                 key="dashboard-relationship-counts",
             )
     with process_tab:
@@ -265,9 +281,8 @@ def render_dashboard_tab(
         with left:
             st.markdown("##### 장비별 공정 실행")
             if snapshot["equipment_runs"]:
-                st.plotly_chart(
+                render_dashboard_figure(
                     build_equipment_runs_figure(snapshot["equipment_runs"]),
-                    width="stretch",
                     key="dashboard-equipment-runs",
                 )
             else:
@@ -287,9 +302,8 @@ def render_dashboard_tab(
         with left:
             st.markdown("##### 이상 유형 분포")
             if snapshot["anomaly_runs"]:
-                st.plotly_chart(
+                render_dashboard_figure(
                     build_anomaly_runs_figure(snapshot["anomaly_runs"]),
-                    width="stretch",
                     key="dashboard-anomaly-runs",
                 )
             else:
@@ -297,9 +311,8 @@ def render_dashboard_tab(
         with right:
             st.markdown("##### 품질 불합격 상위 항목")
             if snapshot["quality_failures"]:
-                st.plotly_chart(
+                render_dashboard_figure(
                     build_quality_failures_figure(snapshot["quality_failures"]),
-                    width="stretch",
                     key="dashboard-quality-failures",
                 )
             else:
@@ -351,17 +364,15 @@ def render_dashboard_tab(
     with status_column:
         st.markdown("##### 질의 상태")
         if runtime["status_counts"]:
-            st.plotly_chart(
+            render_dashboard_figure(
                 build_status_counts_figure(runtime["status_counts"]),
-                width="stretch",
                 key="dashboard-runtime-status",
             )
         else:
             st.info("아직 기록된 질의가 없습니다.")
         if runtime["provider_counts"]:
-            st.plotly_chart(
+            render_dashboard_figure(
                 build_provider_counts_figure(runtime["provider_counts"]),
-                width="stretch",
                 key="dashboard-runtime-provider",
             )
     with recent_column:
@@ -380,9 +391,8 @@ def render_dashboard_tab(
                 },
             )
             if "elapsed_ms" in recent_queries:
-                st.plotly_chart(
+                render_dashboard_figure(
                     build_recent_latency_figure(runtime["recent_queries"]),
-                    width="stretch",
                     key="dashboard-recent-latency",
                 )
         else:
@@ -496,9 +506,8 @@ def render_dashboard_tab(
                 ),
             },
         )
-        st.plotly_chart(
+        render_dashboard_figure(
             build_blind_comparison_figure(comparison),
-            width="stretch",
             key="dashboard-blind-comparison",
         )
         st.caption(

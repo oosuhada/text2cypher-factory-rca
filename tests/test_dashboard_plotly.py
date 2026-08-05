@@ -4,6 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from frontend.dashboard_plotly import (
+    PLOTLY_CHART_CONFIG,
     build_anomaly_runs_figure,
     build_blind_comparison_figure,
     build_equipment_runs_figure,
@@ -78,5 +79,38 @@ def test_empty_chart_inputs_return_presentable_empty_figures() -> None:
 
     assert isinstance(figure, go.Figure)
     assert not figure.data
-    assert figure.layout.annotations[0].text == "표시할 데이터가 없습니다."
+    assert "표시할 데이터가 없습니다." in figure.layout.annotations[0].text
+    assert figure.layout.paper_bgcolor == "rgba(0,0,0,0)"
+
+
+def test_polished_figures_use_product_visual_defaults() -> None:
+    figure = build_node_counts_figure(
+        [
+            {"label": "Equipment", "count": 100},
+            {"label": "Observation", "count": 345_600},
+        ]
+    )
+
+    assert figure.layout.title.text is None
+    assert figure.layout.paper_bgcolor == "rgba(0,0,0,0)"
+    assert figure.layout.plot_bgcolor == "rgba(0,0,0,0)"
+    assert figure.layout.barcornerradius == 4
+    assert figure.layout.xaxis.gridcolor == "#ECEDEF"
+    assert figure.data[0].hovertemplate.endswith("<extra></extra>")
+    assert PLOTLY_CHART_CONFIG["displayModeBar"] is False
+    assert PLOTLY_CHART_CONFIG["displaylogo"] is False
+
+
+def test_status_donut_contains_total_and_semantic_colors() -> None:
+    figure = build_status_counts_figure(
+        [
+            {"status": "success", "count": 4},
+            {"status": "blocked", "count": 2},
+        ]
+    )
+
+    assert figure.layout.annotations
+    assert "6" in figure.layout.annotations[0].text
+    assert list(figure.data[0].marker.colors) == ["#29A634", "#DB0714"]
+    assert figure.data[0].hole == 0.68
 
