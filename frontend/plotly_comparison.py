@@ -177,29 +177,47 @@ def _render_react_echarts_runtime() -> None:
         f"""
         <section class="p3-react-runtime">
           <header>
-            <div><small>IMPLEMENTED PRODUCT RUNTIME</small><h2>현재 React + ECharts Dashboard</h2></div>
+            <div><small>WHY A PRODUCT RUNTIME</small><h2>차트 선택이 다른 업무 화면까지 이어지는 구조</h2></div>
             <a class="p3-workspace-link" href="{REACT_ECHARTS_URL}" target="_blank" rel="noreferrer">실제 Dashboard 열기 ↗</a>
           </header>
-          <div class="p3-react-runtime-grid">
-            <article><b>Visualization registry</b><span>Metric · Table · Bar · Stacked · Line · Area · Donut · Histogram · Scatter · Heatmap</span></article>
-            <article><b>Board runtime</b><span>react-grid-layout 기반 크기·배치·fullscreen·saved view</span></article>
-            <article><b>Interaction</b><span>click selection · brush · data zoom · server cross-filter</span></article>
-            <article><b>Semantic planner</b><span>자동 추천, 대안·불가 사유, 수동 chart·field mapping</span></article>
-            <article><b>Product context</b><span>Project · Workspace · Role · Object context와 동기화</span></article>
-            <article><b>State contract</b><span>loading · empty · incompatible · ready를 Board 단위로 처리</span></article>
-          </div>
-          <div class="p3-react-board-preview" aria-label="React ECharts runtime structure preview">
-            <div class="p3-react-board-head"><span>관리형 BOARD · 위험 추세 분석</span><div><i>AUTO</i><b>Line</b><em>•••</em></div></div>
-            <div class="p3-react-board-body">
-              <aside><strong>Object context</strong><span>CMP-S03-L03-01</span><small>긴급 검토 · 82.5%</small></aside>
-              <div class="p3-react-chart-schematic">
-                <div class="p3-react-chart-gridline is-1"></div><div class="p3-react-chart-gridline is-2"></div><div class="p3-react-chart-gridline is-3"></div>
-                <svg viewBox="0 0 640 190" role="img" aria-label="ECharts line interaction schematic"><path d="M12 160 C88 148 116 120 174 132 S264 92 318 106 S410 54 468 76 S558 28 628 42" fill="none" stroke="#0C1C74" stroke-width="5" stroke-linecap="round"/><path d="M12 160 C88 148 116 120 174 132 S264 92 318 106 S410 54 468 76 S558 28 628 42 L628 184 L12 184 Z" fill="rgba(12,28,116,.10)"/><g fill="#fff" stroke="#0C1C74" stroke-width="4"><circle cx="174" cy="132" r="6"/><circle cx="318" cy="106" r="6"/><circle cx="468" cy="76" r="6"/><circle cx="628" cy="42" r="6"/></g></svg>
+          <p class="p3-runtime-intro">ECharts는 차트를 그립니다. React Dashboard runtime은 사용자의 선택을 공통 Object Context로 바꾸고, 다른 Board·필터·Inspector에 전파합니다.</p>
+          <div class="p3-runtime-flow" aria-label="Chart interaction to shared object context and synchronized dashboard effects">
+            <article class="p3-runtime-stage is-chart-event">
+              <header><span>01 · CHART EVENT</span><strong>위험 막대 선택</strong></header>
+              <div class="p3-runtime-bars" aria-label="Selected risk bar example">
+                <div><small>CMP-S01</small><i style="--bar-size:43%"></i><em>43%</em></div>
+                <div><small>CMP-S02</small><i style="--bar-size:61%"></i><em>61%</em></div>
+                <div class="is-selected"><small>CMP-S03</small><i style="--bar-size:82.5%"></i><em>82.5%</em></div>
               </div>
-            </div>
-            <footer><span>선택 → Object Context 갱신</span><span>Brush → Cross-filter</span><span>Inspector → 차트·필드 변경</span></footer>
+              <footer><b>Click / Brush</b><span>selection payload 생성</span></footer>
+            </article>
+            <div class="p3-runtime-arrow" aria-hidden="true"><span>선택 상태 전달</span><b>→</b></div>
+            <article class="p3-runtime-stage is-context">
+              <header><span>02 · SHARED CONTEXT</span><strong>Object Context 갱신</strong></header>
+              <dl>
+                <div><dt>Object</dt><dd>CMP-S03-L03-01</dd></div>
+                <div><dt>Risk</dt><dd class="is-danger">82.5% · 긴급 검토</dd></div>
+                <div><dt>Scope</dt><dd>Manufacturing / Engineer</dd></div>
+              </dl>
+              <footer><b>단일 상태</b><span>Project · Workspace · Role 동기화</span></footer>
+            </article>
+            <div class="p3-runtime-arrow" aria-hidden="true"><span>Cross-filter 전파</span><b>→</b></div>
+            <article class="p3-runtime-stage is-effects">
+              <header><span>03 · SYNCHRONIZED UI</span><strong>관련 화면이 함께 변경</strong></header>
+              <div class="p3-runtime-effects">
+                <div><small>Maintenance queue</small><b>3개 설비로 필터</b><span>우선 점검 대상만 표시</span></div>
+                <div><small>Board Inspector</small><b>Line · failure_probability</b><span>차트·필드 매핑 변경</span></div>
+                <div><small>Saved role view</small><b>Engineer focus</b><span>역할별 레이아웃 유지</span></div>
+              </div>
+            </article>
           </div>
-          <p class="p3-react-preview-note">위 미리보기는 실제 제품 runtime의 구조를 설명하는 schematic이며, 실제 ECharts Canvas와 Board 동작은 링크된 React Dashboard에서 확인합니다.</p>
+          <div class="p3-runtime-foundation" aria-label="React dashboard runtime responsibilities">
+            <span><b>Board grid</b> 크기·배치·전체화면</span>
+            <span><b>Visualization registry</b> 10종 차트 전환</span>
+            <span><b>State contract</b> Loading·Empty·Ready</span>
+            <span><b>Saved view</b> 역할·필터·레이아웃 저장</span>
+          </div>
+          <p class="p3-react-preview-note">핵심은 ECharts 자체가 아니라, 차트 이벤트를 제품 상태로 변환해 여러 업무 화면을 동기화하는 React runtime입니다.</p>
         </section>
         """,
         unsafe_allow_html=True,
@@ -549,7 +567,11 @@ def render_plotly_comparison_route() -> None:
         """
         <style>
           [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"] { display: none !important; }
-          .block-container { max-width: 1600px !important; padding-left: 2rem !important; padding-right: 2rem !important; }
+          .block-container {
+            max-width: 1600px !important;
+            padding-left: clamp(.75rem, 3vw, 2rem) !important;
+            padding-right: clamp(.75rem, 3vw, 2rem) !important;
+          }
         </style>
         """,
         unsafe_allow_html=True,

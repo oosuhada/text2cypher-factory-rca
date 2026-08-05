@@ -426,6 +426,146 @@ def render_app_shell(app_title: str) -> None:
           font-size: 1.15rem;
           letter-spacing: -.025em;
         }
+        .p3-runtime-intro {
+          max-width: 980px;
+          margin: .75rem 0 1rem;
+          color:#5F6B7B;
+          font-size:.78rem;
+          line-height:1.6;
+        }
+        .p3-runtime-flow {
+          display:grid;
+          grid-template-columns:minmax(0,1fr) 84px minmax(0,.9fr) 84px minmax(0,1.05fr);
+          align-items:stretch;
+          gap:.55rem;
+        }
+        .p3-runtime-stage {
+          display:flex;
+          min-width:0;
+          min-height:250px;
+          flex-direction:column;
+          overflow:hidden;
+          border:1px solid #DCDCDD;
+          border-radius:10px;
+          background:#FFFFFF;
+        }
+        .p3-runtime-stage > header {
+          display:flex;
+          flex-direction:column;
+          gap:.18rem;
+          min-height:62px;
+          padding:.65rem .72rem;
+          border-bottom:1px solid #ECEDEF;
+          background:#F7F8F9;
+        }
+        .p3-runtime-stage > header span {
+          color:#0F766E;
+          font-size:.56rem;
+          font-weight:850;
+          letter-spacing:.08em;
+        }
+        .p3-runtime-stage > header strong {color:#263238;font-size:.78rem;}
+        .p3-runtime-stage > footer {
+          display:flex;
+          min-height:43px;
+          align-items:center;
+          justify-content:space-between;
+          gap:.5rem;
+          margin-top:auto;
+          border-top:1px solid #ECEDEF;
+          padding:.5rem .65rem;
+          background:#F7F8F9;
+        }
+        .p3-runtime-stage > footer b {color:#0C1C74;font-size:.62rem;}
+        .p3-runtime-stage > footer span {color:#697586;font-size:.57rem;text-align:right;}
+        .p3-runtime-bars {
+          display:grid;
+          gap:.7rem;
+          padding:1rem .75rem;
+        }
+        .p3-runtime-bars > div {
+          display:grid;
+          grid-template-columns:58px minmax(0,1fr) 38px;
+          align-items:center;
+          gap:.4rem;
+          border-radius:6px;
+          padding:.32rem .4rem;
+        }
+        .p3-runtime-bars > div.is-selected {background:#EEF2FF;box-shadow:inset 0 0 0 1px #A5B4FC;}
+        .p3-runtime-bars small {color:#5F6B7B;font-size:.57rem;}
+        .p3-runtime-bars i {
+          display:block;
+          width:var(--bar-size);
+          height:14px;
+          border-radius:0 4px 4px 0;
+          background:#7C8AA5;
+        }
+        .p3-runtime-bars .is-selected i {background:#0C1C74;}
+        .p3-runtime-bars em {color:#3A4950;font-size:.58rem;font-style:normal;text-align:right;}
+        .p3-runtime-arrow {
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          flex-direction:column;
+          gap:.3rem;
+          color:#7B8794;
+          text-align:center;
+        }
+        .p3-runtime-arrow span {font-size:.55rem;line-height:1.35;}
+        .p3-runtime-arrow b {
+          display:grid;
+          place-items:center;
+          width:30px;
+          height:30px;
+          border:1px solid #C7D2FE;
+          border-radius:999px;
+          color:#0C1C74;
+          background:#EEF2FF;
+          font-size:1rem;
+        }
+        .p3-runtime-stage.is-context dl {display:grid;gap:.55rem;margin:0;padding:.9rem .75rem;}
+        .p3-runtime-stage.is-context dl div {
+          display:grid;
+          gap:.12rem;
+          border-bottom:1px solid #F0F1F2;
+          padding-bottom:.5rem;
+        }
+        .p3-runtime-stage.is-context dl div:last-child {border-bottom:0;}
+        .p3-runtime-stage.is-context dt {color:#7B8794;font-size:.55rem;font-weight:800;text-transform:uppercase;}
+        .p3-runtime-stage.is-context dd {margin:0;color:#263238;font-size:.68rem;font-weight:750;line-height:1.35;}
+        .p3-runtime-stage.is-context dd.is-danger {color:#B42318;}
+        .p3-runtime-effects {display:grid;gap:.45rem;padding:.72rem;}
+        .p3-runtime-effects div {
+          display:grid;
+          gap:.12rem;
+          border:1px solid #E4E7EB;
+          border-radius:7px;
+          padding:.55rem .62rem;
+          background:#FAFBFC;
+        }
+        .p3-runtime-effects small {color:#7B8794;font-size:.54rem;font-weight:800;text-transform:uppercase;}
+        .p3-runtime-effects b {color:#263238;font-size:.66rem;}
+        .p3-runtime-effects span {color:#697586;font-size:.57rem;line-height:1.35;}
+        .p3-runtime-foundation {
+          display:grid;
+          grid-template-columns:repeat(4,minmax(0,1fr));
+          gap:.45rem;
+          margin-top:.65rem;
+        }
+        .p3-runtime-foundation span {
+          display:flex;
+          min-width:0;
+          flex-direction:column;
+          gap:.15rem;
+          border:1px solid #E4E7EB;
+          border-radius:7px;
+          padding:.52rem .6rem;
+          color:#697586;
+          background:#F7F8F9;
+          font-size:.57rem;
+          line-height:1.3;
+        }
+        .p3-runtime-foundation b {color:#3A4950;font-size:.62rem;}
         .p3-react-runtime-grid {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -792,9 +932,11 @@ def render_app_shell(app_title: str) -> None:
           .p3-comparison-notes {grid-template-columns:repeat(2,minmax(0,1fr));}
           .p3-method-grid {grid-template-columns:1fr;}
           .p3-method-card p {min-height:0;}
-          .p3-react-runtime-grid {grid-template-columns:repeat(2,minmax(0,1fr));}
-          .p3-react-board-body {grid-template-columns:1fr;}
-          .p3-react-board-body aside {border-right:0;border-bottom:1px solid #ECEDEF;}
+          .p3-runtime-flow {grid-template-columns:1fr;}
+          .p3-runtime-arrow {min-height:42px;flex-direction:row;}
+          .p3-runtime-arrow b {transform:rotate(90deg);}
+          .p3-runtime-stage {min-height:0;}
+          .p3-runtime-foundation {grid-template-columns:repeat(2,minmax(0,1fr));}
           .st-key-renderer-live-grid [data-testid="stHorizontalBlock"] {flex-wrap:wrap;}
           .st-key-renderer-live-grid [data-testid="stColumn"] {
             flex:1 1 100% !important;
@@ -848,7 +990,18 @@ def render_app_shell(app_title: str) -> None:
           .p3-comparison-notes {grid-template-columns:1fr;}
           .p3-react-runtime > header,
           .p3-decision-panel > header {align-items:flex-start;flex-direction:column;}
-          .p3-react-runtime-grid {grid-template-columns:1fr;}
+          .p3-live-renderer-head {min-height:auto;padding:.68rem .72rem;}
+          .p3-renderer-context {grid-template-columns:1fr 1fr;}
+          .p3-renderer-context dd {overflow:visible;text-overflow:clip;white-space:normal;line-height:1.25;}
+          .p3-renderer-metrics {grid-template-columns:repeat(2,minmax(0,1fr));}
+          .p3-renderer-metrics span {min-height:58px;border-bottom:1px solid #ECEDEF;}
+          .p3-renderer-metrics span:nth-child(2n) {border-right:0;}
+          .p3-renderer-metrics span:nth-last-child(-n+2) {border-bottom:0;}
+          .p3-renderer-metrics small {min-height:auto;font-size:.54rem;}
+          .p3-renderer-metrics b {overflow:visible;font-size:.67rem;text-overflow:clip;white-space:normal;}
+          .p3-runtime-foundation {grid-template-columns:1fr;}
+          .p3-runtime-stage > footer {align-items:flex-start;flex-direction:column;}
+          .p3-runtime-stage > footer span {text-align:left;}
           .st-key-dashboard-primary-metrics [data-testid="stColumn"],
           .st-key-dashboard-integrity-metrics [data-testid="stColumn"],
           .st-key-dashboard-runtime-metrics [data-testid="stColumn"],
