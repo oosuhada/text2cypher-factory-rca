@@ -1,4 +1,45 @@
 {
   "schema_version": "visualization-renderer-benchmark-v1",
-  "cases": {}
+  "environment": "public-cloudflare-cold-browser-context",
+  "cases": {
+    "범주 비교": {
+      "plotly_express_ready_ms": 3618,
+      "plotly_graph_objects_ready_ms": 3618,
+      "react_echarts_ready_ms": 5274,
+      "runs": 3,
+      "viewport": "1600×1000",
+      "measured_at": "2026-08-05T17:31:04+09:00",
+      "samples": [
+        {"plotly_express_ms": 3618, "plotly_graph_objects_ms": 3618, "react_echarts_ms": 4943, "echarts_internal": "488.2 ms"},
+        {"plotly_express_ms": 5514, "plotly_graph_objects_ms": 5514, "react_echarts_ms": 6363, "echarts_internal": "633.3 ms"},
+        {"plotly_express_ms": 3457, "plotly_graph_objects_ms": 3457, "react_echarts_ms": 5274, "echarts_internal": "829.7 ms"}
+      ]
+    },
+    "상태 구성": {
+      "plotly_express_ready_ms": 3626,
+      "plotly_graph_objects_ready_ms": 3626,
+      "react_echarts_ready_ms": 4410,
+      "runs": 3,
+      "viewport": "1600×1000",
+      "measured_at": "2026-08-05T17:31:18+09:00",
+      "samples": [
+        {"plotly_express_ms": 3626, "plotly_graph_objects_ms": 3626, "react_echarts_ms": 4426, "echarts_internal": "599.1 ms"},
+        {"plotly_express_ms": 2991, "plotly_graph_objects_ms": 2992, "react_echarts_ms": 4338, "echarts_internal": "571.0 ms"},
+        {"plotly_express_ms": 3634, "plotly_graph_objects_ms": 3634, "react_echarts_ms": 4410, "echarts_internal": "536.6 ms"}
+      ]
+    },
+    "시간 추세": {
+      "plotly_express_ready_ms": 3193,
+      "plotly_graph_objects_ready_ms": 3193,
+      "react_echarts_ready_ms": 4893,
+      "runs": 3,
+      "viewport": "1600×1000",
+      "measured_at": "2026-08-05T17:31:32+09:00",
+      "samples": [
+        {"plotly_express_ms": 3209, "plotly_graph_objects_ms": 3209, "react_echarts_ms": 5029, "echarts_internal": "1045.5 ms"},
+        {"plotly_express_ms": 3193, "plotly_graph_objects_ms": 3193, "react_echarts_ms": 4496, "echarts_internal": "528.8 ms"},
+        {"plotly_express_ms": 3082, "plotly_graph_objects_ms": 3082, "react_echarts_ms": 4893, "echarts_internal": "1048.7 ms"}
+      ]
+    }
+  }
 }

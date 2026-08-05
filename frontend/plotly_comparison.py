@@ -13,7 +13,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-import streamlit.components.v1 as components
 
 from frontend.dashboard_plotly import (
     build_node_counts_figure,
@@ -378,7 +377,7 @@ def _render_live_three_way(snapshot: dict[str, Any]) -> None:
                 '<div class="p3-live-renderer-head is-selected"><span>FINAL PRODUCT</span><strong>React + Apache ECharts</strong><small>독립 제품 runtime</small></div>',
                 unsafe_allow_html=True,
             )
-            components.iframe(embed_url, height=390, scrolling=False)
+            st.iframe(embed_url, height=390, scrolling=False)
             st.markdown(
                 _metric_strip(
                     "React ECharts",

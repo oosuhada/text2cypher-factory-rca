@@ -131,3 +131,18 @@ comparison page failed requests: 0
 768px KPI cards: 2 columns
 ```
 
+공개 Cloudflare URL을 새 Chromium context, `1600×1000` viewport에서 케이스별
+3회 실행한 browser-ready 중앙값:
+
+| 데이터 | Plotly Express | Plotly Graph Objects | React + ECharts iframe |
+|---|---:|---:|---:|
+| 범주 비교 | 3,618ms | 3,618ms | 5,274ms |
+| 상태 구성 | 3,626ms | 3,626ms | 4,410ms |
+| 시간 추세 | 3,193ms | 3,193ms | 4,893ms |
+
+두 Plotly 구현은 같은 Streamlit rerun과 Plotly component 로딩 경로를 사용하므로
+end-to-end ready 시간이 거의 동일했다. React + ECharts 수치는 별도 도메인의 iframe
+초기화까지 포함한다. iframe 내부에서 측정한 순수 ECharts chart-ready 시간은 각 실행에서
+약 `488~1,049ms`였다. 따라서 이 측정은 라이브러리 단독 성능 순위가 아니라 현재 배포
+구조에서 사용자가 세 결과를 보게 되는 시점을 비교한 값으로 해석한다.
+
