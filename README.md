@@ -15,6 +15,7 @@ PPT 대조 후 수정 근거는 [방향 수정 기록](./docs/direction-correcti
 - [엔터프라이즈 트랙 1-6 구현·검증](./docs/enterprise-stage1-6-validation.md)
 - [엔터프라이즈 트랙 1-7 구현·검증](./docs/enterprise-stage1-7-validation.md)
 - [엔터프라이즈 트랙 1-8 Release Gate·문서화](./docs/enterprise-stage1-8-validation.md)
+- [엔터프라이즈 트랙 2-1 정보구조·디자인 시스템](./docs/enterprise-stage2-1-information-architecture.md)
 - 플랫폼 공통 API·Registry·스키마·ETL·다중 도메인:
   [`platform-stage1~11`](./docs/platform-stage1-shared-api.md)
 - 제품 리팩터링·Data Intake·Graph Explorer·HITL·배포:
@@ -58,6 +59,7 @@ Text-to-Cypher 질의까지 같은 파이프라인으로 실행할 수 있다. �
 | 제품 리팩터링 8단계 — 배포·E2E | **구현 완료** | 5-service Compose·health gate·보안 헤더·black-box smoke |
 | 엔터프라이즈 1-7 — Project Registry·Readiness | **구현 완료** | 정식 상태 머신·파일/외부 Neo4j 연결·schema/prompt/Gold/evaluation lineage·준비 전 질의 차단 |
 | 엔터프라이즈 1-8 — 백엔드 Release Gate | **구현 완료** | 구조화 오류 계약·tracked secret 0건·P3 추적률 100%·fresh Compose E2E·lineage/runbook |
+| 엔터프라이즈 2-1 — 정보구조·디자인 시스템 | **구현 완료** | 11개 workspace·5개 역할 최소권한 메뉴·4개 화면 상태·공통 토큰·Streamlit/React 경계 |
 
 ## 확정 데이터
 

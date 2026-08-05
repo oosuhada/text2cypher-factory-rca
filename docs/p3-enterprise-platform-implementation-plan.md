@@ -254,6 +254,12 @@
 
 ### 2-1. 정보구조·디자인 시스템
 
+상태: **구현·검증 완료 (2026-07-28)**
+
+검증 기록:
+
+- [`enterprise-stage2-1-information-architecture.md`](./enterprise-stage2-1-information-architecture.md)
+
 목표:
 
 - Streamlit을 단순 데모가 아닌 다중 프로젝트 사내 플랫폼으로 재구성한다.
