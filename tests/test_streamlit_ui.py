@@ -245,6 +245,72 @@ class StreamlitIntegrationTest(unittest.TestCase):
             app.session_state["last_result"]["status"], "unsupported"
         )
 
+    def test_refresh_project_switch_and_conversation_reopen_are_stable(self):
+        from streamlit.testing.v1 import AppTest
+
+        app_path = (
+            Path(__file__).resolve().parents[1]
+            / "frontend"
+            / "streamlit_app.py"
+        )
+        app = AppTest.from_file(str(app_path)).run(timeout=30)
+        navigation = next(
+            radio for radio in app.radio if radio.label == "Navigation"
+        )
+        navigation.set_value("Query Studio").run(timeout=30)
+        provider = next(
+            box for box in app.selectbox if box.label == "생성 모드"
+        )
+        provider.set_value("gold").run(timeout=30)
+        question = (
+            "완제품 300002의 구성품, 각 구성품의 공정과 "
+            "품질검사 결과를 보여줘."
+        )
+        app.chat_input[0].set_value(question).run(timeout=30)
+        self.assertEqual(len(app.session_state["messages"]), 2)
+
+        app.run(timeout=30)
+        self.assertEqual(len(app.session_state["messages"]), 2)
+        self.assertEqual(len(app.session_state["conversations"]), 1)
+
+        workspace = next(
+            box
+            for box in app.selectbox
+            if box.label == "활성 워크스페이스"
+        )
+        workspace.set_value("equipment-history").run(timeout=30)
+        self.assertEqual(
+            app.session_state["active_project_id"],
+            "equipment-history",
+        )
+        self.assertEqual(app.session_state["messages"], [])
+
+        workspace = next(
+            box
+            for box in app.selectbox
+            if box.label == "활성 워크스페이스"
+        )
+        workspace.set_value("cip-dmd").run(timeout=30)
+        self.assertEqual(app.session_state["active_project_id"], "cip-dmd")
+        self.assertEqual(len(app.session_state["messages"]), 2)
+
+        new_conversation = next(
+            button
+            for button in app.button
+            if button.label == "＋ 새 대화"
+        )
+        new_conversation.click().run(timeout=30)
+        self.assertEqual(app.session_state["messages"], [])
+        history_button = next(
+            button
+            for button in app.button
+            if button.label.startswith("완제품 300002의 구성품")
+        )
+        history_button.click().run(timeout=30)
+        self.assertEqual(len(app.session_state["messages"]), 2)
+        self.assertEqual(len(app.chat_message), 2)
+        self.assertEqual(len(app.exception), 0)
+
     def test_navigation_exposes_graph_and_data_workspaces(self):
         from streamlit.testing.v1 import AppTest
 

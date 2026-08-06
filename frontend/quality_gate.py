@@ -111,14 +111,22 @@ def run_ui_quality_gate(project_root: Path) -> dict[str, Any]:
             f"두 도메인 UI 검증 schema가 누락됐습니다: {missing_schemas}"
         )
 
-    app_source = (
-        root / "frontend" / "streamlit_app.py"
-    ).read_text(encoding="utf-8")
+    frontend_sources = {
+        name: (root / "frontend" / name).read_text(encoding="utf-8")
+        for name in (
+            "streamlit_app.py",
+            "session_state.py",
+            "navigation.py",
+            "sidebar.py",
+            "common_ui.py",
+        )
+    }
+    runtime_source = "\n".join(frontend_sources.values())
     required_runtime_markers = (
         "pending_audit_question",
         "render_startup_failure",
         "st.toast",
-        "get_services.clear()",
+        "clear_service_cache",
         "evaluation_filters",
         "explorer_widget_revision",
         "navigation_widget_revision",
@@ -126,19 +134,20 @@ def run_ui_quality_gate(project_root: Path) -> dict[str, Any]:
         "render_workspace_link(",
     )
     missing_markers = [
-        marker for marker in required_runtime_markers if marker not in app_source
+        marker
+        for marker in required_runtime_markers
+        if marker not in runtime_source
     ]
     if missing_markers:
         raise RuntimeError(
             f"Streamlit 상태·복구 계약 누락: {missing_markers}"
         )
-    sidebar_source = app_source[
-        app_source.index("def render_sidebar()")
-        : app_source.index("def render_schema_studio()")
-    ]
+    sidebar_module = frontend_sources["sidebar.py"]
+    sidebar_start = sidebar_module.index("def render_sidebar(")
+    sidebar_source = sidebar_module[sidebar_start:]
     sidebar_markers = (
         "_render_sidebar_project(",
-        "_render_sidebar_navigation(",
+        "render_sidebar_navigation(",
         "_render_sidebar_conversations(",
         "_render_sidebar_execution(",
         '"역할 미리보기"',
