@@ -5,6 +5,7 @@ import { ArrowRight, FolderKanban, Plus } from "lucide-react";
 import Link from "next/link";
 
 import { useProject } from "@/components/project-context";
+import { useProjectNavigation } from "@/components/use-project-navigation";
 import { createProject } from "@/lib/api";
 
 const EMPTY_FORM = {
@@ -24,6 +25,7 @@ export function ProjectWorkspace() {
     refresh,
     switchProject,
   } = useProject();
+  const { openProject, openingProjectId } = useProjectNavigation();
   const [form, setForm] = useState(EMPTY_FORM);
   const [creating, setCreating] = useState(false);
   const [formError, setFormError] = useState("");
@@ -93,9 +95,19 @@ export function ProjectWorkspace() {
                   >
                     {active ? "현재 프로젝트" : "프로젝트 전환"}
                   </button>
-                  <Link href="/query" className="ghost-button">
-                    Query <ArrowRight size={14} />
-                  </Link>
+                  <button
+                    type="button"
+                    className="ghost-button"
+                    disabled={switching || Boolean(openingProjectId)}
+                    onClick={() =>
+                      void openProject(project.project_id, "query")
+                    }
+                  >
+                    {openingProjectId === project.project_id
+                      ? "여는 중…"
+                      : "Query"}{" "}
+                    <ArrowRight size={14} />
+                  </button>
                 </div>
               </article>
             );

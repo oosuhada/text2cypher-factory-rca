@@ -72,6 +72,15 @@ class DeploymentContractTest(unittest.TestCase):
         workspace = (
             PROJECT_ROOT / "web" / "components" / "project-workspace.tsx"
         ).read_text(encoding="utf-8")
+        navigation = (
+            PROJECT_ROOT
+            / "web"
+            / "components"
+            / "use-project-navigation.ts"
+        ).read_text(encoding="utf-8")
+        query = (
+            PROJECT_ROOT / "web" / "components" / "query-workspace.tsx"
+        ).read_text(encoding="utf-8")
         route = (
             PROJECT_ROOT / "web" / "app" / "projects" / "page.tsx"
         ).read_text(encoding="utf-8")
@@ -82,6 +91,18 @@ class DeploymentContractTest(unittest.TestCase):
         self.assertIn('href="/projects#new-project"', overview)
         self.assertIn("모든 프로젝트", workspace)
         self.assertIn("새 프로젝트 만들기", workspace)
+        self.assertNotIn('href="/query"', overview)
+        self.assertNotIn('href="/query"', workspace)
+        self.assertIn('openProject(project.project_id, "query")', overview)
+        self.assertIn('openProject(project.project_id, "query")', workspace)
+        self.assertIn("await switchProject(projectId)", navigation)
+        self.assertIn("router.push(projectRoute(", navigation)
+        self.assertIn("project_id: projectId", navigation)
+        self.assertIn(
+            'searchParams.get("project_id")',
+            query,
+        )
+        self.assertIn("projectContextPending", query)
         self.assertIn("<ProjectWorkspace />", route)
 
     def test_streamlit_uses_url_backed_project_navigation(self):
@@ -93,6 +114,10 @@ class DeploymentContractTest(unittest.TestCase):
         self.assertIn('st.query_params.get("workspace")', source)
         self.assertIn("navigation_widget_revision", source)
         self.assertIn("Gold Question 15/15", source)
+        self.assertIn(
+            'st.session_state.get("latest_project_upload") or {}',
+            source,
+        )
 
 
 if __name__ == "__main__":

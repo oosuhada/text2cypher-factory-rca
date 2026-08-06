@@ -21,7 +21,7 @@ type ProjectContextValue = {
   error: string;
   refresh: () => Promise<void>;
   refreshReadiness: () => Promise<void>;
-  switchProject: (projectId: string) => Promise<void>;
+  switchProject: (projectId: string) => Promise<ProjectReadiness>;
 };
 
 const ProjectContext = createContext<ProjectContextValue | null>(null);
@@ -68,7 +68,6 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     async (projectId: string) => {
       setSwitching(true);
       setError("");
-      setReadiness(null);
       try {
         const nextReadiness = await getProjectReadiness(projectId);
         localStorage.setItem(
@@ -77,6 +76,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         );
         setSelectedProjectId(projectId);
         setReadiness(nextReadiness);
+        return nextReadiness;
       } catch (reason) {
         setError(
           reason instanceof Error

@@ -49,6 +49,15 @@ def next_action_presentation(next_action: str) -> dict[str, str]:
     return {"label": label, "page": page}
 
 
+def project_destination_page(readiness: dict[str, Any]) -> str:
+    """Return the first useful workspace for a project's current readiness."""
+    if readiness.get("can_query"):
+        return "Query Studio"
+    return next_action_presentation(
+        str(readiness.get("next_action", ""))
+    )["page"]
+
+
 def filter_projects(
     projects: Iterable[dict[str, Any]],
     *,

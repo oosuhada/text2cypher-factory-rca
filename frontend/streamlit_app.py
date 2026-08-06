@@ -72,6 +72,7 @@ from frontend.project_context import (
 from frontend.project_workspace import (
     filter_projects,
     next_action_presentation,
+    project_destination_page,
     relative_updated_at,
     status_presentation,
 )
@@ -1112,28 +1113,37 @@ def render_home_project_overview() -> None:
     overview[3].metric("즐겨찾기", favorite_count)
 
     st.markdown("#### 최근 프로젝트")
-    for project in projects[:3]:
-        presentation = status_presentation(project["status"])
-        with st.container(border=True):
-            title, status_column, action_column = st.columns([4, 1, 1])
-            title.markdown(
-                f"**{'★ ' if project.get('favorite') else ''}"
-                f"{project['name']}**"
+    api = FactoryGraphApiClient()
+    api_available = api.live()
+    try:
+        for project in projects[:3]:
+            presentation = status_presentation(project["status"])
+            readiness = _project_readiness_summary(
+                project, api if api_available else None
             )
-            title.caption(
-                f"{project['domain_type']} · {project['dataset_name']} · "
-                f"{relative_updated_at(project['updated_at'])}"
-            )
-            status_column.markdown(f"`{presentation['label']}`")
-            if action_column.button(
-                "열기",
-                key=f"home-open-{project['project_id']}",
-                disabled=bool(project.get("is_active")),
-                width="stretch",
-            ):
-                _switch_project(project["project_id"])
-                navigate_to_page("Projects")
-                st.rerun()
+            destination = project_destination_page(readiness)
+            with st.container(border=True):
+                title, status_column, action_column = st.columns([4, 1, 1])
+                title.markdown(
+                    f"**{'★ ' if project.get('favorite') else ''}"
+                    f"{project['name']}**"
+                )
+                title.caption(
+                    f"{project['domain_type']} · {project['dataset_name']} · "
+                    f"{relative_updated_at(project['updated_at'])}"
+                )
+                status_column.markdown(f"`{presentation['label']}`")
+                if action_column.button(
+                    "작업 열기",
+                    key=f"home-open-{project['project_id']}",
+                    width="stretch",
+                    help=f"{destination} 화면으로 이동",
+                ):
+                    _switch_project(project["project_id"])
+                    navigate_to_page(destination)
+                    st.rerun()
+    finally:
+        api.close()
 
     render_workspace_link(
         "모든 프로젝트 보기 →",
@@ -2561,12 +2571,12 @@ def render_generic_dataset_upload() -> None:
         PROJECT_ROOT / "data" / "processed" / "project_uploads"
     )
     uploads = datasets.list(project_id)
+    session_upload = (
+        st.session_state.get("latest_project_upload") or {}
+    )
     latest = (
-        st.session_state.get("latest_project_upload")
-        if st.session_state.get("latest_project_upload", {}).get(
-            "project_id"
-        )
-        == project_id
+        session_upload
+        if session_upload.get("project_id") == project_id
         else uploads[0]
         if uploads
         else None
