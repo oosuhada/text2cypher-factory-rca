@@ -35,13 +35,17 @@ from frontend.api_client import FactoryGraphApiClient
 from frontend.conversation_history import upsert_conversation
 from frontend.data_preflight import inspect_uploaded_source
 from frontend.design_system import (
+    Action,
     NAVIGATION_ITEMS,
     PAGE_BY_LABEL,
     Role,
     ViewState,
     build_global_css,
+    can_perform,
     navigation_for_role,
+    page_description,
     state_copy,
+    ui_text,
 )
 from frontend.graph_explorer import (
     bound_evidence,
@@ -71,6 +75,8 @@ from frontend.project_workspace import (
     status_presentation,
 )
 from frontend.query_workspace import (
+    example_questions,
+    query_placeholder,
     query_context_versions,
     query_status_presentation,
     statement_history,
@@ -87,24 +93,6 @@ from frontend.onboarding import (
 APP_TITLE = "Factory Graph RCA"
 SERVICE_BUNDLE_VERSION = "2026-07-28-shared-api-v2"
 NAVIGATION_PAGES = tuple(item.label for item in NAVIGATION_ITEMS)
-EXAMPLE_QUESTIONS = [
-    (
-        "제품 Genealogy",
-        "완제품 300002의 구성품, 각 구성품의 공정과 품질검사 결과를 보여줘.",
-    ),
-    (
-        "품질 실패 × 이상",
-        "표면거칠기 검사에 실패한 cylinder bottom들의 밀링 anomaly 분포를 보여줘.",
-    ),
-    (
-        "역방향 영향분석",
-        "밀링 anomaly class 2가 발생한 cylinder bottom과 조립된 완제품의 최종 QC 결과를 보여줘.",
-    ),
-    (
-        "없는 엔티티 검증",
-        "완제품 399999의 구성품과 품질검사 결과를 보여줘.",
-    ),
-]
 
 
 st.set_page_config(
@@ -358,6 +346,7 @@ def get_conversation_store() -> ConversationStore:
 def initialize_session() -> None:
     st.session_state.setdefault("active_page", "Home")
     st.session_state.setdefault("preview_role", Role.ADMIN.value)
+    st.session_state.setdefault("locale", "ko")
     st.session_state.setdefault("messages", [])
     st.session_state.setdefault("last_result", None)
     st.session_state.setdefault("conversations", [])
@@ -407,17 +396,21 @@ def navigate_to_page(page: str) -> None:
 
 def render_page_header(page: str) -> None:
     item = PAGE_BY_LABEL[page]
+    locale = st.session_state.get("locale", "ko")
     badge = (
-        "운영 화면"
+        ui_text("operational", locale)
         if item.delivery == "available"
-        else f"Stage {item.implementation_stage} 준비"
+        else (
+            f"Stage {item.implementation_stage} "
+            f"{ui_text('preparing', locale)}"
+        )
     )
     st.markdown(
         f"""
-        <section class="p3-page-head">
+        <section class="p3-page-head" id="p3-main-content">
           <div>
             <h1>{item.icon} {item.label}</h1>
-            <p>{item.description}</p>
+            <p>{page_description(page, locale)}</p>
           </div>
           <span class="p3-stage-badge">{badge}</span>
         </section>
@@ -708,6 +701,14 @@ def render_expert_review(
             f"기록 ID {existing['review_id'][:8]}"
         )
         return
+    active_role = Role(
+        st.session_state.get("active_role", Role.VIEWER.value)
+    )
+    if not can_perform(active_role, Action.REVIEW_RESULT):
+        st.caption(
+            "판정 기록은 Domain Expert, Data Steward 또는 Admin 권한이 필요합니다."
+        )
+        return
     st.session_state.setdefault(f"{key_prefix}-reviewer", "domain-expert")
     st.session_state.setdefault(f"{key_prefix}-decision", "verified")
     st.session_state.setdefault(f"{key_prefix}-note", "")
@@ -779,9 +780,15 @@ def render_chat_history(services: ServiceBundle) -> str | None:
                     services,
                     key_prefix=f"chat-{index}",
                 )
+                active_role = Role(
+                    st.session_state.get("active_role", Role.VIEWER.value)
+                )
                 if st.button(
                     "이 질문 다시 실행",
                     key=f"rerun-question-{index}",
+                    disabled=not can_perform(
+                        active_role, Action.RERUN_QUERY
+                    ),
                 ):
                     rerun_question = str(
                         message["content"].get("question", "")
@@ -848,12 +855,13 @@ def render_chat_tab(services: ServiceBundle) -> None:
         """,
         unsafe_allow_html=True,
     )
-    columns = st.columns(len(EXAMPLE_QUESTIONS))
+    project_examples = example_questions(project_id)
+    columns = st.columns(len(project_examples))
     selected_question = None
-    for column, (label, question) in zip(columns, EXAMPLE_QUESTIONS):
+    for column, (label, question) in zip(columns, project_examples):
         if column.button(
             label,
-            key=f"example-{label}",
+            key=f"example-{project_id}-{label}",
             help=question,
             width="stretch",
         ):
@@ -870,9 +878,7 @@ def render_chat_tab(services: ServiceBundle) -> None:
         ):
             submit_question(last_result["question"], services)
             st.rerun()
-    typed_question = st.chat_input(
-        "예: 완제품 300002의 구성품과 공정 이력을 보여줘."
-    )
+    typed_question = st.chat_input(query_placeholder(project_id))
     pending_question = st.session_state.pop("pending_audit_question", None)
     question = (
         typed_question
@@ -3664,6 +3670,9 @@ def render_evaluations_workspace(
 def render_audit_workspace() -> None:
     render_page_header("Audit Logs")
     project_id = st.session_state.get("active_project_id", "cip-dmd")
+    active_role = Role(
+        st.session_state.get("active_role", Role.VIEWER.value)
+    )
     api = FactoryGraphApiClient()
     search = st.text_input(
         "감사 이력 검색",
@@ -3754,7 +3763,12 @@ def render_audit_workspace() -> None:
                     "재실행",
                     key=f"audit-rerun-conversation-{conversation['id']}",
                     width="stretch",
-                    disabled=not bool(rerun_question),
+                    disabled=(
+                        not bool(rerun_question)
+                        or not can_perform(
+                            active_role, Action.RERUN_QUERY
+                        )
+                    ),
                 ):
                     open_conversation(conversation["id"])
                     st.session_state["pending_audit_question"] = rerun_question
@@ -3849,7 +3863,12 @@ def render_audit_workspace() -> None:
                 if action_columns[1].button(
                     "질문 재실행",
                     key=f"audit-rerun-{selected_run_id}",
-                    disabled=not bool(detail.get("question")),
+                    disabled=(
+                        not bool(detail.get("question"))
+                        or not can_perform(
+                            active_role, Action.RERUN_QUERY
+                        )
+                    ),
                     width="stretch",
                 ):
                     st.session_state["pending_audit_question"] = detail[
@@ -3918,10 +3937,24 @@ def _switch_project(project_id: str) -> None:
         PROJECT_ROOT / "data" / "processed" / "projects.sqlite3"
     ).activate(project_id)
     get_services.clear()
+    st.toast(f"{project_id} 워크스페이스로 전환했습니다.", icon="✅")
 
 
 def render_sidebar() -> tuple[str, str, str, str]:
     st.sidebar.markdown("### Workspace")
+    locale_label = st.sidebar.segmented_control(
+        "언어 / Language",
+        options=("한국어", "English"),
+        default=(
+            "English"
+            if st.session_state.get("locale") == "en"
+            else "한국어"
+        ),
+        key="locale-control",
+    )
+    st.session_state["locale"] = (
+        "en" if locale_label == "English" else "ko"
+    )
     role_value = st.sidebar.selectbox(
         "역할 미리보기",
         options=tuple(role.value for role in Role),
@@ -3932,6 +3965,7 @@ def render_sidebar() -> tuple[str, str, str, str]:
         ),
     )
     role = Role(role_value)
+    st.session_state["active_role"] = role.value
     allowed_items = navigation_for_role(role)
     allowed_pages = tuple(item.label for item in allowed_items)
     if st.session_state.get("active_page") not in allowed_pages:
@@ -4559,6 +4593,11 @@ def render_schema_studio() -> None:
 def main() -> None:
     initialize_session()
     page, provider, model_name, project_id = render_sidebar()
+    st.markdown(
+        '<a class="p3-skip-link" href="#p3-main-content">'
+        f'{ui_text("skip", st.session_state.get("locale", "ko"))}</a>',
+        unsafe_allow_html=True,
+    )
     if page == "Home":
         render_streamlit_landing()
         return

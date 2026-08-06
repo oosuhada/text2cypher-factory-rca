@@ -27,6 +27,17 @@ class ViewState(str, Enum):
     ERROR = "error"
 
 
+class Action(str, Enum):
+    VIEW = "view"
+    RUN_QUERY = "run_query"
+    RERUN_QUERY = "rerun_query"
+    EXPORT_EVIDENCE = "export_evidence"
+    REVIEW_RESULT = "review_result"
+    MANAGE_DATA = "manage_data"
+    RUN_EVALUATION = "run_evaluation"
+    MANAGE_PLATFORM = "manage_platform"
+
+
 @dataclass(frozen=True)
 class StateCopy:
     title: str
@@ -68,6 +79,49 @@ APPROVER_ROLES: Final = frozenset(
     {Role.DOMAIN_EXPERT, Role.DATA_STEWARD, Role.ADMIN}
 )
 DATA_ROLES: Final = frozenset({Role.DATA_STEWARD, Role.ADMIN})
+
+ACTION_ROLES: Final = {
+    Action.VIEW: ALL_ROLES,
+    Action.RUN_QUERY: INVESTIGATION_ROLES,
+    Action.RERUN_QUERY: GOVERNANCE_ROLES,
+    Action.EXPORT_EVIDENCE: INVESTIGATION_ROLES,
+    Action.REVIEW_RESULT: APPROVER_ROLES,
+    Action.MANAGE_DATA: DATA_ROLES,
+    Action.RUN_EVALUATION: GOVERNANCE_ROLES,
+    Action.MANAGE_PLATFORM: frozenset({Role.ADMIN}),
+}
+
+SUPPORTED_LOCALES: Final = ("ko", "en")
+PAGE_DESCRIPTIONS_EN: Final = {
+    "Home": "Platform purpose, recent projects and system status",
+    "Projects": "Create, search, switch and inspect project readiness",
+    "Data Sources": "File and graph connections, uploads and profiles",
+    "Pipeline": "Mapping review, dry-run, load and integrity validation",
+    "Query Studio": "Natural-language questions, Cypher, results and evidence",
+    "Graph Explorer": "Search, filter, expand and trace graph paths",
+    "Dashboard": "Quality, process, equipment and operational KPIs",
+    "Evaluations": "Gold and Blind comparison with failure analysis",
+    "Approval Queue": "Approve schemas, loads and high-risk recommendations",
+    "Audit Logs": "Trace queries, ETL, evaluation and approvals",
+    "Admin": "Users, roles, connections, models and retention policy",
+}
+
+UI_COPY: Final = {
+    "ko": {
+        "workspace": "Workspace",
+        "language": "언어 / Language",
+        "operational": "운영 화면",
+        "preparing": "준비",
+        "skip": "본문으로 건너뛰기",
+    },
+    "en": {
+        "workspace": "Workspace",
+        "language": "Language / 언어",
+        "operational": "Operational",
+        "preparing": "Planned",
+        "skip": "Skip to main content",
+    },
+}
 
 
 NAVIGATION_ITEMS: Final[tuple[NavigationItem, ...]] = (
@@ -292,6 +346,15 @@ WIREFLOWS: Final = {
         "Evaluations",
         "Audit Logs",
     ),
+    "enterprise_release_gate": (
+        "Projects",
+        "Data Sources",
+        "Pipeline",
+        "Evaluations",
+        "Query Studio",
+        "Graph Explorer",
+        "Audit Logs",
+    ),
 }
 
 
@@ -306,6 +369,27 @@ def can_access(role: Role | str, page_label: str) -> bool:
         return False
     resolved = role if isinstance(role, Role) else Role(role)
     return resolved in item.roles
+
+
+def can_perform(role: Role | str, action: Action | str) -> bool:
+    resolved_role = role if isinstance(role, Role) else Role(role)
+    resolved_action = (
+        action if isinstance(action, Action) else Action(action)
+    )
+    return resolved_role in ACTION_ROLES[resolved_action]
+
+
+def ui_text(key: str, locale: str = "ko") -> str:
+    resolved = locale if locale in SUPPORTED_LOCALES else "ko"
+    return UI_COPY[resolved].get(key, UI_COPY["ko"].get(key, key))
+
+
+def page_description(page_label: str, locale: str = "ko") -> str:
+    if locale == "en":
+        return PAGE_DESCRIPTIONS_EN.get(
+            page_label, PAGE_BY_LABEL[page_label].description
+        )
+    return PAGE_BY_LABEL[page_label].description
 
 
 def state_copy(
@@ -351,6 +435,22 @@ def build_global_css() -> str:
         font-family: {type_tokens["family"]};
         color: var(--p3-text);
       }}
+      .p3-skip-link {{
+        position:absolute;
+        left:-9999px;
+        top:.5rem;
+        z-index:99999;
+        padding:.6rem .9rem;
+        border-radius:{radius["sm"]};
+        background:var(--p3-brand-950);
+        color:white !important;
+      }}
+      .p3-skip-link:focus {{left:.75rem;}}
+      :where(button, input, textarea, select, [role="button"], [tabindex]):focus-visible {{
+        outline:3px solid #0EA5E9 !important;
+        outline-offset:2px !important;
+      }}
+      button, [role="button"] {{min-height:2.5rem;}}
       .p3-page-head {{
         display:flex;
         justify-content:space-between;
@@ -411,6 +511,24 @@ def build_global_css() -> str:
         .p3-page-head {{display:block;}}
         .p3-stage-badge {{display:inline-block;margin-top:.7rem;}}
         .p3-foundation-grid {{grid-template-columns:1fr;}}
+        .block-container {{
+          padding-left:.8rem !important;
+          padding-right:.8rem !important;
+        }}
+        [data-testid="stHorizontalBlock"] {{flex-wrap:wrap;}}
+        [data-testid="column"] {{min-width:100% !important;}}
+      }}
+      @media (prefers-reduced-motion: reduce) {{
+        *, *::before, *::after {{
+          scroll-behavior:auto !important;
+          animation-duration:.01ms !important;
+          transition-duration:.01ms !important;
+        }}
+      }}
+      @media (forced-colors: active) {{
+        .p3-stage-badge, .p3-state-card, .p3-foundation-card {{
+          border:1px solid CanvasText;
+        }}
       }}
     </style>
     """

@@ -1,0 +1,115 @@
+{
+  "version": "enterprise-ui-2.8",
+  "css_sha256": "31b3f00ea57b4deab73adf2086f64eefb83361aab25a5b4c385e6c8755b1ed30",
+  "locales": [
+    "ko",
+    "en"
+  ],
+  "responsive_breakpoints": [
+    760
+  ],
+  "accessibility_contracts": [
+    "skip-link",
+    "focus-visible",
+    "reduced-motion",
+    "forced-colors",
+    "44px-equivalent-control-target"
+  ],
+  "screens": {
+    "Home": [
+      "Find the path.",
+      "Workspace overview"
+    ],
+    "Projects": [
+      "Projects",
+      "새 프로젝트"
+    ],
+    "Data Sources": [
+      "Data Sources",
+      "데이터"
+    ],
+    "Pipeline": [
+      "Pipeline",
+      "Graph mapping"
+    ],
+    "Query Studio": [
+      "Query Studio",
+      "Cypher",
+      "근거"
+    ],
+    "Graph Explorer": [
+      "Interactive Graph Explorer",
+      "N-hop"
+    ],
+    "Dashboard": [
+      "전역 운영 필터",
+      "Agent 품질과 런타임"
+    ],
+    "Evaluations": [
+      "평가 릴리스 게이트",
+      "모델·프롬프트 비교"
+    ],
+    "Audit Logs": [
+      "대화 History",
+      "운영 Timeline",
+      "Run detail"
+    ]
+  },
+  "navigation": [
+    {
+      "label": "Home",
+      "delivery": "available",
+      "stage": "2-1"
+    },
+    {
+      "label": "Projects",
+      "delivery": "available",
+      "stage": "2-2"
+    },
+    {
+      "label": "Data Sources",
+      "delivery": "available",
+      "stage": "2-3"
+    },
+    {
+      "label": "Pipeline",
+      "delivery": "available",
+      "stage": "2-3"
+    },
+    {
+      "label": "Query Studio",
+      "delivery": "available",
+      "stage": "2-4"
+    },
+    {
+      "label": "Graph Explorer",
+      "delivery": "available",
+      "stage": "2-5"
+    },
+    {
+      "label": "Dashboard",
+      "delivery": "available",
+      "stage": "2-6"
+    },
+    {
+      "label": "Evaluations",
+      "delivery": "available",
+      "stage": "2-6"
+    },
+    {
+      "label": "Approval Queue",
+      "delivery": "foundation",
+      "stage": "3-6"
+    },
+    {
+      "label": "Audit Logs",
+      "delivery": "available",
+      "stage": "2-7"
+    },
+    {
+      "label": "Admin",
+      "delivery": "foundation",
+      "stage": "3-8"
+    }
+  ]
+}

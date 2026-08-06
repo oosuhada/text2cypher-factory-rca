@@ -5,6 +5,48 @@ from __future__ import annotations
 from typing import Any
 
 
+DEFAULT_EXAMPLE_QUESTIONS = (
+    (
+        "제품 Genealogy",
+        "완제품 300002의 구성품, 각 구성품의 공정과 품질검사 결과를 보여줘.",
+    ),
+    (
+        "품질 실패 × 이상",
+        "표면거칠기 검사에 실패한 cylinder bottom들의 밀링 anomaly 분포를 보여줘.",
+    ),
+    (
+        "역방향 영향분석",
+        "밀링 anomaly class 2가 발생한 cylinder bottom과 조립된 완제품의 최종 QC 결과를 보여줘.",
+    ),
+    (
+        "없는 엔티티 검증",
+        "완제품 399999의 구성품과 품질검사 결과를 보여줘.",
+    ),
+)
+PROJECT_EXAMPLE_QUESTIONS = {
+    "equipment-history": (
+        ("설비 정비 이력", "EQ-PRESS-01의 정비 이력을 보여줘."),
+        ("장비 중단시간", "누적 중단 시간이 가장 긴 장비를 보여줘."),
+        ("미해결 이벤트", "아직 해결되지 않은 정비 이벤트를 보여줘."),
+        ("없는 설비 검증", "EQ-UNKNOWN 설비의 정비 이력을 보여줘."),
+    ),
+}
+
+
+def example_questions(project_id: str) -> tuple[tuple[str, str], ...]:
+    """Return domain-safe examples instead of leaking another schema's terms."""
+    return PROJECT_EXAMPLE_QUESTIONS.get(
+        project_id,
+        DEFAULT_EXAMPLE_QUESTIONS,
+    )
+
+
+def query_placeholder(project_id: str) -> str:
+    if project_id == "equipment-history":
+        return "예: EQ-PRESS-01의 정비 이력을 보여줘."
+    return "예: 완제품 300002의 구성품과 공정 이력을 보여줘."
+
+
 QUERY_STATUS = {
     "success": {
         "label": "조회 완료",

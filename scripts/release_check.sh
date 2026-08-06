@@ -13,13 +13,16 @@ if ! command -v pnpm >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "[1/6] Python regression suite"
+echo "[1/7] Python regression suite"
 .venv/bin/python -m unittest discover -s tests -v
 
-echo "[2/6] Backend API·traceability·secret contract"
+echo "[2/7] Backend API·traceability·secret contract"
 .venv/bin/python scripts/release_gate.py --json
 
-echo "[3/6] Next.js lint and production build"
+echo "[3/7] Enterprise UI quality·visual baseline"
+.venv/bin/python scripts/ui_quality_gate.py
+
+echo "[4/7] Next.js lint and production build"
 (
   cd web
   pnpm install --frozen-lockfile
@@ -27,14 +30,15 @@ echo "[3/6] Next.js lint and production build"
   pnpm build
 )
 
-echo "[4/6] Script syntax"
+echo "[5/7] Script syntax"
 for script in scripts/*.sh infra/*.sh; do
   bash -n "$script"
 done
 .venv/bin/python -m py_compile scripts/e2e_smoke.py
 .venv/bin/python -m py_compile scripts/release_gate.py
+.venv/bin/python -m py_compile scripts/ui_quality_gate.py
 
-echo "[5/6] Container contract"
+echo "[6/7] Container contract"
 if command -v docker >/dev/null 2>&1; then
   docker compose \
     --env-file "${P3_ENV_FILE:-.env}" \
@@ -44,7 +48,7 @@ else
   echo "Docker CLI not installed; compose validation deferred to CI."
 fi
 
-echo "[6/6] Release documentation"
+echo "[7/7] Release documentation"
 for document in \
   docs/api-contract.md \
   docs/backend-lineage.md \

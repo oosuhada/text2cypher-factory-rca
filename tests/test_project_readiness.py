@@ -1,4 +1,6 @@
 from pathlib import Path
+import base64
+import json
 import tempfile
 import unittest
 
@@ -121,3 +123,68 @@ class ProjectReadinessServiceTest(unittest.TestCase):
             self.assertEqual(report["checks"]["schema"]["status"], "FAIL")
             with self.assertRaisesRegex(ValueError, "readiness gate"):
                 service.promote("equipment-history")
+
+    def test_file_upload_id_is_lineage_not_semantic_source_version(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            projects = ProjectRegistry(root / "projects.sqlite3")
+            projects.create(
+                project_id="equipment-history",
+                name="Equipment History",
+                domain_type="maintenance",
+                dataset_name="Synthetic Maintenance",
+                schema_version="1.0",
+                source_type="file",
+                source_version="synthetic-equipment-history-v1",
+                status="evaluation_required",
+                _bootstrap=True,
+            )
+            datasets = DatasetWorkspace(root / "uploads")
+            source = (
+                PROJECT_ROOT
+                / "examples"
+                / "equipment_history"
+                / "events.csv"
+            )
+            upload = datasets.profile_upload(
+                "equipment-history",
+                [
+                    {
+                        "filename": "events.csv",
+                        "content_base64": base64.b64encode(
+                            source.read_bytes()
+                        ).decode(),
+                    }
+                ],
+            )
+            mapping_root = root / "mappings" / "equipment-history"
+            mapping_root.mkdir(parents=True)
+            (mapping_root / "mapping.json").write_text(
+                json.dumps(
+                    {
+                        "project_id": "equipment-history",
+                        "upload_id": upload["upload_id"],
+                        "status": "approved",
+                        "manifest": {"version": "1.0"},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            for artifact_type, version in (
+                ("source", "synthetic-equipment-history-v1"),
+                ("integrity", "equipment-load-v1"),
+                ("read_only", "reader-v1"),
+            ):
+                projects.record_artifact(
+                    "equipment-history",
+                    artifact_type,
+                    version=version,
+                )
+
+            report = self._service(root, projects).inspect(
+                "equipment-history"
+            )
+
+        self.assertEqual(report["checks"]["source"]["status"], "PASS")
+        self.assertEqual(report["checks"]["data_access"]["status"], "PASS")
+        self.assertTrue(report["eligible_for_ready"])
