@@ -1,19 +1,9 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { ArrowRight, FolderKanban, Plus } from "lucide-react";
-import Link from "next/link";
-
 import { useProject } from "@/components/project-context";
+import { ProjectCard } from "@/components/projects/project-card";
+import { ProjectCreateForm } from "@/components/projects/project-create-form";
 import { useProjectNavigation } from "@/components/use-project-navigation";
-import { createProject } from "@/lib/api";
-
-const EMPTY_FORM = {
-  project_id: "",
-  name: "",
-  domain_type: "",
-  dataset_name: "",
-};
 
 export function ProjectWorkspace() {
   const {
@@ -26,31 +16,10 @@ export function ProjectWorkspace() {
     switchProject,
   } = useProject();
   const { openProject, openingProjectId } = useProjectNavigation();
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [creating, setCreating] = useState(false);
-  const [formError, setFormError] = useState("");
-  const [createdName, setCreatedName] = useState("");
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setCreating(true);
-    setFormError("");
-    setCreatedName("");
-    try {
-      const created = await createProject(form);
-      await refresh();
-      await switchProject(created.project_id);
-      setCreatedName(created.name);
-      setForm(EMPTY_FORM);
-    } catch (reason) {
-      setFormError(
-        reason instanceof Error
-          ? reason.message
-          : "프로젝트 생성에 실패했습니다.",
-      );
-    } finally {
-      setCreating(false);
-    }
+  async function finishProjectCreation(projectId: string) {
+    await refresh();
+    await switchProject(projectId);
   }
 
   return (
@@ -65,57 +34,22 @@ export function ProjectWorkspace() {
         </div>
         {error ? <p className="inline-error">{error}</p> : null}
         <div className="all-project-grid" aria-busy={loading}>
-          {projects.map((project) => {
-            const active =
-              activeProject?.project_id === project.project_id;
-            return (
-              <article className="project-registry-card subtle-card" key={project.project_id}>
-                <div>
-                  <FolderKanban size={19} />
-                  <span className="project-status">{project.status}</span>
-                </div>
-                <h3>{project.name}</h3>
-                <p>{project.domain_type}</p>
-                <dl>
-                  <div>
-                    <dt>Dataset</dt>
-                    <dd>{project.dataset_name}</dd>
-                  </div>
-                  <div>
-                    <dt>Schema</dt>
-                    <dd>{project.schema_version ?? "미정"}</dd>
-                  </div>
-                </dl>
-                <div className="project-card-actions">
-                  <button
-                    type="button"
-                    className={active ? "ghost-button" : "secondary-button"}
-                    disabled={switching || Boolean(openingProjectId)}
-                    onClick={() =>
-                      void openProject(project.project_id, "recommended")
-                    }
-                  >
-                    {openingProjectId === project.project_id
-                      ? "여는 중…"
-                      : "작업 열기"}
-                  </button>
-                  <button
-                    type="button"
-                    className="ghost-button"
-                    disabled={switching || Boolean(openingProjectId)}
-                    onClick={() =>
-                      void openProject(project.project_id, "query")
-                    }
-                  >
-                    {openingProjectId === project.project_id
-                      ? "여는 중…"
-                      : "Query"}{" "}
-                    <ArrowRight size={14} />
-                  </button>
-                </div>
-              </article>
-            );
-          })}
+          {projects.map((project) => (
+            <ProjectCard
+              key={project.project_id}
+              project={project}
+              active={activeProject?.project_id === project.project_id}
+              busy={
+                switching || openingProjectId === project.project_id
+              }
+              onOpenRecommended={() =>
+                void openProject(project.project_id, "recommended")
+              }
+              onOpenQuery={() =>
+                void openProject(project.project_id, "query")
+              }
+            />
+          ))}
         </div>
       </section>
 
@@ -132,73 +66,7 @@ export function ProjectWorkspace() {
             Neo4j 연결을 진행합니다.
           </p>
         </div>
-        <form className="project-create-form" onSubmit={submit}>
-          <label>
-            프로젝트 ID
-            <input
-              required
-              minLength={3}
-              pattern="[a-z][a-z0-9-]{2,62}"
-              placeholder="semiconductor-yield"
-              value={form.project_id}
-              onChange={(event) =>
-                setForm({ ...form, project_id: event.target.value })
-              }
-            />
-          </label>
-          <label>
-            프로젝트 이름
-            <input
-              required
-              placeholder="반도체 수율 RCA"
-              value={form.name}
-              onChange={(event) =>
-                setForm({ ...form, name: event.target.value })
-              }
-            />
-          </label>
-          <label>
-            도메인
-            <input
-              required
-              placeholder="semiconductor-process"
-              value={form.domain_type}
-              onChange={(event) =>
-                setForm({ ...form, domain_type: event.target.value })
-              }
-            />
-          </label>
-          <label>
-            데이터셋/연결 이름
-            <input
-              required
-              placeholder="Fab process history"
-              value={form.dataset_name}
-              onChange={(event) =>
-                setForm({ ...form, dataset_name: event.target.value })
-              }
-            />
-          </label>
-          {formError ? <p className="inline-error">{formError}</p> : null}
-          {createdName ? (
-            <p className="inline-success">
-              {createdName} 프로젝트를 만들고 활성화했습니다.
-            </p>
-          ) : null}
-          <button
-            className="primary-button"
-            type="submit"
-            disabled={creating}
-          >
-            <Plus size={16} />
-            {creating ? "프로젝트 생성 중…" : "프로젝트 생성"}
-          </button>
-          {createdName ? (
-            <Link href="/data" className="secondary-button">
-              데이터 등록으로 이동 <ArrowRight size={15} />
-            </Link>
-          ) : null}
-        </form>
+        <ProjectCreateForm onCreated={finishProjectCreation} />
       </section>
     </div>
   );
