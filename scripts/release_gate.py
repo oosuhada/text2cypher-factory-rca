@@ -51,6 +51,9 @@ REQUIRED_RELEASE_DOCUMENTS = {
     "docs/final-presentation-evidence-pack.md",
     "docs/p3-requirements-traceability.md",
     "docs/presentation-limitations.md",
+    "docs/refactor-stage3-react-structure-ux.md",
+    "docs/refactor-stage4-screen-quality.md",
+    "docs/refactor-stage5-final-release-gate.md",
     "release/backend-v1.yml",
 }
 
