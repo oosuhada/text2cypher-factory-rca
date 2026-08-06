@@ -14,6 +14,9 @@ from frontend.session_state import (
 )
 
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
 def turn(question: str, answer: str) -> list[dict]:
     return [
         {"role": "user", "content": question},
@@ -102,6 +105,27 @@ class StreamlitSessionStateContractTest(unittest.TestCase):
 
 
 class StreamlitNavigationStateContractTest(unittest.TestCase):
+    def test_programmatic_navigation_updates_pending_state_and_url(self):
+        navigation_source = (
+            PROJECT_ROOT / "frontend" / "navigation.py"
+        ).read_text(encoding="utf-8")
+        function_source = navigation_source[
+            navigation_source.index("def navigate_to_page("):
+            navigation_source.index("\n\ndef workspace_url(")
+        ]
+        self.assertIn(
+            'st.session_state["pending_page"] = page',
+            function_source,
+        )
+        self.assertIn(
+            'st.session_state["consumed_workspace_query"] = workspace_key',
+            function_source,
+        )
+        self.assertIn(
+            'st.query_params["workspace"] = workspace_key',
+            function_source,
+        )
+
     def test_url_and_pending_navigation_increment_widget_revision_once(self):
         state = {
             "active_page": "Home",
@@ -148,4 +172,3 @@ class StreamlitNavigationStateContractTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

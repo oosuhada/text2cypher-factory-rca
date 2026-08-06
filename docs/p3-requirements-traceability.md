@@ -46,7 +46,7 @@ P3 필수 요구사항을 코드·테스트·검증 문서에 연결한다. 기�
 | FR-4.7 | 상태 계약 | 완료 | `service-contract.md`, `api-contract.md`, OpenAPI release gate | UI 회귀 유지 |
 | FR-4.8 | schema·Cypher·검증 근거 반환 | 완료 | `metadata`, evidence provenance, 검증 Cypher SHA-256, query audit | UI 버전 표시는 2단계 |
 | FR-4.9 | 프로젝트별 prompt·few-shot·Gold | 완료 | `prompts/*/manifest.yml`, `PromptRegistry`, `EvaluationRegistry`, readiness version linkage | 신규 도메인은 전문가 승인 기준셋 필요 |
-| FR-5.1~5.7 | Streamlit 질의·근거·대화 UI | 완료 | `frontend/streamlit_app.py`, UI 테스트 | 제품형 UX는 2단계에서 고도화 |
+| FR-5.1~5.7 | Streamlit 질의·근거·대화 UI | 완료 | `frontend/pages/query_studio.py`, `evidence.py`, `conversation_history.py`, UI·상태 회귀 테스트 | 3단계 Tool·HITL 상태를 같은 화면 계약으로 확장 |
 | FR-6.1 | 정확도 평가 리포트 | 완료 | `stage16-validation.md`, `metrics.json` | 최신 릴리스마다 갱신 |
 | FR-6.2 | 최종 발표자료 | 완료 | `final-presentation-evidence-pack.md`, 단계별 검증 문서 | 실제 발표 템플릿에 팀명·담당자 반영 |
 | FR-6.3 | 산출물 정리 | 완료 | README·docs·evaluation·Git | 최종 릴리스 태그 |
@@ -61,7 +61,7 @@ P3 필수 요구사항을 코드·테스트·검증 문서에 연결한다. 기�
 | NFR-2 | Git/GitHub 버전 관리 | 완료 | `main`, GitHub Actions |
 | NFR-3 | 모듈 소유권 | 완료 | `module-ownership.md` 역할·모듈·교차 승인 규칙 |
 | NFR-4 | 비밀정보 비커밋 | 완료 | `.env.example`, CI secret 경계 |
-| NFR-5 | 재현 가능한 테스트·실행 | 완료 | `release_check.sh`, `fresh_release_gate.sh`, Compose, unit/E2E |
+| NFR-5 | 재현 가능한 테스트·실행 | 완료 | 9단계 `release_check.sh`, `fresh_release_gate.sh`, Compose, unit/Playwright E2E |
 
 ## 4. 확장 트랙 문서 지도
 
@@ -90,6 +90,15 @@ P3 필수 요구사항을 코드·테스트·검증 문서에 연결한다. 기�
 
 `refactor-stage1-2`와 `refactor-stage3-4`는 두 단계를 한 문서로 묶었기
 때문에 파일 수는 6개지만 작업 단계는 총 8개다.
+
+### 구조·UX 리팩터링과 최종 감사
+
+1. [`refactor-stage-common-foundation.md`](./refactor-stage-common-foundation.md)
+2. [`refactor-stage-page-modules.md`](./refactor-stage-page-modules.md)
+3. [`refactor-stage3-react-structure-ux.md`](./refactor-stage3-react-structure-ux.md)
+4. [`refactor-stage4-screen-quality.md`](./refactor-stage4-screen-quality.md)
+5. [`refactor-stage5-final-release-gate.md`](./refactor-stage5-final-release-gate.md)
+6. [`refactor-final-audit-and-phase3-readiness.md`](./refactor-final-audit-and-phase3-readiness.md)
 
 ## 5. 1단계 작업 우선순위
 

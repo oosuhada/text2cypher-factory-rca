@@ -30,6 +30,7 @@ PPT 대조 후 수정 근거는 [방향 수정 기록](./docs/direction-correcti
 - [리팩토링 3단계 · React 구조·UX](./docs/refactor-stage3-react-structure-ux.md)
 - [리팩토링 4단계 · 화면별 품질 개선](./docs/refactor-stage4-screen-quality.md)
 - [리팩토링 5단계 · 최종 Release Gate](./docs/refactor-stage5-final-release-gate.md)
+- [최종 리팩토링 감사 · 3단계 준비도](./docs/refactor-final-audit-and-phase3-readiness.md)
 - 플랫폼 공통 API·Registry·스키마·ETL·다중 도메인:
   [`platform-stage1~11`](./docs/platform-stage1-shared-api.md)
 - 제품 리팩터링·Data Intake·Graph Explorer·HITL·배포:
