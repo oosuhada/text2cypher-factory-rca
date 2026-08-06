@@ -162,6 +162,7 @@ export function QueryWorkspace() {
   const [reviewLoading, setReviewLoading] = useState(false);
   const [reviewError, setReviewError] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const requestInFlightRef = useRef(false);
 
   useEffect(() => {
     if (
@@ -245,8 +246,10 @@ export function QueryWorkspace() {
 
   const runQuestion = async (input: string) => {
     const normalized = input.trim();
-    if (!normalized || loading) return;
+    if (!normalized || requestInFlightRef.current) return;
+    requestInFlightRef.current = true;
     setLoading(true);
+    setQuestion("");
     setProgressIndex(0);
     setError("");
     setResponse(null);
@@ -279,6 +282,7 @@ export function QueryWorkspace() {
           : "질의를 처리하지 못했습니다.",
       );
     } finally {
+      requestInFlightRef.current = false;
       setLoading(false);
     }
   };
@@ -342,7 +346,7 @@ export function QueryWorkspace() {
                 disabled={!queryEnabled}
                 onClick={() => {
                   setQuestion(example.question);
-                  void runQuestion(example.question);
+                  inputRef.current?.focus();
                 }}
               >
                 <GitBranch size={14} />
@@ -527,7 +531,7 @@ export function QueryWorkspace() {
                 <button
                   type="button"
                   className="secondary-button"
-                  onClick={() => void runQuestion(question)}
+                  onClick={() => void runQuestion(submittedQuestion)}
                 >
                   <RotateCcw size={15} /> 다시 시도
                 </button>

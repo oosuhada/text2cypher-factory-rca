@@ -32,7 +32,10 @@ from frontend.app_services import (
     build_streamlit_service_bundle,
 )
 from frontend.api_client import FactoryGraphApiClient
-from frontend.conversation_history import upsert_conversation
+from frontend.conversation_history import (
+    deduplicate_conversation_turns,
+    upsert_conversation,
+)
 from frontend.data_preflight import inspect_uploaded_source
 from frontend.design_system import (
     Action,
@@ -340,8 +343,17 @@ def get_reference_intake_archive() -> bytes:
 
 
 def get_conversation_store() -> ConversationStore:
+    configured_path = os.getenv("P3_CONVERSATION_DB_PATH", "").strip()
+    store_path = (
+        Path(configured_path).expanduser()
+        if configured_path
+        else PROJECT_ROOT
+        / "data"
+        / "processed"
+        / "conversations.sqlite3"
+    )
     return ConversationStore(
-        PROJECT_ROOT / "data" / "processed" / "conversations.sqlite3"
+        store_path
     )
 
 
@@ -375,9 +387,17 @@ def initialize_session() -> None:
     st.session_state.setdefault("evaluation_filters", {})
     active_project_id = st.session_state["active_project_id"]
     if active_project_id not in st.session_state["conversation_loaded_projects"]:
-        conversations = get_conversation_store().list(
+        store = get_conversation_store()
+        conversations = store.list(
             active_project_id, limit=12
         )
+        for conversation in conversations:
+            normalized = deduplicate_conversation_turns(
+                conversation["messages"]
+            )
+            if normalized != conversation["messages"]:
+                conversation["messages"] = normalized
+                store.save(active_project_id, conversation)
         st.session_state["conversations"] = conversations
         if conversations and not st.session_state["messages"]:
             current = conversations[0]
@@ -389,6 +409,12 @@ def initialize_session() -> None:
         st.session_state["conversation_loaded_projects"].add(
             active_project_id
         )
+    normalized_messages = deduplicate_conversation_turns(
+        st.session_state["messages"]
+    )
+    if normalized_messages != st.session_state["messages"]:
+        st.session_state["messages"] = normalized_messages
+        sync_active_conversation()
 
 
 def navigate_to_page(page: str) -> None:

@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import socket
 import subprocess
+from tempfile import TemporaryDirectory
 import unittest
 
 from frontend.presentation import (
@@ -141,6 +142,24 @@ class PresentationTest(unittest.TestCase):
     "local Neo4j credentials are required for Streamlit integration",
 )
 class StreamlitIntegrationTest(unittest.TestCase):
+    def setUp(self):
+        self._conversation_temp = TemporaryDirectory()
+        self._previous_conversation_path = os.environ.get(
+            "P3_CONVERSATION_DB_PATH"
+        )
+        os.environ["P3_CONVERSATION_DB_PATH"] = str(
+            Path(self._conversation_temp.name) / "conversations.sqlite3"
+        )
+
+    def tearDown(self):
+        if self._previous_conversation_path is None:
+            os.environ.pop("P3_CONVERSATION_DB_PATH", None)
+        else:
+            os.environ[
+                "P3_CONVERSATION_DB_PATH"
+            ] = self._previous_conversation_path
+        self._conversation_temp.cleanup()
+
     def test_initial_screen_and_gold_chat(self):
         from streamlit.testing.v1 import AppTest
 

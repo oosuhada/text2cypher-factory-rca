@@ -112,6 +112,11 @@
   display: none;
 }
 
+.mobile-project-control,
+.nav-backdrop {
+  display: none;
+}
+
 .site-footer {
   border-top: 1px solid var(--line);
   padding-block: 46px;
@@ -143,29 +148,85 @@
 }
 
 @media (max-width: 900px) {
+  .header-inner {
+    min-height: 64px;
+    gap: 12px;
+  }
+
+  .header-actions {
+    margin-left: auto;
+  }
+
   .menu-button {
     display: inline-flex;
   }
 
-  .primary-nav {
-    position: absolute;
-    top: calc(100% + 1px);
-    right: 12px;
-    left: 12px;
+  .header-actions .desktop-project-control {
     display: none;
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    padding: 8px;
+  }
+
+  .nav-backdrop {
+    position: fixed;
+    z-index: 51;
+    inset: 64px 0 0;
+    display: block;
+    border: 0;
+    background: rgba(2, 10, 8, 0.56);
+    backdrop-filter: blur(3px);
+  }
+
+  .primary-nav {
+    position: fixed;
+    z-index: 52;
+    top: 64px;
+    right: 0;
+    bottom: 0;
+    left: auto;
+    display: none;
+    width: min(360px, calc(100vw - 32px));
+    align-content: start;
+    margin: 0;
+    overflow-y: auto;
+    border: 0;
+    border-left: 1px solid var(--line);
+    border-radius: 0;
+    padding: 18px;
     background: var(--surface-solid);
     box-shadow: var(--shadow);
   }
 
   .primary-nav.nav-open {
-    display: grid;
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 6px;
   }
 
   .nav-link {
+    min-height: 46px;
     border-radius: 12px;
+    padding-inline: 14px;
+  }
+
+  .primary-nav .mobile-project-control {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 12px;
+    padding: 10px 12px;
+  }
+
+  .primary-nav .mobile-project-control label {
+    width: 100%;
+  }
+
+  .primary-nav .mobile-project-control label > span {
+    display: block;
+  }
+
+  .primary-nav .project-switcher {
+    width: 100%;
+    max-width: none;
   }
 
   .api-status {
@@ -174,6 +235,10 @@
 }
 
 @media (max-width: 640px) {
+  .brand-lockup small {
+    display: none;
+  }
+
   .footer-inner,
   .footer-links {
     flex-direction: column;

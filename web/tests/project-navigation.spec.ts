@@ -88,10 +88,31 @@ const projects = [
     updated_at: "2026-07-28T05:00:00Z",
     is_active: false,
   },
+  {
+    project_id: "cip-dmd",
+    name: "CiP-DMD Manufacturing",
+    domain_type: "manufacturing-process",
+    dataset_name: "cip-dmd",
+    schema_version: "1.1.0",
+    status: "ready",
+    description: "",
+    industry: "manufacturing",
+    owner: "",
+    security_classification: "internal",
+    source_type: "file",
+    source_version: "cip-dmd-source",
+    connector_id: null,
+    prompt_version: "cip-dmd-prompt",
+    gold_version: "cip-dmd-gold",
+    evaluation_version: "cip-dmd-eval",
+    created_at: "2026-07-28T01:00:00Z",
+    updated_at: "2026-07-28T00:30:00Z",
+    is_active: false,
+  },
 ];
 
 function readiness(projectId: string) {
-  const ready = projectId === "project-a";
+  const ready = projectId === "project-a" || projectId === "cip-dmd";
   const nextAction =
     projectId === "project-b"
       ? "upload"
@@ -123,10 +144,40 @@ function readiness(projectId: string) {
   };
 }
 
+function queryResponse(question: string, projectId: string) {
+  return {
+    project_id: projectId,
+    question,
+    answer: "자동화된 질의 결과입니다.",
+    status: "success",
+    cypher: "MATCH (n) RETURN n LIMIT 1",
+    rows: [{ status: "normal" }],
+    row_count: 1,
+    metadata: { project_id: projectId },
+    evidence: {
+      nodes: [],
+      relationships: [],
+      node_count: 0,
+      relationship_count: 0,
+    },
+    validation: {
+      attempts: 1,
+      errors: [],
+      trace: [],
+      elapsed_ms: 12,
+    },
+    usage: {},
+    caveat: null,
+    provider: "gold",
+    fallback_reason: null,
+  };
+}
+
 async function mockProjectApi(
   page: Page,
   options: { failReadinessFor?: string } = {},
 ) {
+  const queryRequests: string[] = [];
   await page.addInitScript(() => {
     window.localStorage.clear();
   });
@@ -155,6 +206,22 @@ async function mockProjectApi(
       await route.fulfill({ status: 200, headers, json: projects });
       return;
     }
+    if (
+      url.pathname === "/api/v1/query" &&
+      request.method() === "POST"
+    ) {
+      const payload = request.postDataJSON() as {
+        question: string;
+        project_id: string;
+      };
+      queryRequests.push(payload.question);
+      await route.fulfill({
+        status: 200,
+        headers,
+        json: queryResponse(payload.question, payload.project_id),
+      });
+      return;
+    }
     const match = url.pathname.match(
       /^\/api\/v1\/projects\/([^/]+)\/readiness$/,
     );
@@ -181,6 +248,7 @@ async function mockProjectApi(
       json: { detail: `Unmocked endpoint: ${url.pathname}` },
     });
   });
+  return { queryRequests };
 }
 
 test("card Query atomically switches project and survives refresh", async ({
@@ -200,12 +268,12 @@ test("card Query atomically switches project and survives refresh", async ({
       name: "Draft Project B에 질문하세요.",
     }),
   ).toBeVisible();
-  await expect(page.getByLabel("활성 프로젝트")).toHaveValue("project-b");
+  await expect(page.getByLabel("활성 프로젝트", { exact: true })).toHaveValue("project-b");
   await expect(page.getByLabel("제조 관계 질문")).toBeDisabled();
 
   await page.reload();
   await expect(page).toHaveURL("/query?project_id=project-b");
-  await expect(page.getByLabel("활성 프로젝트")).toHaveValue("project-b");
+  await expect(page.getByLabel("활성 프로젝트", { exact: true })).toHaveValue("project-b");
   await expect(
     page.getByRole("heading", {
       name: "Draft Project B에 질문하세요.",
@@ -222,7 +290,7 @@ test("recommended project entry follows readiness", async ({ page }) => {
     .filter({ hasText: "Draft Project B" });
   await draftCard.getByRole("button", { name: "작업 열기" }).click();
   await expect(page).toHaveURL("/data?project_id=project-b");
-  await expect(page.getByLabel("활성 프로젝트")).toHaveValue("project-b");
+  await expect(page.getByLabel("활성 프로젝트", { exact: true })).toHaveValue("project-b");
 
   await page.goto("/projects");
   const mappingCard = page
@@ -230,7 +298,7 @@ test("recommended project entry follows readiness", async ({ page }) => {
     .filter({ hasText: "Mapping Project C" });
   await mappingCard.getByRole("button", { name: "작업 열기" }).click();
   await expect(page).toHaveURL("/schema?project_id=project-c");
-  await expect(page.getByLabel("활성 프로젝트")).toHaveValue("project-c");
+  await expect(page.getByLabel("활성 프로젝트", { exact: true })).toHaveValue("project-c");
 
   await page.goto("/projects");
   const evaluationCard = page
@@ -238,7 +306,7 @@ test("recommended project entry follows readiness", async ({ page }) => {
     .filter({ hasText: "Evaluation Project D" });
   await evaluationCard.getByRole("button", { name: "작업 열기" }).click();
   await expect(page).toHaveURL("/operations?project_id=project-d");
-  await expect(page.getByLabel("활성 프로젝트")).toHaveValue("project-d");
+  await expect(page.getByLabel("활성 프로젝트", { exact: true })).toHaveValue("project-d");
 
   await page.goto("/projects");
   const readyCard = page
@@ -246,7 +314,7 @@ test("recommended project entry follows readiness", async ({ page }) => {
     .filter({ hasText: "Ready Project A" });
   await readyCard.getByRole("button", { name: "작업 열기" }).click();
   await expect(page).toHaveURL("/query?project_id=project-a");
-  await expect(page.getByLabel("활성 프로젝트")).toHaveValue("project-a");
+  await expect(page.getByLabel("활성 프로젝트", { exact: true })).toHaveValue("project-a");
 });
 
 test("failed project switch never navigates", async ({ page }) => {
@@ -261,5 +329,57 @@ test("failed project switch never navigates", async ({ page }) => {
   await expect(page).toHaveURL("/");
   await expect(page.getByText("프로젝트 준비 상태를 확인하지 못했습니다."))
     .toBeVisible();
-  await expect(page.getByLabel("활성 프로젝트")).toHaveValue("project-a");
+  await expect(page.getByLabel("활성 프로젝트", { exact: true })).toHaveValue("project-a");
+});
+
+test("demo question previews before one guarded submission", async ({
+  page,
+}) => {
+  const api = await mockProjectApi(page);
+  await page.goto("/query?project_id=cip-dmd");
+
+  const composer = page.getByLabel("제조 관계 질문");
+  await page
+    .getByRole("button", { name: /제품 Genealogy/ })
+    .click();
+  await expect(composer).toHaveValue(
+    "완제품 300002의 구성품, 각 구성품의 공정과 품질검사 결과를 보여줘.",
+  );
+  expect(api.queryRequests).toHaveLength(0);
+
+  const submit = page.getByRole("button", { name: "질문 전송" });
+  await submit.evaluate((button: HTMLButtonElement) => {
+    button.click();
+    button.click();
+  });
+
+  await expect(page.getByText("자동화된 질의 결과입니다.")).toBeVisible();
+  await expect(composer).toHaveValue("");
+  await expect.poll(() => api.queryRequests.length).toBe(1);
+});
+
+test("mobile header uses a drawer without horizontal overflow", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await mockProjectApi(page);
+  await page.goto("/");
+
+  await expect(page.locator(".desktop-project-control")).toBeHidden();
+  await expect(page.getByRole("navigation", { name: "주요 작업공간" }))
+    .toBeHidden();
+  await page.getByRole("button", { name: "메뉴 열기" }).click();
+
+  const navigation = page.getByRole("navigation", {
+    name: "주요 작업공간",
+  });
+  await expect(navigation).toBeVisible();
+  await expect(page.getByLabel("모바일 활성 프로젝트", { exact: true })).toBeVisible();
+  await expect(navigation.getByRole("link", { name: "Query" }))
+    .toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
 });
