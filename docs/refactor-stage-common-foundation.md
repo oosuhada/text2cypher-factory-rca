@@ -33,7 +33,6 @@
   `test_refresh_project_switch_and_conversation_reopen_are_stable`
 - UI 품질 Gate는 분리된 5개 프론트엔드 모듈을 함께 검사한다.
 
-다음 단계에서는 공통 기반을 다시 건드리지 않고 Graph Explorer,
-Pipeline, Dashboard, Query Studio 등 페이지별 `render_*` 함수를
-`frontend/pages/`로 이동한다.
-
+후속 작업에서 Graph Explorer, Pipeline, Dashboard, Query Studio 등
+페이지별 `render_*` 함수를 `frontend/pages/`로 이동했다. 결과는
+`refactor-stage-page-modules.md`에 기록한다.
