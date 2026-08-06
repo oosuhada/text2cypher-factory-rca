@@ -289,24 +289,27 @@ test("recommended project entry follows readiness", async ({ page }) => {
     .getByRole("article")
     .filter({ hasText: "Draft Project B" });
   await draftCard.getByRole("button", { name: "작업 열기" }).click();
-  await expect(page).toHaveURL("/data?project_id=project-b");
-  await expect(page.getByLabel("활성 프로젝트", { exact: true })).toHaveValue("project-b");
+  await expect(page).toHaveURL(
+    "http://localhost:8501/?workspace=data_sources&project_id=project-b",
+  );
 
   await page.goto("/projects");
   const mappingCard = page
     .getByRole("article")
     .filter({ hasText: "Mapping Project C" });
   await mappingCard.getByRole("button", { name: "작업 열기" }).click();
-  await expect(page).toHaveURL("/schema?project_id=project-c");
-  await expect(page.getByLabel("활성 프로젝트", { exact: true })).toHaveValue("project-c");
+  await expect(page).toHaveURL(
+    "http://localhost:8501/?workspace=pipeline&project_id=project-c",
+  );
 
   await page.goto("/projects");
   const evaluationCard = page
     .getByRole("article")
     .filter({ hasText: "Evaluation Project D" });
   await evaluationCard.getByRole("button", { name: "작업 열기" }).click();
-  await expect(page).toHaveURL("/operations?project_id=project-d");
-  await expect(page.getByLabel("활성 프로젝트", { exact: true })).toHaveValue("project-d");
+  await expect(page).toHaveURL(
+    "http://localhost:8501/?workspace=dashboard&project_id=project-d",
+  );
 
   await page.goto("/projects");
   const readyCard = page
@@ -402,6 +405,14 @@ test("mobile header uses a drawer without horizontal overflow", async ({
   await expect(page.getByLabel("모바일 활성 프로젝트", { exact: true })).toBeVisible();
   await expect(navigation.getByRole("link", { name: "Query" }))
     .toBeVisible();
+  await expect(
+    navigation.getByRole("link", { name: "Evidence / Graph" }),
+  ).toBeVisible();
+  await expect(navigation.getByRole("link", { name: "Data" })).toHaveCount(0);
+  await expect(navigation.getByRole("link", { name: "Schema" })).toHaveCount(0);
+  await expect(
+    navigation.getByRole("link", { name: "Operations" }),
+  ).toHaveCount(0);
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,

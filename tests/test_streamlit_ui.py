@@ -175,7 +175,13 @@ class StreamlitIntegrationTest(unittest.TestCase):
         )
         self.assertEqual(navigation.value, "Home")
         self.assertTrue(
-            any(button.label == "RCA 질문 시작 →" for button in app.button)
+            any(button.label == "프로젝트 운영 보기" for button in app.button)
+        )
+        self.assertTrue(
+            any(
+                "Internal Console" in markdown.value
+                for markdown in app.markdown
+            )
         )
         self.assertEqual(len(app.chat_input), 0)
 

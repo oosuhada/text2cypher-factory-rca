@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 import streamlit as st
@@ -30,20 +31,20 @@ def render_landing_overview() -> None:
         """
         <div class="p3-feature-grid">
           <div class="p3-feature">
-            <b>01 · Ask</b>
-            <p>제조 관계를 자연어로 질문합니다.</p>
+            <b>01 · Data</b>
+            <p>데이터 소스, 업로드 이력과 프로파일을 점검합니다.</p>
           </div>
           <div class="p3-feature">
-            <b>02 · Generate</b>
-            <p>LLM이 읽기 전용 Cypher를 생성합니다.</p>
+            <b>02 · Pipeline</b>
+            <p>매핑, dry-run, 적재와 무결성 상태를 관리합니다.</p>
           </div>
           <div class="p3-feature">
-            <b>03 · Verify</b>
-            <p>의미·문법·쓰기 위험을 실행 전에 검사합니다.</p>
+            <b>03 · Evaluate</b>
+            <p>Gold·Blind 회귀평가와 실패 유형을 확인합니다.</p>
           </div>
           <div class="p3-feature">
-            <b>04 · Trace</b>
-            <p>조회 결과와 실제 관계 경로를 함께 확인합니다.</p>
+            <b>04 · Audit</b>
+            <p>질의·ETL·평가 실행과 운영 증적을 추적합니다.</p>
           </div>
         </div>
         """,
@@ -51,95 +52,91 @@ def render_landing_overview() -> None:
     )
 
 def render_streamlit_landing() -> None:
+    product_url = os.getenv("P3_PRODUCT_UI_URL", "http://localhost:3000")
     st.markdown(
         """
         <section class="p3-landing-hero">
           <div class="p3-landing-copy">
-            <div class="p3-kicker">Manufacturing Knowledge Graph</div>
-            <h1>Find the path.<span>Keep the proof.</span></h1>
+            <div class="p3-kicker">Internal Operations Console</div>
+            <h1>Factory Graph RCA<span>Internal Console</span></h1>
             <p>
-              제조 관계를 자연어로 묻고, 검증된 Cypher와 실제 그래프
-              경로로 RCA 후보를 확인합니다. 추정한 답변이 아니라 조회한
-              근거와 전문가 판정을 남깁니다.
+              이 화면은 데이터 온보딩, 그래프 적재, 평가와 운영 진단을
+              위한 내부 콘솔입니다. 최종 사용자 RCA 질문과 근거 탐색은
+              React 제품 UI에서 수행합니다.
             </p>
             <div class="p3-landing-proof">
-              <span>Gold Question 15/15</span>
-              <span>READ-only 100%</span>
-              <span>Blind 26</span>
-              <span>Expert HITL</span>
+              <span>Data operations</span>
+              <span>Evaluation</span>
+              <span>Audit</span>
+              <span>Diagnostics</span>
             </div>
           </div>
           <div class="p3-investigation">
             <div class="p3-investigation-head">
-              <span>Live investigation</span><span>Verified</span>
+              <span>Surface boundary</span><span>Internal only</span>
             </div>
             <div class="p3-investigation-question">
-              완제품 300002의 구성품과 각 공정·품질검사 결과를 보여줘.
+              제품 질의·Evidence·History는 React가 소유합니다.
             </div>
             <div class="p3-investigation-path">
-              <b>Cylinder<br>300002</b><span>→</span>
-              <b>Part<br>103504</b><span>→</span>
-              <b>Process<br>CNC milling</b>
+              <b>Data<br>Source</b><span>→</span>
+              <b>Graph<br>Pipeline</b><span>→</span>
+              <b>Evaluate<br>Audit</b>
             </div>
             <div class="p3-cypher-preview">
-              MATCH (c:Cylinder)-[:ASSEMBLED_FROM]-&gt;(p:Part)<br>
-              OPTIONAL MATCH (p)-[:UNDERWENT]-&gt;(run:ProcessRun)<br>
-              RETURN c, p, run
+              Product UI  · React :3000<br>
+              Internal Console · Streamlit :8501<br>
+              Source of truth · FastAPI :8000
             </div>
           </div>
         </section>
         """,
         unsafe_allow_html=True,
     )
-    query_column, graph_column, spacer = st.columns([1, 1, 3])
-    query_column.button(
-        "RCA 질문 시작 →",
+    product_column, project_column, spacer = st.columns([1.25, 1, 2.75])
+    product_column.link_button(
+        "React 제품 UI 열기 →",
+        product_url,
         type="primary",
         width="stretch",
-        on_click=navigate_to_page,
-        args=("Query Studio",),
     )
-    graph_column.button(
-        "그래프 탐색",
+    project_column.button(
+        "프로젝트 운영 보기",
         width="stretch",
         on_click=navigate_to_page,
-        args=("Graph Explorer",),
+        args=("Projects",),
     )
-
-    metric_columns = st.columns(4)
-    metric_columns[0].metric("조립 완제품", "802")
-    metric_columns[1].metric("Genealogy 완전성", "95.6%")
-    metric_columns[2].metric("Blind 의미값 정확도", "61.5%")
-    metric_columns[3].metric("관계 유형", "7")
 
     st.markdown(
         """
         <section class="p3-landing-section">
-          <div class="p3-kicker" style="color:#0F766E">What the system proves</div>
-          <h2>AI 답변보다 검증 경로를 설계합니다.</h2>
+          <div class="p3-kicker" style="color:#0F766E">Internal responsibilities</div>
+          <h2>제품 기능과 운영 기능을 분리합니다.</h2>
         </section>
         """,
         unsafe_allow_html=True,
     )
     render_landing_overview()
-    st.markdown(
-        """
-        <section class="p3-landing-section">
-          <div class="p3-kicker" style="color:#0F766E">Agent workflow</div>
-          <h2>실행 전에 의심하고, 실행 후에 증명합니다.</h2>
-          <div class="p3-workflow">
-            <div><b>01 · Ask</b><span>현업 언어로 관계 질문</span></div>
-            <div><b>02 · Generate</b><span>스키마 기반 Cypher 생성</span></div>
-            <div><b>03 · Verify</b><span>READ-only·EXPLAIN·의미 검사</span></div>
-            <div><b>04 · Trace</b><span>조회값·관계·전문가 판정</span></div>
-          </div>
-        </section>
-        """,
-        unsafe_allow_html=True,
-    )
+
+    st.markdown("### 운영 바로가기")
+    shortcuts = st.columns(4)
+    for column, label, page in zip(
+        shortcuts,
+        ("데이터 소스", "파이프라인", "평가", "감사 로그"),
+        ("Data Sources", "Pipeline", "Evaluations", "Audit Logs"),
+        strict=True,
+    ):
+        column.button(
+            label,
+            key=f"console-shortcut-{page}",
+            width="stretch",
+            on_click=navigate_to_page,
+            args=(page,),
+        )
+
     st.info(
-        "사내 프로토타입에서는 질문, 실행 Cypher, 조회 결과, 관계 경로와 "
-        "도메인 전문가 판정을 같은 앱에서 확인합니다.",
+        "최종 사용자 발표 여정은 React 제품 UI에서 완결합니다. "
+        "Streamlit은 데이터·평가·감사·장애 진단에만 사용합니다.",
         icon="🔷",
     )
     render_home_project_overview()

@@ -561,7 +561,11 @@
 
 ### 2.9-1. 단일 제품 UI 결정과 Surface 경계 고정
 
-상태: **작업 예정**
+상태: **구현·검증 완료 (2026-07-28)**
+
+검증 기록:
+
+- [`enterprise-stage2-9-1-surface-boundary.md`](./enterprise-stage2-9-1-surface-boundary.md)
 
 목적:
 
@@ -613,7 +617,7 @@
 
 ### 2.9-2. Streamlit 자동 페이지 충돌 제거
 
-상태: **2.9-1 이후 진행**
+상태: **다음 진행 단계**
 
 목적:
 

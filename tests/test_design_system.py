@@ -3,10 +3,13 @@ import unittest
 from frontend.design_system import (
     Action,
     DESIGN_TOKENS,
+    INTERNAL_CONSOLE_NAVIGATION,
     NAVIGATION_ITEMS,
     PAGE_BY_LABEL,
+    PRODUCT_UI_NAVIGATION,
     REACT_STREAMLIT_BOUNDARY,
     SIDEBAR_SECTION_ORDER,
+    SURFACE_OWNERSHIP,
     WIREFLOWS,
     Role,
     ViewState,
@@ -129,10 +132,23 @@ class DesignSystemContractTest(unittest.TestCase):
             set(REACT_STREAMLIT_BOUNDARY),
             {"streamlit", "react", "backend"},
         )
+        self.assertIn("Query Studio", PRODUCT_UI_NAVIGATION)
+        self.assertIn("Evidence / Graph", PRODUCT_UI_NAVIGATION)
+        self.assertNotIn("Evaluations", PRODUCT_UI_NAVIGATION)
+        self.assertIn("Evaluations", INTERNAL_CONSOLE_NAVIGATION)
+        self.assertEqual(SURFACE_OWNERSHIP["rca_query"], "react")
+        self.assertEqual(SURFACE_OWNERSHIP["evaluations"], "streamlit")
+        self.assertEqual(SURFACE_OWNERSHIP["platform_state"], "backend")
         self.assertTrue(
             any(
-                "iframe" in statement
+                "단일 제품 진입점" in statement
                 for statement in REACT_STREAMLIT_BOUNDARY["react"]
+            )
+        )
+        self.assertTrue(
+            any(
+                "내부 운영 콘솔" in statement
+                for statement in REACT_STREAMLIT_BOUNDARY["streamlit"]
             )
         )
         self.assertTrue(

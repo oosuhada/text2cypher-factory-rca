@@ -1,15 +1,12 @@
 "use client";
 
 import {
-  Activity,
-  Database,
   History,
   Menu,
   MessageSquareText,
   Network,
   DatabaseZap,
   FolderKanban,
-  Workflow,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -19,16 +16,18 @@ import { useState } from "react";
 import { ApiStatus } from "@/components/api-status";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useProject } from "@/components/project-context";
+import {
+  PRODUCT_NAVIGATION,
+  projectStatusLabel,
+  readinessStatusLabel,
+} from "@/lib/product-surface";
 
-const NAVIGATION = [
-  { href: "/projects", label: "Projects", icon: FolderKanban },
-  { href: "/query", label: "Query", icon: MessageSquareText },
-  { href: "/graph", label: "Graph", icon: Network },
-  { href: "/history", label: "History", icon: History },
-  { href: "/data", label: "Data", icon: Database },
-  { href: "/schema", label: "Schema", icon: Workflow },
-  { href: "/operations", label: "Operations", icon: Activity },
-];
+const NAVIGATION_ICONS = {
+  projects: FolderKanban,
+  query: MessageSquareText,
+  graph: Network,
+  history: History,
+};
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -40,17 +39,7 @@ export function SiteHeader() {
     switching,
     switchProject,
   } = useProject();
-  const statusLabel = readiness?.can_query
-    ? `${readiness.node_count.toLocaleString()} nodes`
-    : readiness?.next_action === "evaluate"
-      ? "Evaluation required"
-      : readiness?.next_action === "connect"
-        ? "Connection required"
-    : readiness?.next_action === "load"
-      ? "Load required"
-      : readiness?.next_action === "map"
-        ? "Mapping required"
-        : "Upload required";
+  const statusLabel = readinessStatusLabel(readiness ?? undefined);
   const projectSelector = (className: string) => (
     <div className={`project-control ${className}`}>
       <DatabaseZap size={15} />
@@ -71,7 +60,7 @@ export function SiteHeader() {
         >
           {projects.map((project) => (
             <option key={project.project_id} value={project.project_id}>
-              {project.name} · {project.status}
+              {project.name} · {projectStatusLabel(project.status)}
             </option>
           ))}
         </select>
@@ -107,8 +96,9 @@ export function SiteHeader() {
           aria-label="주요 작업공간"
         >
           {projectSelector("mobile-project-control")}
-          {NAVIGATION.map((item) => {
+          {PRODUCT_NAVIGATION.map((item) => {
             const active = pathname.startsWith(item.href);
+            const Icon = NAVIGATION_ICONS[item.icon];
             return (
               <Link
                 href={item.href}
@@ -116,7 +106,7 @@ export function SiteHeader() {
                 className={active ? "nav-link active" : "nav-link"}
                 onClick={() => setOpen(false)}
               >
-                <item.icon size={15} />
+                <Icon size={15} />
                 {item.label}
               </Link>
             );

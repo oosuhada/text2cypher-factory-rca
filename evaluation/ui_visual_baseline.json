@@ -1,5 +1,5 @@
 {
-  "version": "enterprise-ui-2.10",
+  "version": "enterprise-ui-2.11-product-surface",
   "css_sha256": "3323acf2a1e1203152dd3f98a62085e8565998ffc566468641356ecee408398c",
   "locales": [
     "ko",
@@ -17,7 +17,7 @@
   ],
   "screens": {
     "Home": [
-      "Find the path.",
+      "Internal Console",
       "Workspace overview"
     ],
     "Projects": [
@@ -124,5 +124,54 @@
       "delivery": "foundation",
       "stage": "3-8"
     }
-  ]
+  ],
+  "product_surface": {
+    "product_navigation": [
+      "Projects",
+      "Query Studio",
+      "Evidence / Graph",
+      "History",
+      "Expert Review"
+    ],
+    "internal_console_navigation": [
+      "Projects",
+      "Data Sources",
+      "Pipeline",
+      "Query Diagnostics",
+      "Graph Diagnostics",
+      "Dashboard",
+      "Evaluations",
+      "Audit Logs",
+      "Admin"
+    ],
+    "ownership": {
+      "project_selection": "react",
+      "rca_query": "react",
+      "evidence_graph": "react",
+      "conversation_history": "react",
+      "expert_review": "react",
+      "data_sources": "streamlit",
+      "pipeline": "streamlit",
+      "evaluations": "streamlit",
+      "audit_logs": "streamlit",
+      "model_diagnostics": "streamlit",
+      "platform_state": "backend"
+    },
+    "boundary": {
+      "react": [
+        "최종 사용자와 발표 평가자의 단일 제품 진입점",
+        "프로젝트 선택·RCA 질문·답변·근거·기록·전문가 검토의 소유자",
+        "내부 운영 기능을 중복 구현하지 않고 필요 시 내부 콘솔로 연결"
+      ],
+      "streamlit": [
+        "개발자·Data Steward·Admin을 위한 내부 운영 콘솔",
+        "데이터 온보딩·ETL·평가·감사·모델 진단 기능의 소유자",
+        "React 제품 UI를 iframe으로 감싸거나 별도 제품처럼 경쟁하지 않음"
+      ],
+      "backend": [
+        "프로젝트·작업·권한·평가 상태의 source of truth",
+        "두 UI가 파일이나 Neo4j에 직접 접근하지 않도록 API 경계 제공"
+      ]
+    }
+  }
 }
