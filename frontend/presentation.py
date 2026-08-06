@@ -83,12 +83,14 @@ def normalize_catalog_evidence(
         )
         nodes.append({**node, "label": label})
     relationships = list(payload.get("relationships", []))
+    root = payload.get("root")
     return {
         "nodes": nodes,
         "relationships": relationships,
         "node_count": len(nodes),
         "relationship_count": len(relationships),
         "truncated": payload.get("truncated", False),
+        "root_id": root.get("id") if isinstance(root, dict) else None,
     }
 
 

@@ -21,7 +21,6 @@ import streamlit as st
 
 from backend.app.services.diagnostics import collect_demo_diagnostics
 from backend.app.services.data_intake_service import DataIntakeService
-from backend.app.services.graph_service import NODE_IDENTITIES
 from backend.app.conversations import ConversationStore
 from backend.app.jobs import PipelineJobStore
 from backend.app.ingestion import DatasetWorkspace
@@ -43,6 +42,16 @@ from frontend.design_system import (
     build_global_css,
     navigation_for_role,
     state_copy,
+)
+from frontend.graph_explorer import (
+    bound_evidence,
+    build_visual_spec,
+    graph_performance_policy,
+    merge_catalog_payload,
+    node_caption,
+    selected_entity_details,
+    shortest_path_ids,
+    validate_project_scope,
 )
 from frontend.presentation import (
     evidence_to_dot,
@@ -357,6 +366,13 @@ def initialize_session() -> None:
     )
     st.session_state.setdefault("explorer_result", None)
     st.session_state.setdefault("explorer_search_result", None)
+    st.session_state.setdefault("explorer_selected_node_ids", [])
+    st.session_state.setdefault(
+        "explorer_selected_relationship_ids", []
+    )
+    st.session_state.setdefault("explorer_expansion_history", [])
+    st.session_state.setdefault("explorer_filters", {})
+    st.session_state.setdefault("explorer_widget_revision", 0)
     st.session_state.setdefault("expert_reviews", {})
     st.session_state.setdefault("intake_record", None)
     st.session_state.setdefault("intake_approval_token", None)
@@ -1301,13 +1317,30 @@ def render_projects_workspace() -> None:
 
 
 def render_graph_explorer(services: ServiceBundle) -> None:
-    st.subheader("지식그래프 탐색")
+    project_id = st.session_state.get("active_project_id", "cip-dmd")
+    st.subheader("Interactive Graph Explorer")
     st.caption(
-        "노드의 실제 ID를 기준으로 최대 3-hop 관계를 읽기 전용으로 "
-        "탐색합니다."
+        "노드를 검색하고 선택해 최대 3-hop까지 확장합니다. 모든 조회는 "
+        f"현재 프로젝트 `{project_id}` 범위와 읽기 전용 계약을 따릅니다."
     )
     if services.graph is None:
         st.error("그래프 탐색 서비스가 구성되지 않았습니다.")
+        return
+
+    try:
+        contract = SchemaRegistry(PROJECT_ROOT / "schemas").contract(
+            project_id
+        )
+    except (KeyError, ValueError) as error:
+        st.error(f"프로젝트 그래프 스키마를 불러오지 못했습니다: {error}")
+        return
+    identity_by_label = {
+        row["label"]: row["identity_property"]
+        for row in contract["node_identities"]
+    }
+    labels = tuple(identity_by_label)
+    if not labels:
+        st.info("탐색 가능한 노드 라벨이 없습니다.")
         return
 
     label_names = {
@@ -1322,30 +1355,46 @@ def render_graph_explorer(services: ServiceBundle) -> None:
         "QualityMeasurement": "품질 측정",
         "QualityFailure": "품질 불합격",
     }
-    label = st.selectbox(
-        "노드 유형",
-        options=tuple(NODE_IDENTITIES),
-        index=1,
-        format_func=lambda value: label_names.get(value, value),
-        key="graph-explorer-label",
-    )
+    start_column, depth_column, limit_column = st.columns([2, 1, 1])
+    with start_column:
+        label = st.selectbox(
+            "시작 노드 유형",
+            options=labels,
+            index=(
+                labels.index("Cylinder")
+                if "Cylinder" in labels
+                else 0
+            ),
+            format_func=lambda value: label_names.get(value, value),
+            key=f"graph-explorer-label-{project_id}",
+        )
+    with depth_column:
+        default_depth = st.select_slider(
+            "N-hop",
+            options=(1, 2, 3),
+            value=2,
+            key=f"graph-explorer-depth-{project_id}",
+        )
+    with limit_column:
+        result_limit = st.selectbox(
+            "경로 제한",
+            options=(25, 50, 75, 100),
+            index=2,
+            key=f"graph-explorer-limit-{project_id}",
+        )
 
-    st.markdown("#### ID를 몰라도 검색")
-    st.caption(
-        "노드 ID, 공정·장비 이름, 이상 유형, 측정 항목의 일부를 "
-        "검색한 뒤 관계를 펼칠 수 있습니다."
-    )
-    with st.form("graph-node-search-form"):
-        search_column, button_column = st.columns([3, 1])
+    with st.form(f"graph-node-search-form-{project_id}"):
+        search_column, button_column = st.columns([4, 1])
         with search_column:
             search_term = st.text_input(
-                "노드 검색어",
-                placeholder="예: pressure, anomaly, 3000",
+                "노드 검색",
+                placeholder="ID, 이름, 공정, 이상 유형 또는 측정 항목 검색",
                 label_visibility="collapsed",
             )
         with button_column:
             search_submitted = st.form_submit_button(
-                "노드 검색",
+                "검색",
+                type="primary",
                 width="stretch",
             )
     if search_submitted:
@@ -1358,7 +1407,7 @@ def render_graph_explorer(services: ServiceBundle) -> None:
                         services.graph.search_nodes(
                             label=label,
                             query=search_term.strip(),
-                            limit=15,
+                            limit=20,
                         )
                     )
             except Exception as error:
@@ -1394,21 +1443,16 @@ def render_graph_explorer(services: ServiceBundle) -> None:
                     f"검색 결과 {len(nodes)}개",
                     options=range(len(nodes)),
                     format_func=search_option_label,
-                    key="graph-search-selection",
+                    key=f"graph-search-selection-{project_id}-{label}",
                 )
             with depth_column:
-                search_depth = st.select_slider(
-                    "탐색 깊이",
-                    options=(1, 2, 3),
-                    value=2,
-                    key="graph-search-depth",
-                )
+                st.caption("검색 결과를 시작점으로 사용합니다.")
             with action_column:
-                st.write("")
                 explore_selected = st.button(
-                    "선택 노드 탐색",
+                    "그래프 열기",
                     type="primary",
                     width="stretch",
+                    key=f"graph-open-search-{project_id}",
                 )
             if explore_selected:
                 selected_node = nodes[selected_index]
@@ -1422,31 +1466,49 @@ def render_graph_explorer(services: ServiceBundle) -> None:
                         payload = services.graph.subgraph(
                             label=label,
                             identity=selected_identity,
-                            depth=search_depth,
-                            limit=70,
+                            depth=default_depth,
+                            limit=result_limit,
                         )
+                    validate_project_scope(payload, project_id)
                     st.session_state["explorer_result"] = {
                         "label": label,
                         "identity": selected_identity,
-                        "depth": search_depth,
+                        "depth": default_depth,
                         "payload": payload,
                     }
+                    st.session_state["explorer_selected_node_ids"] = [
+                        str(selected_node["id"])
+                    ]
+                    st.session_state[
+                        "explorer_selected_relationship_ids"
+                    ] = []
+                    st.session_state["explorer_expansion_history"] = [
+                        {
+                            "label": label,
+                            "identity": selected_identity,
+                            "depth": default_depth,
+                        }
+                    ]
+                    st.session_state["explorer_widget_revision"] += 1
+                    st.rerun()
                 except Exception as error:
                     st.error(f"관계 탐색에 실패했습니다: {error}")
         else:
             st.info("일치하는 노드가 없습니다. 다른 검색어를 입력해보세요.")
 
     with st.expander("정확한 ID로 바로 탐색"):
-        with st.form("graph-explorer-form"):
+        with st.form(f"graph-explorer-form-{project_id}"):
             identity_column, depth_column = st.columns([1.5, 1])
             with identity_column:
                 identity = st.text_input(
-                    f"식별값 · {NODE_IDENTITIES[label]}",
+                    f"식별값 · {identity_by_label[label]}",
                     value="300002" if label == "Cylinder" else "",
                     placeholder="예: 300002",
                 )
             with depth_column:
-                depth = st.slider("탐색 깊이", 1, 3, 2)
+                st.caption(
+                    f"{default_depth}-hop · 최대 {result_limit}개 경로"
+                )
             submitted = st.form_submit_button(
                 "관계 탐색",
                 type="primary",
@@ -1462,15 +1524,32 @@ def render_graph_explorer(services: ServiceBundle) -> None:
                     payload = services.graph.subgraph(
                         label=label,
                         identity=identity.strip(),
-                        depth=depth,
-                        limit=70,
+                        depth=default_depth,
+                        limit=result_limit,
                     )
+                validate_project_scope(payload, project_id)
                 st.session_state["explorer_result"] = {
                     "label": label,
                     "identity": identity.strip(),
-                    "depth": depth,
+                    "depth": default_depth,
                     "payload": payload,
                 }
+                root = payload.get("root")
+                st.session_state["explorer_selected_node_ids"] = (
+                    [str(root["id"])] if isinstance(root, dict) else []
+                )
+                st.session_state[
+                    "explorer_selected_relationship_ids"
+                ] = []
+                st.session_state["explorer_expansion_history"] = [
+                    {
+                        "label": label,
+                        "identity": identity.strip(),
+                        "depth": default_depth,
+                    }
+                ]
+                st.session_state["explorer_widget_revision"] += 1
+                st.rerun()
             except Exception as error:
                 st.error(f"관계 탐색에 실패했습니다: {error}")
 
@@ -1489,6 +1568,11 @@ def render_graph_explorer(services: ServiceBundle) -> None:
         return
 
     payload = explorer_result["payload"]
+    try:
+        validate_project_scope(payload, project_id)
+    except ValueError as error:
+        st.error(str(error), icon="🔒")
+        return
     if payload.get("root") is None:
         st.info(
             f"{explorer_result['label']} "
@@ -1497,31 +1581,386 @@ def render_graph_explorer(services: ServiceBundle) -> None:
         return
 
     evidence = normalize_catalog_evidence(payload)
-    node_metric, relation_metric, depth_metric = st.columns(3)
-    node_metric.metric("표시 노드", evidence["node_count"])
-    relation_metric.metric("표시 관계", evidence["relationship_count"])
-    depth_metric.metric("탐색 깊이", explorer_result["depth"])
-    st.graphviz_chart(evidence_to_dot(evidence), width="stretch")
+    available_labels = sorted(
+        {str(node["label"]) for node in evidence["nodes"]}
+    )
+    available_relationships = sorted(
+        {
+            str(relationship["type"])
+            for relationship in evidence["relationships"]
+        }
+    )
+    filters = st.session_state.get("explorer_filters", {})
+    with st.expander("표시 필터와 레이아웃", expanded=False):
+        filter_column, relation_column, layout_column = st.columns(3)
+        with filter_column:
+            selected_labels = st.multiselect(
+                "노드 유형",
+                options=available_labels,
+                default=[
+                    value
+                    for value in filters.get(
+                        "labels", available_labels
+                    )
+                    if value in available_labels
+                ],
+                key=f"graph-label-filter-{project_id}",
+            )
+        with relation_column:
+            selected_relationship_types = st.multiselect(
+                "관계 유형",
+                options=available_relationships,
+                default=[
+                    value
+                    for value in filters.get(
+                        "relationship_types",
+                        available_relationships,
+                    )
+                    if value in available_relationships
+                ],
+                key=f"graph-relation-filter-{project_id}",
+            )
+        with layout_column:
+            layout = st.selectbox(
+                "레이아웃",
+                options=(
+                    "forcedirected",
+                    "hierarchical",
+                    "circular",
+                    "grid",
+                ),
+                format_func=lambda value: {
+                    "forcedirected": "Force directed",
+                    "hierarchical": "Hierarchical",
+                    "circular": "Circular",
+                    "grid": "Grid",
+                }[value],
+                key=f"graph-layout-{project_id}",
+            )
+            include_isolated = st.toggle(
+                "고립 노드 표시",
+                value=bool(filters.get("include_isolated", True)),
+                key=f"graph-isolated-{project_id}",
+            )
+    st.session_state["explorer_filters"] = {
+        "labels": selected_labels,
+        "relationship_types": selected_relationship_types,
+        "include_isolated": include_isolated,
+    }
+    filtered = filter_evidence(
+        evidence,
+        labels=set(selected_labels),
+        relationship_types=set(selected_relationship_types),
+        include_isolated=include_isolated,
+    )
+    if not filtered["nodes"]:
+        st.info(
+            "현재 필터에 표시할 노드가 없습니다. 노드 유형 필터를 "
+            "하나 이상 선택하세요."
+        )
+        return
+    performance = graph_performance_policy(filtered["node_count"])
+    filtered = bound_evidence(
+        filtered,
+        performance.recommended_limit,
+        priority_node_ids=st.session_state.get(
+            "explorer_selected_node_ids", []
+        ),
+    )
+    visible_node_ids = {
+        str(node["id"]) for node in filtered["nodes"]
+    }
+    visible_relationship_ids = {
+        str(relationship.get("id", ""))
+        for relationship in filtered["relationships"]
+    }
+    selected_node_ids = [
+        node_id
+        for node_id in st.session_state.get(
+            "explorer_selected_node_ids", []
+        )
+        if node_id in visible_node_ids
+    ]
+    selected_relationship_ids = [
+        relationship_id
+        for relationship_id in st.session_state.get(
+            "explorer_selected_relationship_ids", []
+        )
+        if relationship_id in visible_relationship_ids
+    ]
+
+    node_lookup = {
+        str(node["id"]): node for node in filtered["nodes"]
+    }
+    focus_column, focus_action_column, path_column = st.columns(
+        [3, 1, 1]
+    )
+    with focus_column:
+        focus_node_id = st.selectbox(
+            "화면에서 선택할 노드",
+            options=tuple(node_lookup),
+            index=(
+                tuple(node_lookup).index(selected_node_ids[0])
+                if selected_node_ids
+                and selected_node_ids[0] in node_lookup
+                else 0
+            ),
+            format_func=lambda node_id: node_caption(
+                node_lookup[node_id], identity_by_label
+            ).replace("\n", " · "),
+            key=f"graph-focus-node-{project_id}",
+        )
+    with focus_action_column:
+        st.write("")
+        if st.button(
+            "선택 동기화",
+            width="stretch",
+            key=f"graph-focus-action-{project_id}",
+        ):
+            st.session_state["explorer_selected_node_ids"] = [
+                focus_node_id
+            ]
+            st.session_state[
+                "explorer_selected_relationship_ids"
+            ] = []
+            st.session_state["explorer_widget_revision"] += 1
+            st.rerun()
+    with path_column:
+        highlight_path = st.toggle(
+            "루트 경로 강조",
+            value=True,
+            key=f"graph-path-highlight-{project_id}",
+        )
+
+    path_node_ids: set[str] = set()
+    path_relationship_ids: set[str] = set()
+    if highlight_path and selected_node_ids:
+        path_node_ids, path_relationship_ids = shortest_path_ids(
+            filtered,
+            filtered.get("root_id"),
+            selected_node_ids[0],
+        )
+    visual_spec = build_visual_spec(
+        filtered,
+        identity_by_label=identity_by_label,
+        root_id=filtered.get("root_id"),
+        selected_node_ids=selected_node_ids,
+        selected_relationship_ids=selected_relationship_ids,
+        highlighted_node_ids=path_node_ids,
+        highlighted_relationship_ids=path_relationship_ids,
+        label_mode=performance.label_mode,
+    )
+
+    node_metric, relation_metric, depth_metric, renderer_metric = st.columns(
+        4
+    )
+    node_metric.metric("표시 노드", filtered["node_count"])
+    relation_metric.metric("표시 관계", filtered["relationship_count"])
+    depth_metric.metric("누적 확장", len(
+        st.session_state.get("explorer_expansion_history", [])
+    ))
+    renderer_metric.metric("렌더러", performance.renderer.upper())
+    st.caption(performance.message)
+    if filtered.get("sampled_out_node_count"):
+        st.warning(
+            f"브라우저 안정성을 위해 "
+            f"{filtered['sampled_out_node_count']:,}개 노드를 제외하고 "
+            "루트·선택 노드를 우선 표시했습니다."
+        )
+
+    graph_column, detail_column = st.columns([3, 1])
+    widget_selection = {
+        "node_ids": selected_node_ids,
+        "relationship_ids": selected_relationship_ids,
+    }
+    with graph_column:
+        if not visual_spec["nodes"]:
+            st.info("현재 필터에 표시할 노드가 없습니다.")
+        else:
+            try:
+                from neo4j_viz import (
+                    GraphSelection,
+                    Node,
+                    Relationship,
+                    Renderer,
+                    VisualizationGraph,
+                )
+                from neo4j_viz.streamlit import display_widget
+
+                graph = VisualizationGraph(
+                    nodes=[
+                        Node(**node) for node in visual_spec["nodes"]
+                    ],
+                    relationships=[
+                        Relationship(**relationship)
+                        for relationship in visual_spec["relationships"]
+                    ],
+                )
+                widget = graph.render_widget(
+                    layout=layout,
+                    renderer=(
+                        Renderer.WEB_GL
+                        if performance.renderer == "webgl"
+                        else Renderer.CANVAS
+                    ),
+                    height="640px",
+                    max_allowed_nodes=performance.recommended_limit,
+                    theme="light",
+                )
+                widget.selected = GraphSelection(
+                    nodeIds=selected_node_ids,
+                    relationshipIds=selected_relationship_ids,
+                )
+                widget_key = (
+                    f"graph-widget-{project_id}-{layout}-"
+                    f"{st.session_state['explorer_widget_revision']}"
+                )
+                display_widget(widget, key=widget_key)
+                widget_selection = {
+                    "node_ids": list(widget.selected.nodeIds),
+                    "relationship_ids": list(
+                        widget.selected.relationshipIds
+                    ),
+                }
+                st.caption(
+                    "드래그로 이동 · 휠로 확대/축소 · 클릭으로 선택 · "
+                    "우측 상단에서 레이아웃 전환"
+                )
+            except Exception as error:
+                st.warning(
+                    "인터랙티브 렌더러를 사용할 수 없어 안전한 "
+                    f"Graphviz 보기로 전환했습니다: {error}"
+                )
+                st.graphviz_chart(
+                    evidence_to_dot(filtered), width="stretch"
+                )
+    selected_node_ids = [
+        node_id
+        for node_id in widget_selection["node_ids"]
+        if node_id in visible_node_ids
+    ]
+    selected_relationship_ids = [
+        relationship_id
+        for relationship_id in widget_selection["relationship_ids"]
+        if relationship_id in visible_relationship_ids
+    ]
+    st.session_state["explorer_selected_node_ids"] = selected_node_ids
+    st.session_state[
+        "explorer_selected_relationship_ids"
+    ] = selected_relationship_ids
+    details = selected_entity_details(
+        filtered,
+        selected_node_ids,
+        selected_relationship_ids,
+    )
+    with detail_column:
+        st.markdown("#### 선택 상세")
+        if details["nodes"]:
+            selected_node = details["nodes"][0]
+            st.markdown(
+                f"**{node_caption(selected_node, identity_by_label)}**"
+                .replace("\n", " · ")
+            )
+            st.json(selected_node.get("properties") or {}, expanded=True)
+            selected_label = str(selected_node["label"])
+            selected_identity_property = identity_by_label.get(
+                selected_label
+            )
+            selected_identity = (
+                (selected_node.get("properties") or {}).get(
+                    selected_identity_property
+                )
+                if selected_identity_property
+                else None
+            )
+            expand_depth = st.select_slider(
+                "이 노드에서 확장",
+                options=(1, 2, 3),
+                value=1,
+                key=f"graph-expand-depth-{project_id}",
+            )
+            if st.button(
+                f"{expand_depth}-hop 추가",
+                type="primary",
+                width="stretch",
+                key=f"graph-expand-action-{project_id}",
+                disabled=selected_identity in (None, ""),
+            ):
+                try:
+                    with st.spinner("선택 노드의 이웃을 확장합니다."):
+                        incoming = services.graph.subgraph(
+                            label=selected_label,
+                            identity=str(selected_identity),
+                            depth=expand_depth,
+                            limit=result_limit,
+                        )
+                    validate_project_scope(incoming, project_id)
+                    explorer_result["payload"] = merge_catalog_payload(
+                        payload, incoming
+                    )
+                    st.session_state[
+                        "explorer_result"
+                    ] = explorer_result
+                    st.session_state[
+                        "explorer_expansion_history"
+                    ].append(
+                        {
+                            "label": selected_label,
+                            "identity": str(selected_identity),
+                            "depth": expand_depth,
+                        }
+                    )
+                    st.rerun()
+                except Exception as error:
+                    st.error(f"이웃 확장에 실패했습니다: {error}")
+        elif details["relationships"]:
+            relationship = details["relationships"][0]
+            st.markdown(f"**:{relationship.get('type', 'RELATED')}**")
+            st.caption(
+                f"{relationship['source']} → {relationship['target']}"
+            )
+            st.json(
+                relationship.get("properties") or {},
+                expanded=True,
+            )
+        else:
+            st.info("그래프에서 노드나 관계를 클릭하세요.")
+
     if evidence.get("truncated"):
-        st.info("가독성을 위해 최대 70개 경로까지만 표시합니다.")
-    node_tab, relationship_tab = st.tabs(["노드 상세", "관계 상세"])
+        st.warning(
+            f"서버 안전 한도에 따라 최대 {result_limit}개 경로만 "
+            "조회했습니다. 검색어·필터·N-hop을 좁혀 탐색하세요."
+        )
+    node_tab, relationship_tab, history_tab = st.tabs(
+        ["노드 목록", "관계 목록", "확장 이력"]
+    )
     with node_tab:
         st.dataframe(
-            pd.DataFrame(flatten_rows_for_table(evidence["nodes"])),
+            pd.DataFrame(flatten_rows_for_table(filtered["nodes"])),
             width="stretch",
             hide_index=True,
         )
     with relationship_tab:
-        if evidence["relationships"]:
+        if filtered["relationships"]:
             st.dataframe(
                 pd.DataFrame(
-                    flatten_rows_for_table(evidence["relationships"])
+                    flatten_rows_for_table(filtered["relationships"])
                 ),
                 width="stretch",
                 hide_index=True,
             )
         else:
             st.info("선택한 깊이에서 연결 관계를 찾지 못했습니다.")
+    with history_tab:
+        st.dataframe(
+            pd.DataFrame(
+                st.session_state.get(
+                    "explorer_expansion_history", []
+                )
+            ),
+            width="stretch",
+            hide_index=True,
+        )
 
 
 def render_startup_failure(error: Exception) -> None:

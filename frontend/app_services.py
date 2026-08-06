@@ -1,15 +1,77 @@
 """Streamlit service composition through the shared FastAPI boundary."""
 
 import os
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from backend.app.services.bootstrap import ServiceBundle, build_service_bundle
+from backend.app.schema_registry import SchemaRegistry
+from backend.app.services.graph_service import node_search_contract
 from frontend.api_client import (
     ApiRequestError,
     ApiServiceBundle,
     FactoryGraphApiClient,
 )
+
+
+@dataclass
+class _DirectProjectGraph:
+    """Bind direct Neo4j reads to the same project contract as the API."""
+
+    graph: Any
+    project_id: str
+    contract: dict[str, Any]
+
+    def _node_contract(self, label: str) -> dict[str, Any]:
+        try:
+            return next(
+                node
+                for node in self.contract["nodes"]
+                if node["label"] == label
+            )
+        except StopIteration as error:
+            raise ValueError(
+                f"지원하지 않는 노드 라벨입니다: {label}"
+            ) from error
+
+    def search_nodes(
+        self, label: str, query: str, limit: int
+    ) -> dict[str, Any]:
+        identity, search_properties = node_search_contract(
+            self.contract, label
+        )
+        if self.project_id == "cip-dmd":
+            return self.graph.search_nodes(label, query, limit)
+        return self.graph.search_nodes(
+            label,
+            query,
+            limit,
+            project_id=self.project_id,
+            identity_property=identity,
+            search_properties=search_properties,
+        )
+
+    def subgraph(
+        self,
+        label: str,
+        identity: str,
+        depth: int,
+        limit: int,
+    ) -> dict[str, Any]:
+        node = self._node_contract(label)
+        if self.project_id == "cip-dmd":
+            return self.graph.subgraph(
+                label, identity, depth, limit
+            )
+        return self.graph.subgraph(
+            label,
+            identity,
+            depth,
+            limit,
+            project_id=self.project_id,
+            identity_property=str(node["identity"]),
+        )
 
 
 def build_streamlit_service_bundle(
@@ -59,6 +121,15 @@ def build_streamlit_service_bundle(
         project_id=project_id,
         schema_context=schema_context,
     )
+    if bundle.graph is not None:
+        contract = SchemaRegistry(
+            project_root / "schemas"
+        ).contract(project_id)
+        bundle.graph = _DirectProjectGraph(
+            graph=bundle.graph,
+            project_id=project_id,
+            contract=contract,
+        )
     setattr(bundle, "transport", "direct")
     return bundle
 

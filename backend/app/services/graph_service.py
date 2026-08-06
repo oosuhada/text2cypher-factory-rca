@@ -66,6 +66,49 @@ def schema_contract() -> dict[str, Any]:
     }
 
 
+def node_search_contract(
+    contract: dict[str, Any],
+    label: str,
+) -> tuple[str, tuple[str, ...]]:
+    """Resolve identity and inherited searchable properties for a label."""
+
+    node_by_label = {
+        str(node["label"]): node for node in contract.get("nodes", [])
+    }
+    if label not in node_by_label:
+        raise ValueError(f"지원하지 않는 노드 라벨입니다: {label}")
+    node = node_by_label[label]
+    identity = str(node["identity"])
+    chain: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    current: dict[str, Any] | None = node
+    while current is not None:
+        current_label = str(current["label"])
+        if current_label in seen:
+            raise ValueError(
+                f"노드 상속 순환이 발생했습니다: {label}"
+            )
+        seen.add(current_label)
+        chain.append(current)
+        parent = current.get("extends")
+        current = node_by_label.get(str(parent)) if parent else None
+    properties = list(
+        dict.fromkeys(
+            [
+                identity,
+                *(
+                    property_name
+                    for inherited in reversed(chain)
+                    for property_name in (
+                        inherited.get("properties") or {}
+                    )
+                ),
+            ]
+        )
+    )
+    return identity, tuple(properties)
+
+
 def _node_payload(node: Node) -> dict[str, Any]:
     return {
         "id": node.element_id,
@@ -211,8 +254,11 @@ class GraphCatalogService:
             " AND root.project_id = $project_id" if project_id else ""
         )
         path_scope = (
-            " WHERE path IS NULL OR all(node IN nodes(path) "
-            "WHERE node.project_id = $project_id)"
+            " WHERE path IS NULL OR ("
+            "all(node IN nodes(path) "
+            "WHERE node.project_id = $project_id) AND "
+            "all(relationship IN relationships(path) "
+            "WHERE relationship.project_id = $project_id))"
             if project_id
             else ""
         )
