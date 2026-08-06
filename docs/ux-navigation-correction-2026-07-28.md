@@ -29,8 +29,9 @@ Query·Graph 중심 화면만 구현되고 Project Registry의 홈 진입점이
   `navigation_widget_revision`을 올려 브라우저의 오래된 radio 값을
   재사용하지 않는다.
 - 모든 하위 Streamlit 화면 오른쪽에 `← 운영 홈으로` 버튼을 제공한다.
-- Streamlit 사이드바를 다음 순서로 고정한다.
-  `대화 → 역할 미리보기 → 프로젝트 → 언어 → 실행 설정 → 작업공간 이동`
+- Streamlit 사이드바를 업무 맥락 기준으로 재정렬한다.
+  `프로젝트 → 작업공간 이동 → 대화 → 실행 설정 → 역할 미리보기
+  → 언어 → 안전 설정`
 - React Home에 최근 프로젝트 카드와 `모든 프로젝트 보기`,
   `새 프로젝트 만들기` CTA를 추가한다.
 - React `/projects`에 전체 Registry, 프로젝트 전환, 새 프로젝트 생성

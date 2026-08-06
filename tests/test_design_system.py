@@ -24,12 +24,13 @@ class DesignSystemContractTest(unittest.TestCase):
         self.assertEqual(
             SIDEBAR_SECTION_ORDER,
             (
-                "대화",
-                "역할 미리보기",
                 "프로젝트",
-                "언어 / Language",
-                "실행 설정",
                 "작업공간 이동",
+                "대화",
+                "실행 설정",
+                "역할 미리보기",
+                "언어 / Language",
+                "안전 설정",
             ),
         )
 

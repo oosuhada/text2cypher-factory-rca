@@ -76,6 +76,7 @@ class DeploymentContractTest(unittest.TestCase):
             PROJECT_ROOT / "web" / "app" / "projects" / "page.tsx"
         ).read_text(encoding="utf-8")
         self.assertIn("<ProjectOverview />", home)
+        self.assertIn("Gold Question 15/15", home)
         self.assertIn("최근 프로젝트", overview)
         self.assertIn('href="/projects"', overview)
         self.assertIn('href="/projects#new-project"', overview)
@@ -91,6 +92,7 @@ class DeploymentContractTest(unittest.TestCase):
         self.assertIn("render_workspace_link(", source)
         self.assertIn('st.query_params.get("workspace")', source)
         self.assertIn("navigation_widget_revision", source)
+        self.assertIn("Gold Question 15/15", source)
 
 
 if __name__ == "__main__":

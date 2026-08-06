@@ -964,7 +964,7 @@ def render_streamlit_landing() -> None:
               근거와 전문가 판정을 남깁니다.
             </p>
             <div class="p3-landing-proof">
-              <span>Gold 15/15</span>
+              <span>Gold Question 15/15</span>
               <span>READ-only 100%</span>
               <span>Blind 26</span>
               <span>Expert HITL</span>
@@ -4034,36 +4034,12 @@ def _render_sidebar_conversations(project_id: str) -> None:
         st.rerun()
 
 
-def render_sidebar() -> tuple[str, str, str, str]:
-    registry = ProjectRegistry(
-        PROJECT_ROOT / "data" / "processed" / "projects.sqlite3"
-    )
-    registry.ensure_default()
-    project_rows = registry.list()
+def _render_sidebar_project(
+    project_rows: list[dict[str, Any]],
+    active_project_id: str,
+    role: Role,
+) -> str:
     project_ids = [row["project_id"] for row in project_rows]
-    active_project_id = st.session_state.get(
-        "active_project_id", registry.active_project_id() or "cip-dmd"
-    )
-    if active_project_id not in project_ids:
-        active_project_id = project_ids[0]
-
-    st.sidebar.markdown("### Workspace")
-    _render_sidebar_conversations(active_project_id)
-    st.sidebar.divider()
-
-    role_value = st.sidebar.selectbox(
-        "역할 미리보기",
-        options=tuple(role.value for role in Role),
-        key="preview_role",
-        help=(
-            "2-1 UI 권한 설계를 검증하는 프로토타입입니다. "
-            "실제 사용자 인증·SSO는 Admin 단계에서 연결합니다."
-        ),
-    )
-    role = Role(role_value)
-    st.session_state["active_role"] = role.value
-    st.sidebar.divider()
-
     st.sidebar.markdown("### 프로젝트")
     selected_project_id = st.sidebar.selectbox(
         "활성 워크스페이스",
@@ -4084,23 +4060,10 @@ def render_sidebar() -> tuple[str, str, str, str]:
         ):
             navigate_to_page("Projects")
             st.rerun()
-    st.sidebar.divider()
+    return selected_project_id
 
-    locale_label = st.sidebar.segmented_control(
-        "언어 / Language",
-        options=("한국어", "English"),
-        default=(
-            "English"
-            if st.session_state.get("locale") == "en"
-            else "한국어"
-        ),
-        key="locale-control",
-    )
-    st.session_state["locale"] = (
-        "en" if locale_label == "English" else "ko"
-    )
-    st.sidebar.divider()
 
+def _render_sidebar_execution(role: Role) -> tuple[str, str]:
     st.sidebar.markdown("### 실행 설정")
     if role in {Role.DATA_STEWARD, Role.ADMIN}:
         provider = st.sidebar.selectbox(
@@ -4110,7 +4073,7 @@ def render_sidebar() -> tuple[str, str, str, str]:
                 {
                     "auto": "자동 · OpenAI 없으면 Gemini",
                     "gemini": "Vertex Gemini · 자유 질문",
-                    "gold": "Gold 데모 · 회귀검증 전용",
+                    "gold": "Gold Question 데모 · 정답셋 전용",
                     "openai": "OpenAI · 자유 질문",
                 }[value]
             ),
@@ -4131,7 +4094,8 @@ def render_sidebar() -> tuple[str, str, str, str]:
         )
         if provider == "gold":
             st.sidebar.info(
-                "추천 질문과 Gold 15개만 정확히 실행하는 회귀검증 모드입니다."
+                "추천 질문과 Gold Question 정답셋 15개만 정확히 "
+                "실행하는 회귀검증 모드입니다."
             )
         elif provider == "gemini":
             st.sidebar.info(
@@ -4153,15 +4117,10 @@ def render_sidebar() -> tuple[str, str, str, str]:
         st.sidebar.caption(
             "모델과 provider는 Data Steward 또는 Admin이 관리합니다."
         )
+    return provider, model_name
 
-    st.sidebar.divider()
-    st.sidebar.markdown("### 안전 설정")
-    st.sidebar.success("Neo4j reader mode")
-    st.sidebar.caption(
-        "쓰기 의도 차단 · Cypher 검사 · EXPLAIN · DB read-only"
-    )
 
-    st.sidebar.divider()
+def _render_sidebar_navigation(role: Role) -> str:
     st.sidebar.markdown("### 작업공간 이동")
     allowed_items = navigation_for_role(role)
     allowed_pages = tuple(item.label for item in allowed_items)
@@ -4209,6 +4168,73 @@ def render_sidebar() -> tuple[str, str, str, str]:
         st.query_params["workspace"] = workspace_key
     st.sidebar.caption(
         f"{role.value} 권한 · {len(allowed_pages)}개 작업공간"
+    )
+    return page
+
+
+def render_sidebar() -> tuple[str, str, str, str]:
+    registry = ProjectRegistry(
+        PROJECT_ROOT / "data" / "processed" / "projects.sqlite3"
+    )
+    registry.ensure_default()
+    project_rows = registry.list()
+    project_ids = [row["project_id"] for row in project_rows]
+    active_project_id = st.session_state.get(
+        "active_project_id", registry.active_project_id() or "cip-dmd"
+    )
+    if active_project_id not in project_ids:
+        active_project_id = project_ids[0]
+    role = Role(st.session_state.get("preview_role", Role.ADMIN.value))
+
+    st.sidebar.markdown("### Workspace")
+    selected_project_id = _render_sidebar_project(
+        project_rows,
+        active_project_id,
+        role,
+    )
+    st.sidebar.divider()
+
+    page = _render_sidebar_navigation(role)
+    st.sidebar.divider()
+
+    _render_sidebar_conversations(selected_project_id)
+    st.sidebar.divider()
+
+    provider, model_name = _render_sidebar_execution(role)
+    st.sidebar.divider()
+
+    role_value = st.sidebar.selectbox(
+        "역할 미리보기",
+        options=tuple(candidate.value for candidate in Role),
+        key="preview_role",
+        help=(
+            "2-1 UI 권한 설계를 검증하는 프로토타입입니다. "
+            "실제 사용자 인증·SSO는 Admin 단계에서 연결합니다."
+        ),
+    )
+    role = Role(role_value)
+    st.session_state["active_role"] = role.value
+    st.sidebar.divider()
+
+    locale_label = st.sidebar.segmented_control(
+        "언어 / Language",
+        options=("한국어", "English"),
+        default=(
+            "English"
+            if st.session_state.get("locale") == "en"
+            else "한국어"
+        ),
+        key="locale-control",
+    )
+    st.session_state["locale"] = (
+        "en" if locale_label == "English" else "ko"
+    )
+    st.sidebar.divider()
+
+    st.sidebar.markdown("### 안전 설정")
+    st.sidebar.success("Neo4j reader mode")
+    st.sidebar.caption(
+        "쓰기 의도 차단 · Cypher 검사 · EXPLAIN · DB read-only"
     )
     return page, provider, model_name, selected_project_id
 

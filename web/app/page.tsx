@@ -77,7 +77,7 @@ export default function HomePage() {
             </div>
             <div className="hero-proof">
               <span>
-                <CheckCircle2 size={15} /> Gold 15/15
+                <CheckCircle2 size={15} /> Gold Question 15/15
               </span>
               <span>
                 <CheckCircle2 size={15} /> READ-only 100%
