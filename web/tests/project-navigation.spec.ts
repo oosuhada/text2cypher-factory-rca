@@ -358,6 +358,31 @@ test("demo question previews before one guarded submission", async ({
   await expect.poll(() => api.queryRequests.length).toBe(1);
 });
 
+test("query result connects answer, evidence and expert review safely", async ({
+  page,
+}) => {
+  await mockProjectApi(page);
+  await page.goto("/query?project_id=cip-dmd");
+
+  await page.getByLabel("제조 관계 질문").fill(
+    "완제품 300002의 구성품을 보여줘.",
+  );
+  await page.getByRole("button", { name: "질문 전송" }).click();
+
+  await expect(page.getByText("자동화된 질의 결과입니다.")).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "같은 조회의 근거 확인" }),
+  ).toHaveAttribute("href", "#query-evidence");
+  await expect(
+    page.getByRole("tab", { name: "결과", exact: true }),
+  ).toHaveAttribute("aria-selected", "true");
+  const expertReview = page.locator("details.expert-review");
+  await expect(expertReview).not.toHaveAttribute("open", "");
+  await expect(
+    expertReview.getByText("전문가 전용", { exact: false }),
+  ).toBeVisible();
+});
+
 test("mobile header uses a drawer without horizontal overflow", async ({
   page,
 }) => {
