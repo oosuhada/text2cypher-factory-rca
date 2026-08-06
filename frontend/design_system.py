@@ -148,7 +148,7 @@ NAVIGATION_ITEMS: Final[tuple[NavigationItem, ...]] = (
         "Governance",
         "Gold·Blind 실행, 비교와 실패 유형 분석",
         GOVERNANCE_ROLES,
-        "foundation",
+        "available",
         "2-6",
     ),
     NavigationItem(

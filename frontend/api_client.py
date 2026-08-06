@@ -215,12 +215,26 @@ class FactoryGraphApiClient:
         )
 
     def metrics(
-        self, project_id: str | None = None
+        self,
+        project_id: str | None = None,
+        *,
+        providers: list[str] | None = None,
+        statuses: list[str] | None = None,
+        days: int | None = None,
     ) -> dict[str, Any]:
+        params: dict[str, Any] = {}
+        if project_id:
+            params["project_id"] = project_id
+        if providers:
+            params["provider"] = providers
+        if statuses:
+            params["query_status"] = statuses
+        if days:
+            params["days"] = days
         return self._request(
             "GET",
             "/api/v1/metrics",
-            params={"project_id": project_id} if project_id else None,
+            params=params or None,
         )
 
     def search_nodes(
@@ -291,8 +305,16 @@ class _ApiDashboard:
     api: FactoryGraphApiClient
     project_id: str
 
-    def snapshot(self) -> dict[str, Any]:
-        return self.api.metrics(self.project_id)
+    def snapshot(
+        self, runtime_filters: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        runtime_filters = runtime_filters or {}
+        return self.api.metrics(
+            self.project_id,
+            providers=runtime_filters.get("providers"),
+            statuses=runtime_filters.get("statuses"),
+            days=runtime_filters.get("days"),
+        )
 
 
 @dataclass

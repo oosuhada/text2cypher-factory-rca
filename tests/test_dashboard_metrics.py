@@ -4,6 +4,7 @@ from tempfile import TemporaryDirectory
 import unittest
 
 from backend.app.services.dashboard_service import (
+    filter_runtime_events,
     load_query_audit,
     summarize_runtime,
 )
@@ -79,6 +80,62 @@ class DashboardMetricsTest(unittest.TestCase):
             events = load_query_audit(path, limit=2)
 
         self.assertEqual(events, [{"status": "empty"}])
+
+    def test_runtime_filters_share_provider_status_project_and_time_scope(self):
+        events = [
+            {
+                "timestamp": "2026-07-27T00:00:00+00:00",
+                "project_id": "cip-dmd",
+                "provider": "gemini",
+                "status": "success",
+            },
+            {
+                "timestamp": "2025-01-01T00:00:00+00:00",
+                "project_id": "cip-dmd",
+                "provider": "gemini",
+                "status": "success",
+            },
+            {
+                "timestamp": "2026-07-27T00:00:00+00:00",
+                "project_id": "other",
+                "provider": "gemini",
+                "status": "success",
+            },
+        ]
+        filtered = filter_runtime_events(
+            events,
+            providers=["gemini"],
+            statuses=["success"],
+            days=30,
+            project_id="cip-dmd",
+        )
+        self.assertEqual(filtered, [events[0]])
+
+    def test_runtime_summary_reports_latency_provider_and_errors(self):
+        summary = summarize_runtime(
+            [
+                {
+                    "status": "success",
+                    "provider": "gemini",
+                    "elapsed_ms": 10,
+                    "error_count": 0,
+                },
+                {
+                    "status": "failed",
+                    "provider": "gemini",
+                    "elapsed_ms": 90,
+                    "error_count": 2,
+                },
+            ]
+        )
+        self.assertEqual(summary["median_elapsed_ms"], 50)
+        self.assertEqual(summary["p95_elapsed_ms"], 90)
+        self.assertEqual(
+            summary["provider_counts"],
+            [{"provider": "gemini", "count": 2}],
+        )
+        self.assertEqual(summary["error_count"], 2)
+        self.assertEqual(summary["error_rate"], 1)
 
 
 if __name__ == "__main__":

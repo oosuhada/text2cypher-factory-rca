@@ -7,7 +7,11 @@ from typing import Any
 
 from neo4j import Driver, READ_ACCESS
 
-from .dashboard_service import load_query_audit, summarize_runtime
+from .dashboard_service import (
+    filter_runtime_events,
+    load_query_audit,
+    summarize_runtime,
+)
 
 
 class ProjectDashboardService:
@@ -38,7 +42,9 @@ class ProjectDashboardService:
                 )
             ]
 
-    def snapshot(self) -> dict[str, Any]:
+    def snapshot(
+        self, runtime_filters: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         totals = self._query(
             """
             MATCH (node {project_id: $project_id})
@@ -65,6 +71,15 @@ class ProjectDashboardService:
             ORDER BY count DESC, relationship_type
             """
         )
+        all_events = load_query_audit(self.audit_log_path)
+        runtime_filters = runtime_filters or {}
+        scoped_events = filter_runtime_events(
+            all_events,
+            providers=runtime_filters.get("providers"),
+            statuses=runtime_filters.get("statuses"),
+            days=runtime_filters.get("days"),
+            project_id=self.project_id,
+        )
         return {
             "project_id": self.project_id,
             "totals": totals,
@@ -83,7 +98,19 @@ class ProjectDashboardService:
             "blind_evaluation": None,
             "status_evaluation": None,
             "etl": None,
-            "runtime": summarize_runtime(
-                load_query_audit(self.audit_log_path)
-            ),
+            "runtime": summarize_runtime(scoped_events),
+            "runtime_scope": {
+                "providers": runtime_filters.get("providers") or [],
+                "statuses": runtime_filters.get("statuses") or [],
+                "days": runtime_filters.get("days"),
+                "source_event_count": len(all_events),
+                "filtered_event_count": len(scoped_events),
+            },
+            "provenance": {
+                "graph_project_id": self.project_id,
+                "metrics_file": None,
+                "metrics_sha256": None,
+                "audit_file": self.audit_log_path.name,
+                "audit_event_count": len(all_events),
+            },
         }
