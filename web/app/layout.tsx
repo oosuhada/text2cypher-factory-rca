@@ -55,7 +55,11 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ko" suppressHydrationWarning>
+    <html
+      lang="ko"
+      suppressHydrationWarning
+      data-scroll-behavior="smooth"
+    >
       <body className={`${geist.variable} ${geistMono.variable}`}>
         <ProjectProvider>
           <SiteHeader />

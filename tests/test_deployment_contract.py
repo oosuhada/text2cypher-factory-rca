@@ -93,6 +93,14 @@ class DeploymentContractTest(unittest.TestCase):
         self.assertIn("새 프로젝트 만들기", workspace)
         self.assertNotIn('href="/query"', overview)
         self.assertNotIn('href="/query"', workspace)
+        self.assertIn(
+            'openProject(project.project_id, "recommended")',
+            overview,
+        )
+        self.assertIn(
+            'openProject(project.project_id, "recommended")',
+            workspace,
+        )
         self.assertIn('openProject(project.project_id, "query")', overview)
         self.assertIn('openProject(project.project_id, "query")', workspace)
         self.assertIn("await switchProject(projectId)", navigation)
