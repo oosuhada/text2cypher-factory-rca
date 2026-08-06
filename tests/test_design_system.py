@@ -6,6 +6,7 @@ from frontend.design_system import (
     NAVIGATION_ITEMS,
     PAGE_BY_LABEL,
     REACT_STREAMLIT_BOUNDARY,
+    SIDEBAR_SECTION_ORDER,
     WIREFLOWS,
     Role,
     ViewState,
@@ -19,6 +20,19 @@ from frontend.design_system import (
 
 
 class DesignSystemContractTest(unittest.TestCase):
+    def test_sidebar_sections_follow_the_operator_workflow(self):
+        self.assertEqual(
+            SIDEBAR_SECTION_ORDER,
+            (
+                "대화",
+                "역할 미리보기",
+                "프로젝트",
+                "언어 / Language",
+                "실행 설정",
+                "작업공간 이동",
+            ),
+        )
+
     def test_information_architecture_has_all_required_workspaces(self):
         self.assertEqual(
             [item.label for item in NAVIGATION_ITEMS],

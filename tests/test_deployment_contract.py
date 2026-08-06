@@ -62,6 +62,36 @@ class DeploymentContractTest(unittest.TestCase):
                 _neo4j_endpoint(), ("graph-db.internal", 7777)
             )
 
+    def test_react_home_exposes_complete_project_workspace_journey(self):
+        home = (PROJECT_ROOT / "web" / "app" / "page.tsx").read_text(
+            encoding="utf-8"
+        )
+        overview = (
+            PROJECT_ROOT / "web" / "components" / "project-overview.tsx"
+        ).read_text(encoding="utf-8")
+        workspace = (
+            PROJECT_ROOT / "web" / "components" / "project-workspace.tsx"
+        ).read_text(encoding="utf-8")
+        route = (
+            PROJECT_ROOT / "web" / "app" / "projects" / "page.tsx"
+        ).read_text(encoding="utf-8")
+        self.assertIn("<ProjectOverview />", home)
+        self.assertIn("최근 프로젝트", overview)
+        self.assertIn('href="/projects"', overview)
+        self.assertIn('href="/projects#new-project"', overview)
+        self.assertIn("모든 프로젝트", workspace)
+        self.assertIn("새 프로젝트 만들기", workspace)
+        self.assertIn("<ProjectWorkspace />", route)
+
+    def test_streamlit_uses_url_backed_project_navigation(self):
+        source = (
+            PROJECT_ROOT / "frontend" / "streamlit_app.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn('return f"/?workspace=', source)
+        self.assertIn("render_workspace_link(", source)
+        self.assertIn('st.query_params.get("workspace")', source)
+        self.assertIn("navigation_widget_revision", source)
+
 
 if __name__ == "__main__":
     unittest.main()

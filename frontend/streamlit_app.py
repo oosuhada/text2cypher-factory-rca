@@ -37,6 +37,7 @@ from frontend.data_preflight import inspect_uploaded_source
 from frontend.design_system import (
     Action,
     NAVIGATION_ITEMS,
+    PAGE_BY_KEY,
     PAGE_BY_LABEL,
     Role,
     ViewState,
@@ -362,6 +363,7 @@ def initialize_session() -> None:
     st.session_state.setdefault("explorer_expansion_history", [])
     st.session_state.setdefault("explorer_filters", {})
     st.session_state.setdefault("explorer_widget_revision", 0)
+    st.session_state.setdefault("navigation_widget_revision", 0)
     st.session_state.setdefault("expert_reviews", {})
     st.session_state.setdefault("intake_record", None)
     st.session_state.setdefault("intake_approval_token", None)
@@ -391,7 +393,30 @@ def initialize_session() -> None:
 def navigate_to_page(page: str) -> None:
     if page not in NAVIGATION_PAGES:
         return
-    st.session_state["active_page"] = page
+    # The navigation radio already exists by the time most page buttons run.
+    # Queueing the target avoids mutating an instantiated widget key and lets
+    # render_sidebar apply the transition before the next radio is created.
+    st.session_state["pending_page"] = page
+
+
+def workspace_url(page: str) -> str:
+    return f"/?workspace={PAGE_BY_LABEL[page].key}"
+
+
+def render_workspace_link(
+    label: str,
+    page: str,
+    *,
+    stretch: bool = False,
+) -> None:
+    width_class = " p3-workspace-link--stretch" if stretch else ""
+    st.markdown(
+        (
+            f'<a class="p3-workspace-link{width_class}" '
+            f'href="{workspace_url(page)}" target="_self">{label}</a>'
+        ),
+        unsafe_allow_html=True,
+    )
 
 
 def render_page_header(page: str) -> None:
@@ -405,18 +430,27 @@ def render_page_header(page: str) -> None:
             f"{ui_text('preparing', locale)}"
         )
     )
-    st.markdown(
-        f"""
-        <section class="p3-page-head" id="p3-main-content">
-          <div>
-            <h1>{item.icon} {item.label}</h1>
-            <p>{page_description(page, locale)}</p>
-          </div>
-          <span class="p3-stage-badge">{badge}</span>
-        </section>
-        """,
-        unsafe_allow_html=True,
-    )
+    heading_column, home_column = st.columns([5, 1])
+    with heading_column:
+        st.markdown(
+            f"""
+            <section class="p3-page-head" id="p3-main-content">
+              <div>
+                <h1>{item.icon} {item.label}</h1>
+                <p>{page_description(page, locale)}</p>
+                <span class="p3-stage-badge">{badge}</span>
+              </div>
+            </section>
+            """,
+            unsafe_allow_html=True,
+        )
+    with home_column:
+        st.caption("현재 작업공간")
+        render_workspace_link(
+            "← 운영 홈으로",
+            "Home",
+            stretch=True,
+        )
 
 
 def render_view_state(
@@ -1101,13 +1135,10 @@ def render_home_project_overview() -> None:
                 navigate_to_page("Projects")
                 st.rerun()
 
-    if st.button(
+    render_workspace_link(
         "모든 프로젝트 보기 →",
-        key="home-all-projects",
-        on_click=navigate_to_page,
-        args=("Projects",),
-    ):
-        st.rerun()
+        "Projects",
+    )
 
 
 def render_projects_workspace() -> None:
@@ -3940,8 +3971,121 @@ def _switch_project(project_id: str) -> None:
     st.toast(f"{project_id} 워크스페이스로 전환했습니다.", icon="✅")
 
 
+def _render_sidebar_conversations(project_id: str) -> None:
+    st.sidebar.markdown("### 대화")
+    if st.sidebar.button(
+        "＋ 새 대화",
+        type="primary",
+        width="stretch",
+        key="sidebar-new-conversation",
+    ):
+        start_new_conversation()
+        navigate_to_page("Query Studio")
+        st.rerun()
+    conversations = st.session_state["conversations"]
+    if not conversations:
+        st.sidebar.caption("질문을 실행하면 최근 대화가 여기에 표시됩니다.")
+        return
+
+    st.sidebar.caption("프로젝트에 저장된 최근 대화 · 최대 12개")
+    history_search = st.sidebar.text_input(
+        "대화 검색",
+        placeholder="질문 제목 또는 내용",
+        key=f"conversation-search-{project_id}",
+    )
+    visible_conversations = (
+        get_conversation_store().list(
+            project_id,
+            search=history_search,
+            limit=12,
+        )
+        if history_search.strip()
+        else conversations
+    )
+    for conversation in visible_conversations[:6]:
+        is_active = (
+            conversation["id"]
+            == st.session_state["active_conversation_id"]
+        )
+        label = (
+            f"● {conversation['title']}"
+            if is_active
+            else conversation["title"]
+        )
+        if st.sidebar.button(
+            label,
+            key=f"conversation-{conversation['id']}",
+            width="stretch",
+            disabled=is_active,
+        ):
+            open_conversation(conversation["id"])
+            navigate_to_page("Query Studio")
+            st.rerun()
+    if st.sidebar.button(
+        "프로젝트 대화 모두 지우기",
+        key="clear-all-conversations",
+        width="stretch",
+    ):
+        get_conversation_store().delete_project(project_id)
+        st.session_state["conversations"] = []
+        st.session_state["active_conversation_id"] = str(uuid4())
+        st.session_state["messages"] = []
+        st.session_state["last_result"] = None
+        st.rerun()
+
+
 def render_sidebar() -> tuple[str, str, str, str]:
+    registry = ProjectRegistry(
+        PROJECT_ROOT / "data" / "processed" / "projects.sqlite3"
+    )
+    registry.ensure_default()
+    project_rows = registry.list()
+    project_ids = [row["project_id"] for row in project_rows]
+    active_project_id = st.session_state.get(
+        "active_project_id", registry.active_project_id() or "cip-dmd"
+    )
+    if active_project_id not in project_ids:
+        active_project_id = project_ids[0]
+
     st.sidebar.markdown("### Workspace")
+    _render_sidebar_conversations(active_project_id)
+    st.sidebar.divider()
+
+    role_value = st.sidebar.selectbox(
+        "역할 미리보기",
+        options=tuple(role.value for role in Role),
+        key="preview_role",
+        help=(
+            "2-1 UI 권한 설계를 검증하는 프로토타입입니다. "
+            "실제 사용자 인증·SSO는 Admin 단계에서 연결합니다."
+        ),
+    )
+    role = Role(role_value)
+    st.session_state["active_role"] = role.value
+    st.sidebar.divider()
+
+    st.sidebar.markdown("### 프로젝트")
+    selected_project_id = st.sidebar.selectbox(
+        "활성 워크스페이스",
+        project_ids,
+        index=project_ids.index(active_project_id),
+        format_func=lambda value: next(
+            row["name"] for row in project_rows if row["project_id"] == value
+        ),
+    )
+    if selected_project_id != active_project_id:
+        _switch_project(selected_project_id)
+        st.rerun()
+    if role in {Role.DATA_STEWARD, Role.ADMIN}:
+        if st.sidebar.button(
+            "＋ 프로젝트 만들기",
+            key="sidebar-create-project",
+            width="stretch",
+        ):
+            navigate_to_page("Projects")
+            st.rerun()
+    st.sidebar.divider()
+
     locale_label = st.sidebar.segmented_control(
         "언어 / Language",
         options=("한국어", "English"),
@@ -3955,142 +4099,8 @@ def render_sidebar() -> tuple[str, str, str, str]:
     st.session_state["locale"] = (
         "en" if locale_label == "English" else "ko"
     )
-    role_value = st.sidebar.selectbox(
-        "역할 미리보기",
-        options=tuple(role.value for role in Role),
-        key="preview_role",
-        help=(
-            "2-1 UI 권한 설계를 검증하는 프로토타입입니다. "
-            "실제 사용자 인증·SSO는 Admin 단계에서 연결합니다."
-        ),
-    )
-    role = Role(role_value)
-    st.session_state["active_role"] = role.value
-    allowed_items = navigation_for_role(role)
-    allowed_pages = tuple(item.label for item in allowed_items)
-    if st.session_state.get("active_page") not in allowed_pages:
-        st.session_state["active_page"] = "Home"
-    page = st.sidebar.radio(
-        "Navigation",
-        options=allowed_pages,
-        key="active_page",
-        format_func=lambda label: (
-            f"{PAGE_BY_LABEL[label].icon}  {label}"
-            + (
-                f"  · {PAGE_BY_LABEL[label].implementation_stage}"
-                if PAGE_BY_LABEL[label].delivery == "foundation"
-                else ""
-            )
-        ),
-        label_visibility="collapsed",
-    )
-    st.sidebar.caption(
-        f"{role.value} 권한 · {len(allowed_pages)}개 작업공간"
-    )
     st.sidebar.divider()
-    if page == "Home":
-        st.sidebar.markdown("### FactoryGraph RCA")
-        st.sidebar.caption(
-            "자연어 질문 → 검증된 Cypher → Neo4j 근거 → 전문가 판정"
-        )
-        st.sidebar.success("제품 랜딩")
-        return (
-            page,
-            "auto",
-            os.getenv("GOOGLE_VERTEX_MODEL", "gemini-2.5-flash"),
-            st.session_state.get("active_project_id", "cip-dmd"),
-        )
 
-    registry = ProjectRegistry(
-        PROJECT_ROOT / "data" / "processed" / "projects.sqlite3"
-    )
-    registry.ensure_default()
-    project_rows = registry.list()
-    project_ids = [row["project_id"] for row in project_rows]
-    active_project_id = st.session_state.get(
-        "active_project_id", registry.active_project_id() or "cip-dmd"
-    )
-    if active_project_id not in project_ids:
-        active_project_id = project_ids[0]
-    st.sidebar.markdown("### 프로젝트")
-    selected_project_id = st.sidebar.selectbox(
-        "활성 워크스페이스",
-        project_ids,
-        index=project_ids.index(active_project_id),
-        format_func=lambda value: next(
-            row["name"] for row in project_rows if row["project_id"] == value
-        ),
-    )
-    _switch_project(selected_project_id)
-    if role in {Role.DATA_STEWARD, Role.ADMIN}:
-        if st.sidebar.button(
-            "＋ 프로젝트 만들기",
-            key="sidebar-create-project",
-            width="stretch",
-        ):
-            navigate_to_page("Projects")
-            st.rerun()
-    st.sidebar.divider()
-    st.sidebar.markdown("### 대화")
-    if st.sidebar.button(
-        "＋ 새 대화",
-        type="primary",
-        width="stretch",
-    ):
-        start_new_conversation()
-        st.rerun()
-    conversations = st.session_state["conversations"]
-    if conversations:
-        st.sidebar.caption(
-            "프로젝트에 저장된 최근 대화 · 최대 12개"
-        )
-        history_search = st.sidebar.text_input(
-            "대화 검색",
-            placeholder="질문 제목 또는 내용",
-            key=f"conversation-search-{selected_project_id}",
-        )
-        visible_conversations = (
-            get_conversation_store().list(
-                selected_project_id,
-                search=history_search,
-                limit=12,
-            )
-            if history_search.strip()
-            else conversations
-        )
-        for conversation in visible_conversations[:6]:
-            is_active = (
-                conversation["id"]
-                == st.session_state["active_conversation_id"]
-            )
-            label = (
-                f"● {conversation['title']}"
-                if is_active
-                else conversation["title"]
-            )
-            if st.sidebar.button(
-                label,
-                key=f"conversation-{conversation['id']}",
-                width="stretch",
-                disabled=is_active,
-            ):
-                open_conversation(conversation["id"])
-                st.rerun()
-        if st.sidebar.button(
-            "프로젝트 대화 모두 지우기",
-            key="clear-all-conversations",
-            width="stretch",
-        ):
-            get_conversation_store().delete_project(selected_project_id)
-            st.session_state["conversations"] = []
-            st.session_state["active_conversation_id"] = str(uuid4())
-            st.session_state["messages"] = []
-            st.session_state["last_result"] = None
-            st.rerun()
-    else:
-        st.sidebar.caption("질문을 실행하면 최근 대화가 여기에 표시됩니다.")
-
-    st.sidebar.divider()
     st.sidebar.markdown("### 실행 설정")
     if role in {Role.DATA_STEWARD, Role.ADMIN}:
         provider = st.sidebar.selectbox(
@@ -4149,6 +4159,56 @@ def render_sidebar() -> tuple[str, str, str, str]:
     st.sidebar.success("Neo4j reader mode")
     st.sidebar.caption(
         "쓰기 의도 차단 · Cypher 검사 · EXPLAIN · DB read-only"
+    )
+
+    st.sidebar.divider()
+    st.sidebar.markdown("### 작업공간 이동")
+    allowed_items = navigation_for_role(role)
+    allowed_pages = tuple(item.label for item in allowed_items)
+    requested_workspace = st.query_params.get("workspace")
+    if (
+        requested_workspace in PAGE_BY_KEY
+        and requested_workspace
+        != st.session_state.get("consumed_workspace_query")
+    ):
+        requested_page = PAGE_BY_KEY[requested_workspace].label
+        if requested_page in allowed_pages:
+            st.session_state["pending_page"] = requested_page
+        st.session_state["consumed_workspace_query"] = requested_workspace
+    pending_page = st.session_state.pop("pending_page", None)
+    if pending_page in allowed_pages:
+        st.session_state["active_page"] = pending_page
+        # A programmatic transition must not be overwritten by the browser's
+        # persisted value for the already-mounted radio widget.
+        st.session_state["navigation_widget_revision"] += 1
+    if st.session_state.get("active_page") not in allowed_pages:
+        st.session_state["active_page"] = "Home"
+    current_page = st.session_state["active_page"]
+    page = st.sidebar.radio(
+        "Navigation",
+        options=allowed_pages,
+        index=allowed_pages.index(current_page),
+        key=(
+            "navigation-"
+            f"{st.session_state['navigation_widget_revision']}"
+        ),
+        format_func=lambda label: (
+            f"{PAGE_BY_LABEL[label].icon}  {label}"
+            + (
+                f"  · {PAGE_BY_LABEL[label].implementation_stage}"
+                if PAGE_BY_LABEL[label].delivery == "foundation"
+                else ""
+            )
+        ),
+        label_visibility="collapsed",
+    )
+    if page != current_page:
+        st.session_state["active_page"] = page
+        workspace_key = PAGE_BY_LABEL[page].key
+        st.session_state["consumed_workspace_query"] = workspace_key
+        st.query_params["workspace"] = workspace_key
+    st.sidebar.caption(
+        f"{role.value} 권한 · {len(allowed_pages)}개 작업공간"
     )
     return page, provider, model_name, selected_project_id
 
