@@ -33,6 +33,7 @@ from backend.app.services.diagnostics import (
     collect_demo_diagnostics,
     diagnostics_pass,
 )
+from backend.app.services.audit_service import AuditService
 from backend.app.services.project_load_service import (
     ProjectGraphLoadService,
 )
@@ -287,6 +288,7 @@ def create_app(
         mappings,
         graph_counter=direct_graph_counts,
     )
+    audit = AuditService(PROJECT_ROOT)
 
     @asynccontextmanager
     async def lifespan(application: FastAPI):
@@ -383,6 +385,43 @@ def create_app(
             "status": "ready" if diagnostics_pass(checks) else "degraded",
             "checks": checks,
         }
+
+    @application.get("/api/v1/audit/events")
+    def audit_events(
+        project_id: str | None = None,
+        event_type: str | None = None,
+        search: str = "",
+        limit: int = 300,
+    ) -> dict:
+        resolved_project_id = (
+            project_id or projects.active_project_id() or "cip-dmd"
+        )
+        try:
+            projects.require(resolved_project_id)
+            events = audit.events(
+                resolved_project_id,
+                event_type=event_type,
+                search=search,
+                limit=limit,
+            )
+            return {
+                "project_id": resolved_project_id,
+                "count": len(events),
+                "events": events,
+            }
+        except (KeyError, ValueError) as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+
+    @application.get("/api/v1/audit/runs/{run_id}")
+    def audit_run(run_id: str, project_id: str | None = None) -> dict:
+        resolved_project_id = (
+            project_id or projects.active_project_id() or "cip-dmd"
+        )
+        try:
+            projects.require(resolved_project_id)
+            return audit.run(resolved_project_id, run_id)
+        except (KeyError, ValueError) as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
 
     @application.get("/api/v1/runtime", response_model=RuntimeResponse)
     def runtime(project_id: str | None = None) -> dict[str, str]:

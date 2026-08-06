@@ -89,6 +89,36 @@ class FactoryGraphApiClient:
             params={"project_id": project_id} if project_id else None,
         )
 
+    def health(self) -> dict[str, Any]:
+        return self._request("GET", "/api/v1/health")
+
+    def audit_events(
+        self,
+        project_id: str,
+        *,
+        event_type: str | None = None,
+        search: str = "",
+        limit: int = 300,
+    ) -> dict[str, Any]:
+        params: dict[str, Any] = {
+            "project_id": project_id,
+            "limit": limit,
+        }
+        if event_type:
+            params["event_type"] = event_type
+        if search:
+            params["search"] = search
+        return self._request("GET", "/api/v1/audit/events", params=params)
+
+    def audit_run(
+        self, project_id: str, run_id: str
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            f"/api/v1/audit/runs/{run_id}",
+            params={"project_id": project_id},
+        )
+
     def query(
         self, question: str, project_id: str | None = None
     ) -> dict[str, Any]:

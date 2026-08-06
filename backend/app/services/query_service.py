@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 from threading import Lock
 from typing import Any, Callable
+from uuid import uuid4
 
 from backend.app.agent.workflow import TextToCypherAgent
 
@@ -31,6 +32,7 @@ class QueryService:
         before_usage = self.usage_reader() if self.usage_reader else {}
         result = format_agent_result(self.agent.invoke(question))
         result["provider"] = self.provider
+        result["run_id"] = str(uuid4())
         after_usage = self.usage_reader() if self.usage_reader else {}
         result["usage"] = {
             key: round(
@@ -56,9 +58,12 @@ class QueryService:
         validation = result.get("validation", {})
         trace = validation.get("trace", [])
         event = {
+            "run_id": result.get("run_id"),
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "question": result.get("question", ""),
+            "cypher": result.get("cypher", ""),
             "provider": self.provider,
+            "model_name": result.get("metadata", {}).get("model_name"),
             "project_id": result.get("metadata", {}).get("project_id"),
             "schema_version": result.get("metadata", {}).get(
                 "schema_version"

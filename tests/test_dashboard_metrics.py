@@ -46,6 +46,11 @@ class DashboardMetricsTest(unittest.TestCase):
         self.assertEqual(events[0]["elapsed_ms"], 42)
         self.assertTrue(events[0]["corrected"])
         self.assertEqual(events[0]["provider"], "gold")
+        self.assertTrue(events[0]["run_id"])
+        self.assertEqual(
+            events[0]["cypher"],
+            "MATCH (part:Part) RETURN part LIMIT 1",
+        )
 
     def test_runtime_summary_uses_only_corrected_queries_for_rate(self):
         events = [
