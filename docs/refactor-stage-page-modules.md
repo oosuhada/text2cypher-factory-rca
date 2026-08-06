@@ -8,7 +8,7 @@
 
 ## 변경 결과
 
-- `streamlit_app.py`: 4,213줄에서 119줄로 축소
+- `streamlit_app.py`: 4,213줄에서 117줄로 축소
 - 진입점의 최상위 함수: `main()` 하나만 유지
 - 페이지 설정과 공통 CSS: `frontend/app_shell.py`로 분리
 - 서비스 캐시와 프로젝트 경로: `frontend/runtime.py`로 분리
