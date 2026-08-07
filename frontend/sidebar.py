@@ -18,6 +18,12 @@ from frontend.session_state import (
     start_new_conversation,
     switch_project_state,
 )
+from frontend.ui_mode import (
+    configured_role,
+    current_ui_mode,
+    is_development,
+    runtime_provider_and_model,
+)
 
 
 def switch_project(
@@ -143,7 +149,9 @@ def _render_sidebar_project(
     return selected_project_id
 
 
-def _render_sidebar_execution(role: Role) -> tuple[str, str]:
+def _render_sidebar_execution(role: Role) -> tuple[str, str | None]:
+    if not is_development():
+        return runtime_provider_and_model()
     st.sidebar.markdown("### 실행 설정")
     if role in {Role.DATA_STEWARD, Role.ADMIN}:
         provider = st.sidebar.selectbox(
@@ -204,7 +212,7 @@ def render_sidebar(
     *,
     project_root: Path,
     clear_services: Callable[[], None],
-) -> tuple[str, str, str, str]:
+) -> tuple[str, str, str | None, str]:
     registry = ProjectRegistry(
         project_root / "data" / "processed" / "projects.sqlite3"
     )
@@ -232,7 +240,13 @@ def render_sidebar(
         st.sidebar.warning(
             "요청한 프로젝트를 찾을 수 없어 현재 프로젝트를 유지합니다."
         )
-    role = Role(st.session_state.get("preview_role", Role.ADMIN.value))
+    mode = current_ui_mode()
+    role = (
+        Role(st.session_state.get("preview_role", Role.ADMIN.value))
+        if is_development(mode)
+        else configured_role(mode)
+    )
+    st.session_state["active_role"] = role.value
 
     st.sidebar.markdown("## Factory Graph RCA")
     st.sidebar.caption(
@@ -257,19 +271,16 @@ def render_sidebar(
     st.sidebar.divider()
 
     provider, model_name = _render_sidebar_execution(role)
-    st.sidebar.divider()
-
-    role_value = st.sidebar.selectbox(
-        "역할 미리보기",
-        options=tuple(candidate.value for candidate in Role),
-        key="preview_role",
-        help=(
-            "2-1 UI 권한 설계를 검증하는 프로토타입입니다. "
-            "실제 사용자 인증·SSO는 Admin 단계에서 연결합니다."
-        ),
-    )
-    st.session_state["active_role"] = Role(role_value).value
-    st.sidebar.divider()
+    if is_development(mode):
+        st.sidebar.divider()
+        role_value = st.sidebar.selectbox(
+            "역할 미리보기",
+            options=tuple(candidate.value for candidate in Role),
+            key="preview_role",
+            help="개발 환경에서 권한별 UI 계약을 검증합니다.",
+        )
+        st.session_state["active_role"] = Role(role_value).value
+        st.sidebar.divider()
 
     locale_label = st.sidebar.segmented_control(
         "언어 / Language",

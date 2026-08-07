@@ -15,6 +15,7 @@ from frontend.design_system import (
     page_description,
     ui_text,
 )
+from frontend.ui_mode import current_ui_mode, is_development, visible_workspace_labels
 
 
 NAVIGATION_PAGES = tuple(item.label for item in NAVIGATION_ITEMS)
@@ -36,10 +37,14 @@ def apply_navigation_request(
     state: MutableMapping[str, Any],
     role: Role,
     requested_workspace: str | None,
+    *,
+    allowed_pages: tuple[str, ...] | None = None,
 ) -> tuple[str, tuple[str, ...]]:
     """Resolve URL and queued navigation before the radio widget is mounted."""
 
-    allowed_pages = tuple(item.label for item in navigation_for_role(role))
+    allowed_pages = allowed_pages or tuple(
+        item.label for item in navigation_for_role(role)
+    )
     if (
         requested_workspace in PAGE_BY_KEY
         and requested_workspace != state.get("consumed_workspace_query")
@@ -78,14 +83,9 @@ def render_workspace_link(
 def render_page_header(page: str) -> None:
     item = PAGE_BY_LABEL[page]
     locale = st.session_state.get("locale", "ko")
-    badge = (
-        ui_text("operational", locale)
-        if item.delivery == "available"
-        else (
-            f"Stage {item.implementation_stage} "
-            f"{ui_text('preparing', locale)}"
-        )
-    )
+    badge = ui_text("operational", locale)
+    if is_development() and item.delivery != "available":
+        badge = f"Development · {item.implementation_stage}"
     heading_column, home_column = st.columns([5, 1])
     with heading_column:
         st.markdown(
@@ -107,10 +107,16 @@ def render_page_header(page: str) -> None:
 
 def render_sidebar_navigation(role: Role) -> str:
     st.sidebar.markdown("### 작업공간 이동")
+    mode = current_ui_mode()
+    allowed_pages = visible_workspace_labels(
+        tuple(item.label for item in navigation_for_role(role)),
+        mode,
+    )
     current_page, allowed_pages = apply_navigation_request(
         st.session_state,
         role,
         st.query_params.get("workspace"),
+        allowed_pages=allowed_pages,
     )
     page = st.sidebar.radio(
         "Navigation",
@@ -120,14 +126,7 @@ def render_sidebar_navigation(role: Role) -> str:
             "navigation-"
             f"{st.session_state['navigation_widget_revision']}"
         ),
-        format_func=lambda label: (
-            f"{PAGE_BY_LABEL[label].icon}  {label}"
-            + (
-                f"  · {PAGE_BY_LABEL[label].implementation_stage}"
-                if PAGE_BY_LABEL[label].delivery == "foundation"
-                else ""
-            )
-        ),
+        format_func=lambda label: f"{PAGE_BY_LABEL[label].icon}  {label}",
         label_visibility="collapsed",
     )
     if page != current_page:

@@ -144,6 +144,7 @@ def run_ui_quality_gate(project_root: Path) -> dict[str, Any]:
             "navigation.py",
             "sidebar.py",
             "common_ui.py",
+            "ui_mode.py",
         )
     }
     frontend_sources.update(
@@ -179,6 +180,16 @@ def run_ui_quality_gate(project_root: Path) -> dict[str, Any]:
         raise RuntimeError("Streamlit 공식 workspace boundary가 누락됐습니다.")
     if 'st.navigation(pages, position="hidden")' not in runtime_boundary:
         raise RuntimeError("Streamlit 숨김 공식 라우터가 누락됐습니다.")
+    ui_mode_source = frontend_sources["ui_mode.py"]
+    for marker in (
+        "P3_UI_MODE",
+        "production",
+        "demo",
+        "development",
+        "DEPLOYMENT_FORBIDDEN_COPY",
+    ):
+        if marker not in ui_mode_source:
+            raise RuntimeError(f"UI mode 계약 누락: {marker}")
     runtime_source = "\n".join(frontend_sources.values())
     required_runtime_markers = (
         "pending_audit_question",

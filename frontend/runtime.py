@@ -19,7 +19,7 @@ SERVICE_BUNDLE_VERSION = "2026-07-28-shared-api-v2"
 @st.cache_resource(show_spinner=False)
 def get_services(
     provider: str,
-    model_name: str,
+    model_name: str | None,
     bundle_version: str,
     project_id: str,
 ) -> Any:
