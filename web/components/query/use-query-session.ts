@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { queryFactoryGraph, submitExpertFeedback } from "@/lib/api";
+import { createClientId, writeTextToClipboard } from "@/lib/browser-compat";
 import { readHistory, saveConversation } from "@/lib/history";
 import type {
   FeedbackDecision,
@@ -91,7 +92,7 @@ export function useQuerySession(
       setActiveTab("table");
       const now = new Date().toISOString();
       const item: StoredConversation = {
-        id: crypto.randomUUID(),
+        id: createClientId(),
         title:
           normalized.length > 38
             ? `${normalized.slice(0, 37)}…`
@@ -122,7 +123,7 @@ export function useQuerySession(
 
   async function copyCypher() {
     if (!response?.cypher) return;
-    await navigator.clipboard.writeText(response.cypher);
+    await writeTextToClipboard(response.cypher);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1200);
   }

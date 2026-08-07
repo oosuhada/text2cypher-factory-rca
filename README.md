@@ -245,6 +245,7 @@ bash scripts/run_lan.sh
 수행하므로 제품 UI가 열리기까지 몇 초 더 걸릴 수 있다.
 
 - React를 production build/start로 실행하고 FastAPI, Streamlit과 함께 `0.0.0.0`에 바인딩
+- 외부 모델 인증 실패로 데모가 중단되지 않도록 기본 API provider를 검증된 `gold` 모드로 실행
 - React가 팀원 브라우저에서도 호스트 FastAPI를 호출하도록 API 주소 설정
 - React의 Internal Console 링크를 호스트 Streamlit 주소로 설정
 - FastAPI CORS에 `http://<HOST_LAN_IP>:3000` 추가
@@ -261,6 +262,13 @@ API docs:         http://192.168.x.x:8000/docs
 
 ```bash
 P3_LAN_IP=192.168.5.57 bash scripts/run_lan.sh
+```
+
+유효한 OpenAI 또는 Vertex AI 인증으로 자유 질문 모델을 사용하려면 provider를
+명시적으로 덮어쓴다.
+
+```bash
+P3_API_PROVIDER=auto bash scripts/run_lan.sh
 ```
 
 팀원은 출력된 IP 주소를 사용해야 하며 `localhost`나 `127.0.0.1`을 사용하면

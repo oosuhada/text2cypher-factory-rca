@@ -65,6 +65,7 @@ STREAMLIT_PORT="${P3_STREAMLIT_PORT:-8501}"
 
 export P3_API_HOST="0.0.0.0"
 export P3_WEB_HOST="0.0.0.0"
+export P3_API_PROVIDER="${P3_API_PROVIDER:-gold}"
 export P3_API_PORT="$API_PORT"
 export P3_WEB_PORT="$WEB_PORT"
 export P3_CORS_ORIGINS="${P3_CORS_ORIGINS:-http://localhost:${WEB_PORT},http://127.0.0.1:${WEB_PORT},http://${LAN_IP}:${WEB_PORT}}"
