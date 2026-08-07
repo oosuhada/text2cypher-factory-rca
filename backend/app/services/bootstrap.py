@@ -65,6 +65,7 @@ class ServiceBundle:
         organization_id: str = "local",
         user_id: str = "anonymous",
         roles: tuple[str, ...] | list[str] = (),
+        routing_state: dict[str, Any] | None = None,
     ) -> dict:
         run_id = str(uuid4())
 
@@ -85,6 +86,7 @@ class ServiceBundle:
                 user_id=user_id,
                 roles=roles,
                 run_id=run_id,
+                routing_state=routing_state,
             )
 
         try:

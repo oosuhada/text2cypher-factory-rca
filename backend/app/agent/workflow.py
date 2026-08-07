@@ -522,9 +522,13 @@ class TextToCypherAgent:
         self,
         question: str,
         identity: RunIdentity,
+        routing_state: dict[str, Any] | None = None,
     ) -> CypherState:
+        sections = initial_state_sections(identity, self.metadata)
+        if routing_state is not None:
+            sections["routing"] = dict(routing_state)
         return {
-            **initial_state_sections(identity, self.metadata),
+            **sections,
             "question": question,
             "statement": "",
             "errors": [],
@@ -548,6 +552,7 @@ class TextToCypherAgent:
         organization_id: str = "local",
         user_id: str = "anonymous",
         roles: tuple[str, ...] | list[str] = (),
+        routing_state: dict[str, Any] | None = None,
     ) -> CypherState:
         started = perf_counter()
         normalized_question = question.strip()
@@ -560,7 +565,11 @@ class TextToCypherAgent:
         )
         config = checkpoint_config(identity) if self.checkpointer else None
         result = self.workflow.invoke(
-            self._base_state(normalized_question, identity),
+            self._base_state(
+                normalized_question,
+                identity,
+                routing_state=routing_state,
+            ),
             config=config,
         )
         migrated = migrate_agent_state(result)

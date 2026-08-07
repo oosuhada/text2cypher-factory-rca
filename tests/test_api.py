@@ -165,8 +165,10 @@ class FakeBundle:
         self.feedback = FakeFeedback()
         self.query = FakeRunQuery()
         self.closed = False
+        self.query_calls = []
 
     def query_with_fallback(self, question):
+        self.query_calls.append(question)
         return {
             "question": question,
             "answer": "조회 결과 1행입니다.",
@@ -406,6 +408,46 @@ class ApiContractTest(unittest.TestCase):
         self.assertEqual(resumed.status_code, 200)
         self.assertEqual(resumed.json()["status"], "success")
         self.assertEqual(resumed.json()["run_id"], "run-1")
+
+    def test_automatic_router_selects_ready_manufacturing_project(self):
+        response = self.client.post(
+            "/api/v1/query",
+            json={"question": "완제품 300002의 구성품을 보여줘."},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["project_id"], "cip-dmd")
+        self.assertEqual(response.json()["routing"]["status"], "routed")
+        self.assertEqual(len(self.bundle.query_calls), 1)
+
+    def test_ambiguous_router_never_executes_a_project_bundle(self):
+        response = self.client.post(
+            "/api/v1/query",
+            json={"question": "전체 현황을 요약해줘."},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "needs_clarification")
+        self.assertIsNone(response.json()["project_id"])
+        self.assertEqual(
+            response.json()["routing"]["status"],
+            "needs_clarification",
+        )
+        self.assertEqual(self.bundle.query_calls, [])
+
+    def test_explicit_project_bypasses_router_even_for_other_domain_terms(self):
+        response = self.client.post(
+            "/api/v1/query",
+            json={
+                "project_id": "cip-dmd",
+                "question": "정비 비용과 담당 기술자를 보여줘.",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["project_id"], "cip-dmd")
+        self.assertEqual(
+            response.json()["routing"]["status"],
+            "explicit_project",
+        )
+        self.assertEqual(len(self.bundle.query_calls), 1)
 
     def test_query_rejects_empty_input(self):
         response = self.client.post(
