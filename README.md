@@ -53,10 +53,17 @@ P4에서 차용할 LangGraph Router·Tool Registry·RAG·권고·HITL·알림·�
 Text-to-Cypher 질의까지 같은 파이프라인으로 실행할 수 있다. 설비 정비
 이력 예제가 두 번째 도메인 재적용 기준으로 포함되어 있다.
 
-- 최종 사용자 제품 UI · React: `http://localhost:3000`
-- 내부 운영 콘솔 · Streamlit: `http://localhost:8501`
-- API 개발 문서 · FastAPI/OpenAPI: `http://localhost:8000/docs`
-- DB 개발 도구 · Neo4j Browser: `http://localhost:7474`
+| 서비스 | 이 컴퓨터에서 접속 | 같은 네트워크의 팀원이 접속 |
+|---|---|---|
+| 최종 사용자 제품 UI · React | `http://localhost:3000` | `http://<HOST_LAN_IP>:3000` |
+| 내부 운영 콘솔 · Streamlit | `http://localhost:8501` | `http://<HOST_LAN_IP>:8501` |
+| API 개발 문서 · FastAPI/OpenAPI | `http://localhost:8000/docs` | `http://<HOST_LAN_IP>:8000/docs` |
+| DB 개발 도구 · Neo4j Browser | `http://localhost:7474` | 기본은 로컬 전용이며 공유를 권장하지 않음 |
+
+`<HOST_LAN_IP>`는 서버를 실행하는 컴퓨터의 사설 IPv4 주소다. 예를 들어
+호스트 IP가 `192.168.5.57`이면 제품 주소는 `http://192.168.5.57:3000`이다.
+네트워크를 바꾸면 IP도 달라질 수 있으므로 아래 `run_lan.sh`가 실행 시점의
+주소를 자동 감지해 출력한다.
 
 ## 현재 진행 상태
 
@@ -153,14 +160,17 @@ Text-to-Cypher 엔진을 사용할 수 있도록 FastAPI 경계를 추가했다.
 ./scripts/run_api.sh
 ```
 
-- OpenAPI 문서: `http://127.0.0.1:8000/docs`
-- 준비 상태: `http://127.0.0.1:8000/api/v1/health`
-- 자연어 질의: `POST http://127.0.0.1:8000/api/v1/query`
-- 전문가 판정: `POST http://127.0.0.1:8000/api/v1/feedback`
-- 전문가 판정 요약: `GET http://127.0.0.1:8000/api/v1/feedback/summary`
-- 그래프 스키마: `GET http://127.0.0.1:8000/api/v1/graph/schema`
-- 노드 검색: `GET http://127.0.0.1:8000/api/v1/graph/search`
-- 부분 그래프: `GET http://127.0.0.1:8000/api/v1/graph/subgraph`
+- OpenAPI 문서: 로컬 `http://127.0.0.1:8000/docs` · LAN `http://<HOST_LAN_IP>:8000/docs`
+- 준비 상태: 로컬 `http://127.0.0.1:8000/api/v1/health` · LAN `http://<HOST_LAN_IP>:8000/api/v1/health`
+- 자연어 질의: `POST /api/v1/query`
+- 전문가 판정: `POST /api/v1/feedback`
+- 전문가 판정 요약: `GET /api/v1/feedback/summary`
+- 그래프 스키마: `GET /api/v1/graph/schema`
+- 노드 검색: `GET /api/v1/graph/search`
+- 부분 그래프: `GET /api/v1/graph/subgraph`
+
+API 경로는 로컬에서는 `http://127.0.0.1:8000`, 같은 네트워크에서는
+`http://<HOST_LAN_IP>:8000` 뒤에 붙인다.
 
 구조 변경과 완료 조건은
 [제품 리팩터링 1~2단계 검증](./docs/refactor-stage1-2-validation.md)에
@@ -176,11 +186,13 @@ RCA 질문, 답변·결과표·관계 근거, History와 전문가 검토 흐름
 ./scripts/run_product.sh
 ```
 
-- 제품 홈: `http://127.0.0.1:3000`
-- Projects: `http://127.0.0.1:3000/projects`
-- Query Studio: `http://127.0.0.1:3000/query`
-- Evidence / Graph: `http://127.0.0.1:3000/graph`
-- History: `http://127.0.0.1:3000/history`
+| 화면 | 로컬 주소 | 같은 네트워크 주소 |
+|---|---|---|
+| 제품 홈 | `http://127.0.0.1:3000` | `http://<HOST_LAN_IP>:3000` |
+| Projects | `http://127.0.0.1:3000/projects` | `http://<HOST_LAN_IP>:3000/projects` |
+| Query Studio | `http://127.0.0.1:3000/query` | `http://<HOST_LAN_IP>:3000/query` |
+| Evidence / Graph | `http://127.0.0.1:3000/graph` | `http://<HOST_LAN_IP>:3000/graph` |
+| History | `http://127.0.0.1:3000/history` | `http://<HOST_LAN_IP>:3000/history` |
 
 Data·Schema·Operations는 최종 사용자 기본 내비게이션에서 제외한다.
 데이터 온보딩, 적재, 평가, 감사와 모델 진단은 Streamlit Internal Console이
@@ -219,6 +231,42 @@ Graph 화면은 내부 진단 기능으로만 취급하며, 배포 프로필별 
 [Streamlit 제품형 UX 이전](./docs/streamlit-product-ux-migration.md)에
 기록되어 있으며, 2.9 제품화 단계가 현재 역할 경계를 다시 정의한다.
 
+## 같은 네트워크에서 팀원과 공유
+
+서버를 실행하는 컴퓨터와 팀원 컴퓨터가 같은 Wi-Fi 또는 LAN에 연결된
+상태에서 다음 명령을 실행한다.
+
+```bash
+bash scripts/run_lan.sh
+```
+
+이 스크립트는 호스트의 LAN IP를 자동 감지하고 다음 항목을 함께 설정한다.
+
+- React, FastAPI, Streamlit을 `0.0.0.0`에 바인딩
+- React가 팀원 브라우저에서도 호스트 FastAPI를 호출하도록 API 주소 설정
+- React의 Internal Console 링크를 호스트 Streamlit 주소로 설정
+- FastAPI CORS에 `http://<HOST_LAN_IP>:3000` 추가
+
+실행 후 터미널에 아래 형식의 실제 주소가 출력된다.
+
+```text
+Product UI:       http://192.168.x.x:3000
+Internal Console: http://192.168.x.x:8501
+API docs:         http://192.168.x.x:8000/docs
+```
+
+자동 감지된 IP가 잘못된 경우 직접 지정할 수 있다.
+
+```bash
+P3_LAN_IP=192.168.5.57 bash scripts/run_lan.sh
+```
+
+팀원은 출력된 IP 주소를 사용해야 하며 `localhost`나 `127.0.0.1`을 사용하면
+각 팀원 자신의 컴퓨터를 가리킨다. macOS 방화벽에서 Python, Node.js와
+Streamlit의 수신 연결 허용이 필요할 수 있다. 공용 Wi-Fi에서는 실행하지
+말고 신뢰할 수 있는 사설 네트워크에서만 사용한다. Neo4j Browser와 Bolt
+포트는 이 스크립트에서 LAN에 노출하지 않는다.
+
 제품 리팩터링 5단계 Data Intake의 안전 경계는
 [Data Intake 검증](./docs/refactor-stage5-data-intake.md)에 정리했다.
 검색형 Graph Explorer의 계약과 안전 경계는
@@ -242,6 +290,9 @@ cp .env.example .env
 - Streamlit 내부 운영 콘솔: `http://127.0.0.1:8501`
 - FastAPI 개발 문서: `http://127.0.0.1:8000/docs`
 - Neo4j DB 개발 도구: `http://127.0.0.1:7474`
+
+Docker Compose 제품 스택은 보안을 위해 기본적으로 loopback에만 공개한다.
+팀원 공유가 목적이면 위의 `bash scripts/run_lan.sh`를 사용한다.
 
 제품 사용자 자동 Gate는 다음 명령으로 확인한다.
 
@@ -281,6 +332,8 @@ cp .env.example .env
 ./scripts/run_product.sh
 ```
 
-발표 시작 주소는 `http://localhost:3000`이다. 기본 동선은
+발표자가 같은 컴퓨터를 사용하면 시작 주소는 `http://localhost:3000`이다.
+같은 네트워크의 다른 컴퓨터에서 발표하면
+`http://<HOST_LAN_IP>:3000`을 사용한다. 기본 동선은
 `Home → Projects → Query Studio → Evidence / Graph → History`이며,
 Streamlit은 데이터·평가·운영 증적을 추가로 설명할 때만 연다.
