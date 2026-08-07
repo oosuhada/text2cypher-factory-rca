@@ -226,6 +226,9 @@ def validate_critical_ux() -> dict[str, str]:
     conversation_panel = _read(
         WEB_COMPONENTS / "query" / "query-conversation-panel.tsx"
     )
+    response_next_actions = _read(
+        WEB_COMPONENTS / "query" / "response-next-actions.tsx"
+    )
     expert_review = _read(
         WEB_COMPONENTS / "query" / "expert-review.tsx"
     )
@@ -328,8 +331,19 @@ def validate_critical_ux() -> dict[str, str]:
     )
     _require(
         conversation_panel,
-        ('className="evidence-jump"', 'href="#query-evidence"'),
-        "React answer-to-evidence navigation",
+        ("ResponseNextActions", "session.response.status === \"success\""),
+        "React status-aware answer actions",
+    )
+    _require(
+        response_next_actions,
+        (
+            'className="evidence-jump"',
+            'href="#query-evidence"',
+            "저장된 기록 보기",
+            "조건 바꿔 다시 질문",
+            "안전한 조회 질문 작성",
+        ),
+        "React answer-to-evidence and recovery navigation",
     )
     _require(
         expert_review,

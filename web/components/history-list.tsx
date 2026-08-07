@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 import { clearHistory, readHistory, removeConversation } from "@/lib/history";
 import type { StoredConversation } from "@/lib/types";
+import { QUERY_STATUS_LABEL } from "@/components/query/query-config";
 import { useProject } from "@/components/project-context";
 
 export function HistoryList() {
@@ -59,7 +60,7 @@ export function HistoryList() {
           <div className="history-meta">
             <span className={`status-${item.response.status}`}>
               <span className="status-dot" />
-              {item.response.status}
+              {QUERY_STATUS_LABEL[item.response.status]}
             </span>
             <time>
               <Clock3 size={13} />
@@ -69,13 +70,13 @@ export function HistoryList() {
           <h2>{item.title}</h2>
           <p>{item.response.answer}</p>
           <div className="history-stats">
-            <span>{item.response.row_count} rows</span>
-            <span>{item.response.evidence.node_count} nodes</span>
-            <span>{item.response.provider}</span>
+            <span>결과 {item.response.row_count}건</span>
+            <span>근거 노드 {item.response.evidence.node_count}개</span>
+            <span>검증 {item.response.validation.attempts}회</span>
           </div>
           <div className="history-actions">
             <Link
-              href={`/query?conversation=${encodeURIComponent(item.id)}`}
+              href={`/query?project_id=${encodeURIComponent(projectId)}&conversation=${encodeURIComponent(item.id)}`}
               className="secondary-button"
             >
               다시 열기 <ArrowRight size={14} />
@@ -92,8 +93,7 @@ export function HistoryList() {
         </article>
       ))}
       <p className="local-data-note">
-        현재 기록은 브라우저 로컬 저장소에만 보관됩니다. 사용자 계정과
-        서버 동기화는 다음 리팩터링 단계에서 추가합니다.
+        최근 RCA 기록은 현재 브라우저에 프로젝트별로 저장됩니다.
       </p>
     </div>
   );

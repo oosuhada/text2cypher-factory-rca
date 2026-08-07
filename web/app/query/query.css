@@ -490,6 +490,43 @@
   font-weight: 700;
 }
 
+.answer-next-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.answer-next-actions .evidence-jump,
+.answer-next-actions .secondary-button {
+  margin-top: 0;
+}
+
+.response-guidance {
+  margin-top: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 13px;
+  background: var(--surface-muted);
+}
+
+.response-guidance strong {
+  display: block;
+  font-size: 0.72rem;
+}
+
+.response-guidance p {
+  margin: 7px 0 11px;
+  color: var(--text-soft);
+  font-size: 0.64rem;
+  line-height: 1.55;
+}
+
+.response-guidance .evidence-jump {
+  margin-left: 8px;
+}
+
 .expert-review {
   margin-top: 18px;
   border-top: 1px solid var(--line);

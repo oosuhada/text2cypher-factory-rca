@@ -27,6 +27,8 @@ PPT 대조 후 수정 근거는 [방향 수정 기록](./docs/direction-correcti
 - [2.9 제품화 단계 기능명세·작업계획](./docs/p3-enterprise-platform-implementation-plan.md#29단계--p3-사용자-서비스-제품화완성)
 - [2.9-1 단일 제품 UI·Surface 경계 검증](./docs/enterprise-stage2-9-1-surface-boundary.md)
 - [2.9-2 Streamlit 단일 내비게이션·이전 URL 호환 검증](./docs/enterprise-stage2-9-2-streamlit-navigation.md)
+- [2.9-3 개발·평가 UI 격리 검증](./docs/enterprise-stage2-9-3-ui-mode-isolation.md)
+- [2.9-4 핵심 RCA 사용자 여정 검증](./docs/enterprise-stage2-9-4-core-rca-journey.md)
 - [2.9-3 개발·평가 기능 격리 검증](./docs/enterprise-stage2-9-3-ui-mode-isolation.md)
 - [UX 내비게이션 재검증·수정](./docs/ux-navigation-correction-2026-07-28.md)
 - [Streamlit 리팩토링 1단계 · 공통 기반 분리](./docs/refactor-stage-common-foundation.md)
