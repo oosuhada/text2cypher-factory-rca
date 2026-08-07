@@ -14,7 +14,9 @@ class CrossSurfaceReleaseGateTest(unittest.TestCase):
     def test_streamlit_architecture_contract(self):
         result = validate_streamlit_architecture()
         self.assertLessEqual(result["entrypoint_lines"], 150)
-        self.assertEqual(result["page_modules"], 10)
+        self.assertEqual(result["workspace_modules"], 10)
+        self.assertEqual(result["legacy_redirects"], 10)
+        self.assertEqual(result["automatic_sidebar"], 0)
 
     def test_react_architecture_contract(self):
         result = validate_react_architecture()

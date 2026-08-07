@@ -692,3 +692,9 @@ def render_neo4j_source_connection(project: dict[str, Any]) -> None:
                 st.error(str(error))
             finally:
                 api.close()
+
+
+if __name__ == "__main__":
+    from frontend.legacy_page_redirect import redirect_legacy_page
+
+    redirect_legacy_page("data_sources")

@@ -253,3 +253,9 @@ def render_evaluations_workspace(
             mime="application/json",
         )
     render_metric_provenance(snapshot)
+
+
+if __name__ == "__main__":
+    from frontend.legacy_page_redirect import redirect_legacy_page
+
+    redirect_legacy_page("evaluations")
