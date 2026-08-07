@@ -18,6 +18,13 @@ if [[ ! -d "node_modules" ]]; then
   "${PNPM[@]}" install --frozen-lockfile
 fi
 
+if [[ "${LAN_SHARE:-0}" == "1" ]]; then
+  "${PNPM[@]}" build
+  exec "${PNPM[@]}" start \
+    --hostname "${P3_WEB_HOST:-0.0.0.0}" \
+    --port "${P3_WEB_PORT:-3000}"
+fi
+
 exec "${PNPM[@]}" dev \
   --hostname "${P3_WEB_HOST:-127.0.0.1}" \
   --port "${P3_WEB_PORT:-3000}"
