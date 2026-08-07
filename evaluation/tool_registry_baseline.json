@@ -1,0 +1,48 @@
+{
+  "version": "enterprise-stage3-3-tool-registry-v1",
+  "required_tools": {
+    "graph_query_tool": {
+      "allowed_roles": [],
+      "max_retries": 0
+    },
+    "rca_query_tool": {
+      "allowed_roles": [],
+      "max_retries": 0
+    },
+    "schema_lookup_tool": {
+      "allowed_roles": [],
+      "max_retries": 0
+    },
+    "etl_status_tool": {
+      "allowed_roles": ["Admin", "Data Steward"],
+      "max_retries": 0
+    },
+    "evaluation_tool": {
+      "allowed_roles": ["Admin", "Analyst", "Data Steward", "Domain Expert"],
+      "max_retries": 0
+    }
+  },
+  "required_error_codes": [
+    "TOOL_INPUT_INVALID",
+    "TOOL_OUTPUT_INVALID",
+    "TOOL_PERMISSION_DENIED",
+    "TOOL_TIMEOUT",
+    "TOOL_NOT_FOUND",
+    "TOOL_DUPLICATE",
+    "TOOL_EXECUTION_FAILED"
+  ],
+  "required_trace_fields": [
+    "invocation_id",
+    "tool",
+    "status",
+    "attempts",
+    "elapsed_ms",
+    "organization_id",
+    "user_id",
+    "project_id",
+    "run_id",
+    "roles",
+    "input_sha256",
+    "error"
+  ]
+}

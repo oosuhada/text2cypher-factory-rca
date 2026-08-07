@@ -19,6 +19,7 @@ from fastapi.responses import JSONResponse
 
 from backend.app.agent.project_router import ProjectRouter
 from backend.app.services.bootstrap import ServiceBundle, build_service_bundle
+from backend.app.tools import ToolContext, ToolError
 from neo4j import GraphDatabase, READ_ACCESS
 
 from backend.app.projects import (
@@ -63,6 +64,8 @@ from .schemas import (
     QueryResponse,
     RuntimeResponse,
     SubgraphResponse,
+    ToolInvocationResponse,
+    ToolInvokeRequest,
 )
 
 
@@ -884,6 +887,73 @@ def create_app(
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail=f"질의 처리에 실패했습니다: {error}",
             ) from error
+
+    @application.get("/api/v1/tools")
+    def list_tools(project_id: str | None = None) -> dict[str, Any]:
+        resolved_project_id = (
+            project_id or projects.active_project_id() or "cip-dmd"
+        )
+        projects.require(resolved_project_id)
+        bundle = registry.get(resolved_project_id)
+        return {
+            "project_id": resolved_project_id,
+            "tools": bundle.tools.list() if bundle.tools is not None else [],
+        }
+
+    @application.post(
+        "/api/v1/tools/{tool_name}/invoke",
+        response_model=ToolInvocationResponse,
+    )
+    def invoke_tool(
+        tool_name: str,
+        payload: ToolInvokeRequest,
+        request: Request,
+    ) -> dict[str, Any]:
+        try:
+            projects.require(payload.project_id)
+            bundle = registry.get(payload.project_id)
+            if bundle.tools is None:
+                raise ToolError(
+                    "TOOL_NOT_FOUND",
+                    "이 Service Bundle에는 Tool Registry가 없습니다.",
+                )
+            roles = tuple(
+                role.strip()
+                for role in request.headers.get("X-User-Roles", "").split(",")
+                if role.strip()
+            )
+            invocation = bundle.tools.invoke(
+                tool_name,
+                payload.input,
+                ToolContext(
+                    organization_id=(
+                        request.headers.get("X-Organization-ID") or "local"
+                    ),
+                    user_id=request.headers.get("X-User-ID") or "anonymous",
+                    project_id=payload.project_id,
+                    run_id=request.headers.get("X-Run-ID") or str(uuid4()),
+                    roles=roles,
+                ),
+            )
+            return {
+                "invocation_id": invocation.invocation_id,
+                "tool_name": invocation.tool_name,
+                "output": invocation.output,
+                "trace": invocation.trace,
+            }
+        except ToolError as error:
+            status_code = {
+                "TOOL_NOT_FOUND": 404,
+                "TOOL_INPUT_INVALID": 422,
+                "TOOL_PERMISSION_DENIED": 403,
+                "TOOL_TIMEOUT": 504,
+            }.get(error.code, 502)
+            raise HTTPException(
+                status_code=status_code,
+                detail=error.as_dict(),
+            ) from error
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
 
     @application.get(
         "/api/v1/agent/runs/{run_id}",

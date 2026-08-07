@@ -17,7 +17,8 @@
 | P3 최종 사용자 서비스 | `AUTOMATION PASS — MANUAL USER REVIEW PENDING` |
 | 3-1 LangGraph State·Checkpoint foundation | `IMPLEMENTED · AUTOMATION PASS` |
 | 3-2 자연어 Project Router | `IMPLEMENTED · EVALUATION PASS` |
-| 3-3 이후 Agentic AI 기본 여정 병합 | `HOLD` |
+| 3-3 Tool Registry | `IMPLEMENTED · TOOL GATE PASS` |
+| 3-4 이후 Agentic AI 기본 여정 병합 | `HOLD` |
 
 각 세부 단계는 다음 Gate를 통과한 뒤 다음 단계로 이동한다.
 
@@ -891,7 +892,7 @@ transport
 
 ## 3단계 — 프로젝트 4 차용 Agentic AI 버전
 
-진입 상태: **3-1·3-2 COMPLETE · 3-3 이후 HOLD**
+진입 상태: **3-1·3-2·3-3 COMPLETE · 3-4 이후 HOLD**
 
 ### 3-1. LangGraph State와 Checkpoint 재설계
 
@@ -955,6 +956,17 @@ transport
 - 수동 선택 모드에서는 자동 전환이 발생하지 않는다.
 
 ### 3-3. Tool Registry
+
+상태: **구현·자동 Gate 완료**
+
+상세 기록:
+
+- [3-3 Tool Registry](./enterprise-stage3-3-tool-registry.md)
+- Pydantic 입력·출력 schema 검증: PASS
+- 권한·timeout·retry·error taxonomy: PASS
+- Tool별 append-only audit trace: PASS
+- 내장 Tool 5개 등록: PASS
+- 기존 Query 경로의 `graph_query_tool` 전환: PASS
 
 목표:
 

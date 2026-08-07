@@ -154,9 +154,9 @@ Evidence, 접힌 전문가 검증을 확인했다.
 다음 항목은 누락이 아니라 `p3-enterprise-platform-implementation-plan.md`
 3단계의 구현 대상이다.
 
-- 프로젝트 미지정 자연어 질문 자동 Router
 - 3-1에서 구현한 공통 LangGraph State·SQLite 영속 Checkpoint의 운영용 PostgreSQL 전환
-- Tool Registry와 Tool별 권한·timeout·audit
+- 3-2 Router의 실제 운영 질문 기반 threshold 재보정
+- 3-3 Tool Registry에 후속 RAG·권고·알림 Tool 추가
 - 문서 RAG
 - RCA 조치 권고
 - LangGraph Interrupt 기반 HITL과 실 Approval Queue
@@ -179,7 +179,9 @@ React 대화 기록은 브라우저 local storage이고 계정 동기화는 아�
 
 - 2.9-5: **AUTOMATION PASS · MANUAL USER REVIEW PENDING**
 - 3-1 foundation: **IMPLEMENTED · AUTOMATIC VALIDATION PASS**
-- 3-2 이후 제품 통합: **HOLD**
+- 3-2 Project Router: **IMPLEMENTED · EVALUATION PASS**
+- 3-3 Tool Registry: **IMPLEMENTED · TOOL GATE PASS**
+- 3-4 이후 제품 통합: **HOLD**
 
 자동 Gate는 통과했지만 실제 사용자 1인 이상의 무설명 대표 여정 검토는
 아직 완료되지 않았다. 따라서 P3 최종 사용자 서비스를 `READY`로 선언하지
@@ -191,18 +193,16 @@ annotated tag `p3-stage2-9-pre-stage3-v1`로 고정하고, 기존 제품 동선�
 수동 기록 양식은
 [`enterprise-stage2-9-5-product-release-gate.md`](./enterprise-stage2-9-5-product-release-gate.md)를 따른다.
 
-수동 Gate 통과 후 권장 순서는 다음과 같다.
+다음 권장 순서는 다음과 같다.
 
-1. 3-2 자연어 프로젝트 Router
-2. 3-3 Tool Registry
-3. 3-4 문서 RAG
-4. 3-5 RCA 권고
-5. 3-6 HITL Interrupt·Approval Queue
-6. 3-7 알림 Tool
-7. 3-8 통합 감사로그·상태 UI
-8. 3-9 판단 품질 평가
-9. 3-10 이상감지 Tool은 데이터 적합 시에만 선택
-10. 3-11 보안·운영·최종 E2E
+1. 3-4 문서 RAG
+2. 3-5 RCA 권고
+3. 3-6 HITL Interrupt·Approval Queue
+4. 3-7 알림 Tool
+5. 3-8 통합 감사로그·상태 UI
+6. 3-9 판단 품질 평가
+7. 3-10 이상감지 Tool은 데이터 적합 시에만 선택
+8. 3-11 보안·운영·최종 E2E
 
 3-1 이후 변경은 기존 P3 질의 경로를 feature flag 또는 별도 node로 보존하고,
 2.9-5 수동 Gate가 통과할 때까지 Router·RAG·권고·실제 HITL·알림을 기본
