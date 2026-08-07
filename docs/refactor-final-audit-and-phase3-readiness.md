@@ -172,9 +172,16 @@ React 대화 기록은 브라우저 local storage이고 계정 동기화는 아�
 
 ## 8. 3단계 진입 순서
 
-준비도 판정: **READY**
+이 문서의 이전 `READY` 판정은 2.9 제품 사용자 Gate 결과로 대체한다.
 
-권장 순서는 계획서 그대로 다음과 같다.
+준비도 판정: **HOLD — 2.9-5 AUTOMATION PASS · MANUAL USER REVIEW PENDING**
+
+자동 Gate는 통과했지만 실제 사용자 1인 이상의 무설명 대표 여정 검토가
+아직 수행되지 않았다. 따라서 P3 최종 사용자 서비스를 `READY`로 선언하거나
+3-1 작업을 시작하지 않는다. 최신 기준과 수동 기록 양식은
+[`enterprise-stage2-9-5-product-release-gate.md`](./enterprise-stage2-9-5-product-release-gate.md)를 따른다.
+
+수동 Gate 통과 후 권장 순서는 계획서 그대로 다음과 같다.
 
 1. 3-1 LangGraph State·Checkpoint
 2. 3-2 자연어 프로젝트 Router
@@ -189,4 +196,4 @@ React 대화 기록은 브라우저 local storage이고 계정 동기화는 아�
 11. 3-11 보안·운영·최종 E2E
 
 각 3단계 변경은 기존 P3 질의 경로를 feature flag 또는 별도 node로 보존하고,
-현재 9단계 Release Gate가 통과할 때만 병합한다.
+현재 2.9-5 자동·수동 Release Gate가 모두 통과할 때만 병합한다.

@@ -2,6 +2,11 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  distDir: process.env.PLAYWRIGHT
+    ? ".next-playwright"
+    : process.env.RELEASE_BUILD
+      ? ".next-release"
+      : ".next",
   output: "standalone",
   async headers() {
     return [

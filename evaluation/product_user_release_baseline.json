@@ -1,0 +1,109 @@
+{
+  "version": "enterprise-stage2-9-5-product-user-release-v1",
+  "product_entrypoint": "http://localhost:3000",
+  "internal_console_entrypoint": "http://localhost:8501",
+  "required_product_routes": [
+    {
+      "path": "/",
+      "heading": "Find the path. Keep the proof."
+    },
+    {
+      "path": "/projects",
+      "heading": "Projects"
+    },
+    {
+      "path": "/query?project_id=cip-dmd",
+      "heading": "CiP-DMD Manufacturing에 질문하세요."
+    },
+    {
+      "path": "/graph?project_id=cip-dmd",
+      "heading": "Graph Explorer"
+    },
+    {
+      "path": "/history?project_id=cip-dmd",
+      "heading": "최근 조사 기록"
+    }
+  ],
+  "product_navigation": [
+    "Projects",
+    "Query Studio",
+    "Evidence / Graph",
+    "History"
+  ],
+  "internal_console_navigation": [
+    "Home",
+    "Projects",
+    "Data Sources",
+    "Pipeline",
+    "Query Studio",
+    "Graph Explorer",
+    "Dashboard",
+    "Evaluations",
+    "Audit Logs"
+  ],
+  "viewport_widths": [
+    390,
+    768,
+    1280,
+    1440
+  ],
+  "deployment_forbidden_copy": [
+    "OpenAI 키",
+    "Gemini를 자동 사용",
+    "Gold Question 데모",
+    "역할 미리보기",
+    "Stage 3-",
+    "foundation",
+    "실제 연결:",
+    "transport"
+  ],
+  "forbidden_framework_page_names": [
+    "streamlit app",
+    "graph explorer page",
+    "schema studio"
+  ],
+  "accessibility_contracts": [
+    "skip-link",
+    "focus-visible",
+    "form-label",
+    "semantic-main",
+    "keyboard-navigation",
+    "reduced-motion"
+  ],
+  "fixtures": {
+    "long_project_name": "반도체 전공정·후공정 통합 수율 분석 및 장비 이상 원인 추적 프로젝트 2026 하반기 생산기술·품질보증·설비운영 공동 Release 기준선",
+    "empty_project_id": "empty-project",
+    "large_result_rows": 120,
+    "query_error_status": 503
+  },
+  "critical_journeys": [
+    "project-switch",
+    "recommended-question-preview",
+    "single-query-submit",
+    "evidence-jump",
+    "graph-open",
+    "history-reopen",
+    "write-block",
+    "recoverable-error"
+  ],
+  "automatic_release_requirements": {
+    "visible_link_click_success_rate": 1.0,
+    "empty_body_count": 0,
+    "browser_console_error_count": 0,
+    "streamlit_exception_count": 0,
+    "horizontal_overflow_count": 0,
+    "forbidden_copy_count": 0,
+    "unauthorized_write_execution_count": 0
+  },
+  "manual_review": {
+    "required_reviewers": 1,
+    "status": "PENDING",
+    "questions": [
+      "처음 본 사용자가 10초 안에 서비스 목적을 설명할 수 있는가?",
+      "첫 화면에서 다음 행동을 설명 없이 찾을 수 있는가?",
+      "답변의 근거와 안전 검증을 설명 없이 찾을 수 있는가?",
+      "실패·차단 상태에서 가능한 다음 행동을 이해하는가?",
+      "React 제품과 Streamlit Internal Console의 역할 차이를 이해하는가?"
+    ]
+  }
+}
