@@ -61,6 +61,7 @@ export const QUERY_STATUS_LABEL: Record<QueryResponse["status"], string> = {
   failed: "처리 실패",
   needs_clarification: "조건 확인",
   unsupported: "지원 범위 밖",
+  paused: "재개 대기",
 };
 
 export function examplesForProject(projectId: string): QueryExample[] {

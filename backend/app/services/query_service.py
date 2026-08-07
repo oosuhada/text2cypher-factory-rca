@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from inspect import Parameter, signature
 import json
 from pathlib import Path
 from threading import Lock
@@ -28,11 +29,44 @@ class QueryService:
         self.usage_reader = usage_reader
         self._audit_lock = Lock()
 
-    def query(self, question: str) -> dict[str, Any]:
+    def query(
+        self,
+        question: str,
+        *,
+        organization_id: str = "local",
+        user_id: str = "anonymous",
+        roles: tuple[str, ...] | list[str] = (),
+        run_id: str | None = None,
+    ) -> dict[str, Any]:
+        resolved_run_id = run_id or str(uuid4())
         before_usage = self.usage_reader() if self.usage_reader else {}
-        result = format_agent_result(self.agent.invoke(question))
+        invoke_parameters = signature(self.agent.invoke).parameters
+        accepts_context = (
+            "run_id" in invoke_parameters
+            or any(
+                parameter.kind is Parameter.VAR_KEYWORD
+                for parameter in invoke_parameters.values()
+            )
+        )
+        resolved_thread_id = self._thread_id(resolved_run_id)
+        state = (
+            self.agent.invoke(
+                question,
+                run_id=resolved_run_id,
+                thread_id=resolved_thread_id,
+                organization_id=organization_id,
+                user_id=user_id,
+                roles=roles,
+            )
+            if accepts_context
+            else self.agent.invoke(question)
+        )
+        result = format_agent_result(state)
         result["provider"] = self.provider
-        result["run_id"] = str(uuid4())
+        result["run_id"] = resolved_run_id
+        result["thread_id"] = state.get("run", {}).get(
+            "thread_id", resolved_thread_id
+        )
         after_usage = self.usage_reader() if self.usage_reader else {}
         result["usage"] = {
             key: round(
@@ -49,6 +83,26 @@ class QueryService:
                 "estimated_cost_usd",
             )
         }
+        self._write_audit(result)
+        return result
+
+    def _thread_id(self, run_id: str) -> str:
+        namespace = getattr(self.agent, "checkpoint_namespace", "text2cypher")
+        return f"{run_id}:{namespace}"
+
+    def run_state(self, run_id: str) -> dict[str, Any]:
+        if not hasattr(self.agent, "state"):
+            raise RuntimeError("Agent가 persistent state 조회를 지원하지 않습니다.")
+        return self.agent.state(self._thread_id(run_id))
+
+    def resume(self, run_id: str) -> dict[str, Any]:
+        if not hasattr(self.agent, "resume"):
+            raise RuntimeError("Agent가 persistent resume을 지원하지 않습니다.")
+        thread_id = self._thread_id(run_id)
+        result = format_agent_result(self.agent.resume(thread_id))
+        result["provider"] = self.provider
+        result["run_id"] = run_id
+        result["thread_id"] = thread_id
         self._write_audit(result)
         return result
 

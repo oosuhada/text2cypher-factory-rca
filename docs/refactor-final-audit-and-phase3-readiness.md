@@ -5,8 +5,9 @@
 
 ## 1. 최종 판정
 
-**P3 필수 백엔드와 2단계 엔터프라이즈 UI 기준선은 PASS이며,
-3-1 LangGraph State·Checkpoint 재설계를 시작할 준비가 됐다.**
+**P3 필수 백엔드와 2단계 엔터프라이즈 UI 기준선은 PASS다.
+2.9 실제 사용자 검토는 계속 PENDING이며, 복원 tag를 먼저 고정한 뒤
+3-1 LangGraph State·Checkpoint foundation만 선행 구현했다.**
 
 이번 판정은 코드 존재 여부만 확인한 것이 아니다.
 
@@ -154,7 +155,7 @@ Evidence, 접힌 전문가 검증을 확인했다.
 3단계의 구현 대상이다.
 
 - 프로젝트 미지정 자연어 질문 자동 Router
-- 공통 LangGraph State와 영속 Checkpoint
+- 3-1에서 구현한 공통 LangGraph State·SQLite 영속 Checkpoint의 운영용 PostgreSQL 전환
 - Tool Registry와 Tool별 권한·timeout·audit
 - 문서 RAG
 - RCA 조치 권고
@@ -174,26 +175,35 @@ React 대화 기록은 브라우저 local storage이고 계정 동기화는 아�
 
 이 문서의 이전 `READY` 판정은 2.9 제품 사용자 Gate 결과로 대체한다.
 
-준비도 판정: **HOLD — 2.9-5 AUTOMATION PASS · MANUAL USER REVIEW PENDING**
+준비도 판정:
 
-자동 Gate는 통과했지만 실제 사용자 1인 이상의 무설명 대표 여정 검토가
-아직 수행되지 않았다. 따라서 P3 최종 사용자 서비스를 `READY`로 선언하거나
-3-1 작업을 시작하지 않는다. 최신 기준과 수동 기록 양식은
+- 2.9-5: **AUTOMATION PASS · MANUAL USER REVIEW PENDING**
+- 3-1 foundation: **IMPLEMENTED · AUTOMATIC VALIDATION PASS**
+- 3-2 이후 제품 통합: **HOLD**
+
+자동 Gate는 통과했지만 실제 사용자 1인 이상의 무설명 대표 여정 검토는
+아직 완료되지 않았다. 따라서 P3 최종 사용자 서비스를 `READY`로 선언하지
+않는다. 사용자의 명시적 결정에 따라 3-1 시작 전 현재 제품 기준선을 원격
+annotated tag `p3-stage2-9-pre-stage3-v1`로 고정하고, 기존 제품 동선을
+변경하지 않는 공통 state·checkpoint foundation만 선행했다. 상세 구현과
+복원 절차는
+[`enterprise-stage3-1-langgraph-state-checkpoint.md`](./enterprise-stage3-1-langgraph-state-checkpoint.md),
+수동 기록 양식은
 [`enterprise-stage2-9-5-product-release-gate.md`](./enterprise-stage2-9-5-product-release-gate.md)를 따른다.
 
-수동 Gate 통과 후 권장 순서는 계획서 그대로 다음과 같다.
+수동 Gate 통과 후 권장 순서는 다음과 같다.
 
-1. 3-1 LangGraph State·Checkpoint
-2. 3-2 자연어 프로젝트 Router
-3. 3-3 Tool Registry
-4. 3-4 문서 RAG
-5. 3-5 RCA 권고
-6. 3-6 HITL Interrupt·Approval Queue
-7. 3-7 알림 Tool
-8. 3-8 통합 감사로그·상태 UI
-9. 3-9 판단 품질 평가
-10. 3-10 이상감지 Tool은 데이터 적합 시에만 선택
-11. 3-11 보안·운영·최종 E2E
+1. 3-2 자연어 프로젝트 Router
+2. 3-3 Tool Registry
+3. 3-4 문서 RAG
+4. 3-5 RCA 권고
+5. 3-6 HITL Interrupt·Approval Queue
+6. 3-7 알림 Tool
+7. 3-8 통합 감사로그·상태 UI
+8. 3-9 판단 품질 평가
+9. 3-10 이상감지 Tool은 데이터 적합 시에만 선택
+10. 3-11 보안·운영·최종 E2E
 
-각 3단계 변경은 기존 P3 질의 경로를 feature flag 또는 별도 node로 보존하고,
-현재 2.9-5 자동·수동 Release Gate가 모두 통과할 때만 병합한다.
+3-1 이후 변경은 기존 P3 질의 경로를 feature flag 또는 별도 node로 보존하고,
+2.9-5 수동 Gate가 통과할 때까지 Router·RAG·권고·실제 HITL·알림을 기본
+사용자 동선에 노출하지 않는다.

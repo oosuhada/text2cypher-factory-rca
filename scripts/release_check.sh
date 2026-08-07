@@ -55,6 +55,8 @@ done
 .venv/bin/python -m py_compile scripts/ui_quality_gate.py
 .venv/bin/python -m py_compile scripts/cross_surface_release_gate.py
 .venv/bin/python -m py_compile scripts/product_user_release_gate.py
+.venv/bin/python -m py_compile backend/app/agent/state.py
+.venv/bin/python -m py_compile backend/app/agent/checkpoints.py
 
 echo "[9/10] Container contract"
 if command -v docker >/dev/null 2>&1; then
@@ -76,6 +78,7 @@ for document in \
   docs/refactor-stage5-final-release-gate.md \
   docs/refactor-final-audit-and-phase3-readiness.md \
   docs/enterprise-stage2-9-5-product-release-gate.md \
+  docs/enterprise-stage3-1-langgraph-state-checkpoint.md \
   evaluation/product_user_release_baseline.json \
   release/backend-v1.yml; do
   test -s "$document"

@@ -4,7 +4,8 @@ export type QueryStatus =
   | "blocked"
   | "failed"
   | "needs_clarification"
-  | "unsupported";
+  | "unsupported"
+  | "paused";
 
 export type EvidenceNode = {
   id: string;
@@ -31,6 +32,17 @@ export type Evidence = {
 
 export type QueryResponse = {
   project_id?: string;
+  run_id?: string;
+  thread_id?: string;
+  state_schema_version?: number;
+  organization?: Record<string, unknown>;
+  user?: Record<string, unknown>;
+  project?: Record<string, unknown>;
+  run?: Record<string, unknown>;
+  routing?: Record<string, unknown>;
+  schema?: Record<string, unknown>;
+  recommendation?: Record<string, unknown>;
+  approval?: Record<string, unknown>;
   question: string;
   answer: string;
   status: QueryStatus;
@@ -51,6 +63,7 @@ export type QueryResponse = {
     attempts: number;
     errors: string[];
     trace: Record<string, unknown>[];
+    tool_trace?: Record<string, unknown>[];
     elapsed_ms: number;
     verified_statement_sha256?: string | null;
     execution_verified?: boolean;

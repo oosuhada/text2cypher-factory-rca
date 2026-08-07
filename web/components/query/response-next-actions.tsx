@@ -60,6 +60,11 @@ export function ResponseNextActions({
       detail: "제품 genealogy, 공정 이력, 품질 실패, 이상 유형 또는 영향 범위를 질문해 주세요.",
       action: "지원 질문으로 바꾸기",
     },
+    paused: {
+      title: "실행 상태가 안전하게 저장되어 재개를 기다리고 있습니다.",
+      detail: "승인 또는 재개 요청이 처리되면 같은 run에서 다음 단계를 이어갑니다.",
+      action: "질문 확인하기",
+    },
     failed: {
       title: "질의를 완료하지 못했습니다.",
       detail: "잠시 후 다시 실행하거나 질문 조건을 단순화해 주세요.",
