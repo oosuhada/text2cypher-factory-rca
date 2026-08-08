@@ -17,28 +17,31 @@ else
   exit 1
 fi
 
-echo "[1/12] Python regression suite"
+echo "[1/13] Python regression suite"
 .venv/bin/python -m unittest discover -s tests -v
 
-echo "[2/12] Backend API·traceability·secret contract"
+echo "[2/13] Backend API·traceability·secret contract"
 .venv/bin/python scripts/release_gate.py --json
 
-echo "[3/12] Enterprise UI quality·visual baseline"
+echo "[3/13] Enterprise UI quality·visual baseline"
 .venv/bin/python scripts/ui_quality_gate.py
 
-echo "[4/12] Cross-surface architecture·critical UX contract"
+echo "[4/13] Cross-surface architecture·critical UX contract"
 .venv/bin/python scripts/cross_surface_release_gate.py
 
-echo "[5/12] Product-user release contract"
+echo "[5/13] Product-user release contract"
 .venv/bin/python scripts/product_user_release_gate.py --json
 
-echo "[6/12] Stage 3-2 project router evaluation"
+echo "[6/13] Stage 3-2 project router evaluation"
 .venv/bin/python scripts/project_router_gate.py --json
 
-echo "[7/12] Stage 3-3 tool registry contract"
+echo "[7/13] Stage 3-3 tool registry contract"
 .venv/bin/python scripts/tool_registry_gate.py
 
-echo "[8/12] Next.js lint and production build"
+echo "[8/13] Stage 3-4 LlamaIndex document RAG contract"
+.venv/bin/python scripts/document_rag_gate.py
+
+echo "[9/13] Next.js lint and production build"
 (
   cd web
   "${PNPM[@]}" install --frozen-lockfile
@@ -46,13 +49,13 @@ echo "[8/12] Next.js lint and production build"
   RELEASE_BUILD=1 "${PNPM[@]}" build
 )
 
-echo "[9/12] React browser journey regression"
+echo "[10/13] React browser journey regression"
 (
   cd web
   "${PNPM[@]}" test:e2e
 )
 
-echo "[10/12] Script syntax"
+echo "[11/13] Script syntax"
 for script in scripts/*.sh infra/*.sh; do
   bash -n "$script"
 done
@@ -63,13 +66,16 @@ done
 .venv/bin/python -m py_compile scripts/product_user_release_gate.py
 .venv/bin/python -m py_compile scripts/project_router_gate.py
 .venv/bin/python -m py_compile scripts/tool_registry_gate.py
+.venv/bin/python -m py_compile scripts/document_rag_gate.py
 .venv/bin/python -m py_compile backend/app/agent/state.py
 .venv/bin/python -m py_compile backend/app/agent/checkpoints.py
 .venv/bin/python -m py_compile backend/app/agent/project_router.py
 .venv/bin/python -m py_compile backend/app/tools/registry.py
 .venv/bin/python -m py_compile backend/app/tools/capabilities.py
+.venv/bin/python -m py_compile backend/app/rag/embedding.py
+.venv/bin/python -m py_compile backend/app/rag/service.py
 
-echo "[11/12] Container contract"
+echo "[12/13] Container contract"
 if command -v docker >/dev/null 2>&1; then
   docker compose \
     --env-file "${P3_ENV_FILE:-.env}" \
@@ -79,7 +85,7 @@ else
   echo "Docker CLI not installed; compose validation deferred to CI."
 fi
 
-echo "[12/12] Release documentation"
+echo "[13/13] Release documentation"
 for document in \
   docs/api-contract.md \
   docs/backend-lineage.md \
@@ -92,8 +98,11 @@ for document in \
   docs/enterprise-stage3-1-langgraph-state-checkpoint.md \
   docs/enterprise-stage3-2-project-router.md \
   docs/enterprise-stage3-3-tool-registry.md \
+  docs/enterprise-stage3-4-llamaindex-document-rag.md \
   evaluation/project_router.yml \
   evaluation/tool_registry_baseline.json \
+  evaluation/document_rag_baseline.json \
+  evaluation/rag_fixtures.json \
   evaluation/product_user_release_baseline.json \
   release/backend-v1.yml; do
   test -s "$document"

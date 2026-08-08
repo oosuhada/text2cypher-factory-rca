@@ -22,11 +22,28 @@ export type EvidenceRelationship = {
   properties?: Record<string, unknown>;
 };
 
+export type DocumentEvidence = {
+  citation_id: string;
+  document_id: string;
+  title: string;
+  version: string;
+  document_type?: string;
+  effective_date?: string | null;
+  is_current?: boolean;
+  security_classification?: string;
+  source_filename?: string;
+  page_number: number;
+  section_title?: string;
+  text: string;
+  score?: number;
+};
+
 export type Evidence = {
   nodes: EvidenceNode[];
   relationships: EvidenceRelationship[];
   node_count: number;
   relationship_count: number;
+  documents?: DocumentEvidence[];
   truncated?: Record<string, boolean> | boolean;
 };
 

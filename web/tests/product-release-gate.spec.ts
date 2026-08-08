@@ -102,13 +102,15 @@ function readiness(projectId: string) {
 }
 
 function queryResponse(question: string, projectId: string, rowCount: number) {
+  const documentQuestion = /매뉴얼|SOP/i.test(question);
+  const documentOnly = /매뉴얼에서|SOP에서/i.test(question);
   const status = question.includes("삭제")
     ? "blocked"
     : question.includes("399999")
       ? "empty"
       : "success";
   const rows =
-    status === "success"
+    status === "success" && !documentOnly
       ? Array.from({ length: rowCount }, (_, index) => ({
           part_id: `P-${String(index + 1).padStart(4, "0")}`,
           process: `공정 ${index + 1}`,
@@ -123,15 +125,20 @@ function queryResponse(question: string, projectId: string, rowCount: number) {
         ? "읽기 전용 정책에 따라 변경 요청을 차단했습니다."
         : status === "empty"
           ? "조건에 일치하는 결과가 없습니다."
-          : "자동화된 질의 결과입니다.",
+          : documentOnly
+            ? "[quality-inspection-sop@1.0:p1] 압력검사 실패 시 상류 공정과 구성품을 확인합니다."
+            : "자동화된 질의 결과입니다.",
     status,
-    cypher: status === "blocked" ? "" : "MATCH (n) RETURN n LIMIT 120",
+    cypher:
+      status === "blocked" || documentOnly
+        ? ""
+        : "MATCH (n) RETURN n LIMIT 120",
     rows,
     row_count: rows.length,
     metadata: { project_id: projectId, schema_version: "1.1.0" },
     evidence: {
       nodes:
-        status === "success"
+        status === "success" && !documentOnly
           ? [
               {
                 id: "Cylinder:300002",
@@ -146,7 +153,7 @@ function queryResponse(question: string, projectId: string, rowCount: number) {
             ]
           : [],
       relationships:
-        status === "success"
+        status === "success" && !documentOnly
           ? [
               {
                 id: "rel-1",
@@ -157,8 +164,25 @@ function queryResponse(question: string, projectId: string, rowCount: number) {
               },
             ]
           : [],
-      node_count: status === "success" ? 2 : 0,
-      relationship_count: status === "success" ? 1 : 0,
+      node_count: status === "success" && !documentOnly ? 2 : 0,
+      relationship_count: status === "success" && !documentOnly ? 1 : 0,
+      documents: documentQuestion
+        ? [
+            {
+              citation_id: "quality-inspection-sop@1.0:p1",
+              document_id: "quality-inspection-sop",
+              title: "제조 품질검사 SOP",
+              version: "1.0",
+              document_type: "quality_standard",
+              page_number: 1,
+              section_title: "압력검사 실패 대응",
+              text: "압력검사 실패 시 상류 공정과 구성품을 확인합니다.",
+              score: 0.91,
+              is_current: true,
+              source_filename: "quality-inspection-sop.md",
+            },
+          ]
+        : [],
     },
     validation: {
       attempts: 1,
@@ -169,7 +193,7 @@ function queryResponse(question: string, projectId: string, rowCount: number) {
     },
     usage: {},
     caveat: null,
-    provider: "gold",
+    provider: documentOnly ? "llamaindex" : "gold",
     fallback_reason: null,
   };
 }
@@ -501,6 +525,39 @@ test("LAN HTTP query works without crypto.randomUUID", async ({ page }) => {
   await expect(page.getByText("crypto.randomUUID", { exact: false })).toHaveCount(0);
   await page.getByRole("link", { name: "저장된 기록 보기" }).click();
   await expect(page.getByRole("button", { name: question })).toBeVisible();
+});
+
+test("document-only query opens citation evidence and survives History", async ({
+  page,
+}) => {
+  await mockProductApi(page);
+  await page.goto("/query?project_id=cip-dmd");
+  const question = "압력검사 실패 대응 절차를 SOP에서 알려줘.";
+  await page.getByLabel("제조 관계 질문").fill(question);
+  await page.getByRole("button", { name: "질문 전송" }).click();
+  await expect(
+    page.getByRole("tab", { name: "문서", selected: true }),
+  ).toBeVisible();
+  await expect(page.getByText("제조 품질검사 SOP")).toBeVisible();
+  await expect(
+    page.getByText("quality-inspection-sop@1.0:p1", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("압력검사 실패 시 상류 공정과 구성품을 확인합니다.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(page.getByText("실행된 Cypher가 없습니다.")).toHaveCount(0);
+
+  await page.getByRole("link", { name: "저장된 기록 보기" }).click();
+  await expect(page.getByRole("button", { name: question })).toBeVisible();
+  await page.getByRole("link", { name: "다시 열기" }).click();
+  await expect(
+    page.getByRole("tab", { name: "문서", selected: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("quality-inspection-sop@1.0:p1", { exact: true }),
+  ).toBeVisible();
 });
 
 test("short mobile viewport keeps the header drawer attached to the viewport", async ({

@@ -5,7 +5,7 @@ export type QueryExample = {
   question: string;
 };
 
-export type EvidenceTab = "table" | "graph" | "cypher" | "trace";
+export type EvidenceTab = "table" | "graph" | "documents" | "cypher" | "trace";
 
 const MANUFACTURING_EXAMPLES: QueryExample[] = [
   {
@@ -17,6 +17,11 @@ const MANUFACTURING_EXAMPLES: QueryExample[] = [
     label: "품질 실패 × 이상",
     question:
       "압력검사에 실패한 완제품과 구성품 공정의 이상 유형을 보여줘.",
+  },
+  {
+    label: "품질 SOP 결합",
+    question:
+      "압력검사 실패 제품의 그래프 이력과 품질검사 SOP 대응 절차를 같이 알려줘.",
   },
   {
     label: "역방향 영향분석",
@@ -42,6 +47,15 @@ const EQUIPMENT_EXAMPLES: QueryExample[] = [
   {
     label: "부품 교체",
     question: "replacement 유형의 정비 이력과 담당 기술자를 보여줘.",
+  },
+  {
+    label: "정비 이력 × 매뉴얼",
+    question:
+      "EQ-PRESS-01의 정비 이력과 유압 펌프 교체 후 매뉴얼 점검 절차를 같이 알려줘.",
+  },
+  {
+    label: "문서 절차만 검색",
+    question: "유압 펌프 교체 후 점검 절차를 매뉴얼에서 알려줘.",
   },
 ];
 

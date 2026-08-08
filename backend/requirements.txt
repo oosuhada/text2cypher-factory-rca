@@ -1,6 +1,8 @@
 neo4j==6.2.0
 langgraph==1.2.9
 langgraph-checkpoint-sqlite==3.1.0
+llama-index-core==0.14.23
+pypdf==6.14.2
 langchain-openai==1.4.1
 PyYAML==6.0.3
 streamlit==1.60.0

@@ -316,7 +316,7 @@ def validate_critical_ux() -> dict[str, str]:
         (
             'useState<EvidenceTab>("table")',
             "requestInFlightRef.current",
-            "setQuestion(\"\")",
+            "setQuestionState(\"\")",
         ),
         "React query submission",
     )

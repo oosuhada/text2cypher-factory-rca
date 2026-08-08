@@ -156,8 +156,8 @@ Evidence, 접힌 전문가 검증을 확인했다.
 
 - 3-1에서 구현한 공통 LangGraph State·SQLite 영속 Checkpoint의 운영용 PostgreSQL 전환
 - 3-2 Router의 실제 운영 질문 기반 threshold 재보정
-- 3-3 Tool Registry에 후속 RAG·권고·알림 Tool 추가
-- 문서 RAG
+- 3-3 Tool Registry에 후속 권고·알림 Tool 추가
+- 3-4 LlamaIndex RAG의 운영 embedding·vector DB·문서 보존정책 고도화
 - RCA 조치 권고
 - LangGraph Interrupt 기반 HITL과 실 Approval Queue
 - 승인 후 notification adapter
@@ -181,29 +181,31 @@ React 대화 기록은 브라우저 local storage이고 계정 동기화는 아�
 - 3-1 foundation: **IMPLEMENTED · AUTOMATIC VALIDATION PASS**
 - 3-2 Project Router: **IMPLEMENTED · EVALUATION PASS**
 - 3-3 Tool Registry: **IMPLEMENTED · TOOL GATE PASS**
-- 3-4 이후 제품 통합: **HOLD**
+- 3-4 LlamaIndex 문서 RAG: **IMPLEMENTED · RAG GATE PASS**
+- 3-5 이후 제품 통합: **HOLD**
 
 자동 Gate는 통과했지만 실제 사용자 1인 이상의 무설명 대표 여정 검토는
 아직 완료되지 않았다. 따라서 P3 최종 사용자 서비스를 `READY`로 선언하지
 않는다. 사용자의 명시적 결정에 따라 3-1 시작 전 현재 제품 기준선을 원격
-annotated tag `p3-stage2-9-pre-stage3-v1`로 고정하고, 기존 제품 동선을
-변경하지 않는 공통 state·checkpoint foundation만 선행했다. 상세 구현과
-복원 절차는
+annotated tag `p3-stage2-9-pre-stage3-v1`로 고정하고, 각 단계 완료 시 별도
+복원 tag를 추가하면서 3-1부터 3-4까지 선행했다. 구현 기록은
 [`enterprise-stage3-1-langgraph-state-checkpoint.md`](./enterprise-stage3-1-langgraph-state-checkpoint.md),
+[`enterprise-stage3-2-project-router.md`](./enterprise-stage3-2-project-router.md),
+[`enterprise-stage3-3-tool-registry.md`](./enterprise-stage3-3-tool-registry.md),
+[`enterprise-stage3-4-llamaindex-document-rag.md`](./enterprise-stage3-4-llamaindex-document-rag.md)를,
 수동 기록 양식은
 [`enterprise-stage2-9-5-product-release-gate.md`](./enterprise-stage2-9-5-product-release-gate.md)를 따른다.
 
 다음 권장 순서는 다음과 같다.
 
-1. 3-4 문서 RAG
-2. 3-5 RCA 권고
-3. 3-6 HITL Interrupt·Approval Queue
-4. 3-7 알림 Tool
-5. 3-8 통합 감사로그·상태 UI
-6. 3-9 판단 품질 평가
-7. 3-10 이상감지 Tool은 데이터 적합 시에만 선택
-8. 3-11 보안·운영·최종 E2E
+1. 3-5 RCA 권고
+2. 3-6 HITL Interrupt·Approval Queue
+3. 3-7 알림 Tool
+4. 3-8 통합 감사로그·상태 UI
+5. 3-9 판단 품질 평가
+6. 3-10 이상감지 Tool은 데이터 적합 시에만 선택
+7. 3-11 보안·운영·최종 E2E
 
-3-1 이후 변경은 기존 P3 질의 경로를 feature flag 또는 별도 node로 보존하고,
-2.9-5 수동 Gate가 통과할 때까지 Router·RAG·권고·실제 HITL·알림을 기본
-사용자 동선에 노출하지 않는다.
+3-1 이후 변경은 기존 P3 질의 경로와 단계별 복원 tag를 보존한다. 2.9-5 수동
+Gate가 완료되기 전까지는 자동 Gate 통과를 최종 사용자 서비스 `READY`로
+표현하지 않는다.

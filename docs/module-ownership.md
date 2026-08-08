@@ -7,7 +7,7 @@
 |---|---|---|---|
 | Data·ETL Owner | `ingestion/`, `mapping/`, `etl/` | 원본 profile, 정제, mapping, load, 무결성 | reconciliation·멱등성 테스트 |
 | Graph Schema Owner | `schema_registry.py`, `schemas/` | 라벨·관계·identity·질의 시나리오 | schema DSL·Gold 경로 검증 |
-| Agent·Security Owner | `agent/`, `security/` | Prompt, Text-to-Cypher, EXPLAIN, 자기수정, READ 차단 | Agent·보안 회귀 |
+| Agent·Security Owner | `agent/`, `tools/`, `rag/`, `security/` | Prompt, Text-to-Cypher, Tool 정책, LlamaIndex retrieval·citation, READ 차단 | Agent·Tool·RAG·보안 회귀 |
 | Evaluation Owner | `evaluation/` | Gold·Blind 분리, snapshot, metrics, 실패 분류 | version fingerprint·평가 리포트 |
 | Platform Owner | `projects/`, `api/`, `services/` | lifecycle, connector, readiness, API 오류 계약 | OpenAPI·readiness·E2E |
 | UI·Evidence Owner | `frontend/`, `web/` | 질문·Cypher·결과·근거·운영 상태 | Streamlit·Next.js UI 회귀 |
@@ -17,7 +17,7 @@
 
 - Schema 변경: Graph Schema + Evaluation Owner 승인
 - ETL 변경: Data·ETL + Graph Schema Owner 승인
-- Prompt·Agent 변경: Agent·Security + Evaluation Owner 승인
+- Prompt·Agent·Tool·RAG 변경: Agent·Security + Evaluation Owner 승인
 - API lifecycle 변경: Platform + UI·Evidence Owner 승인
 - 배포·secret 변경: Release Manager + 해당 모듈 Owner 승인
 

@@ -20,6 +20,7 @@ Project Router
        ├─ graph_query_tool
        ├─ rca_query_tool
        ├─ schema_lookup_tool
+       ├─ search_docs_tool
        ├─ etl_status_tool
        └─ evaluation_tool
 ```
@@ -61,6 +62,7 @@ routing
 | `graph_query_tool` | 기존 read-only Text-to-Cypher 생성·검증·실행 | 모든 Query 사용자 |
 | `rca_query_tool` | 현재 evidence-first RCA 질의 경로 | 모든 Query 사용자 |
 | `schema_lookup_tool` | 프로젝트 schema·노드·관계·질의 시나리오 조회 | 모든 사용자 |
+| `search_docs_tool` | LlamaIndex 프로젝트 문서 검색과 citation | 문서 metadata 권한에 따라 필터 |
 | `etl_status_tool` | 프로젝트 lifecycle·source·artifact 상태 조회 | Data Steward, Admin |
 | `evaluation_tool` | 최신 평가 metric과 failure 조회 | Analyst, Domain Expert, Data Steward, Admin |
 
@@ -192,14 +194,14 @@ X-Run-ID
 evaluation/tool_registry_baseline.json
 ```
 
-Gate는 등록 Tool 5개, 역할 정책, 입력·출력 schema, graph/schema 실제 invocation,
+Gate는 등록 Tool 6개, 역할 정책, 입력·출력 schema, graph/schema 실제 invocation,
 권한 차단, trace 필드, 오류 taxonomy를 고정한다.
 
 ## 남은 경계
 
 - Tool 선택을 LLM이 자유롭게 결정하는 범용 planning Agent는 아직 도입하지 않았다.
-- 3-4 `search_docs_tool`, 3-5 `recommend_action_tool`, 3-7 notification Tool은
-  같은 Registry에 추가한다.
+- 3-4 `search_docs_tool`은 같은 Registry에 추가됐다.
+- 3-5 `recommend_action_tool`, 3-7 notification Tool도 같은 Registry에 추가한다.
 - 실제 인증은 아직 header 기반 context이며 SSO/OIDC enforcement는 후속 보안 범위다.
 - Python worker timeout은 대기 중인 호출을 취소 처리하지만 dependency가 자체적으로
   종료를 지원하지 않으면 백그라운드 작업이 즉시 중단된다는 보장은 없다. 따라서

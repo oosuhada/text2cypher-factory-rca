@@ -8,6 +8,7 @@ __pycache__/
 .DS_Store
 data/processed/query_audit.jsonl
 data/processed/tool_audit.jsonl
+data/processed/rag/
 data/processed/etl_runs/
 data/processed/quarantine/
 data/processed/cip_dmd_etl_summary.json

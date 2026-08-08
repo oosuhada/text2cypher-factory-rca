@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from inspect import Parameter, signature
+import json
 import os
 from pathlib import Path
 from typing import Any
@@ -30,6 +31,7 @@ from backend.app.agent.semantic_validation import (
     build_domain_validator,
     validate_domain_semantics,
 )
+from backend.app.rag import DocumentRagService
 from backend.app.schema_registry import SchemaRegistry
 from backend.app.etl.cli import password_from_keychain
 from backend.app.services.dashboard_service import DashboardService
@@ -42,8 +44,81 @@ from backend.app.services.query_service import QueryService
 from backend.app.tools import ToolContext, ToolRegistry
 from backend.app.tools.capabilities import (
     GraphQueryInput,
+    SearchDocsInput,
     build_project_tool_registry,
 )
+
+
+_DOCUMENT_INTENT = (
+    "절차",
+    "매뉴얼",
+    "manual",
+    "sop",
+    "표준서",
+    "기준서",
+    "작업표준",
+    "점검 순서",
+    "권장 방법",
+)
+_GRAPH_INTENT = (
+    "이력",
+    "기록",
+    "건수",
+    "비용",
+    "다운타임",
+    "관계",
+    "구성품",
+    "공정",
+    "품질",
+    "결과",
+    "담당",
+    "발생",
+)
+
+
+def _tool_selection(question: str) -> tuple[bool, bool]:
+    normalized = question.lower()
+    use_documents = any(token in normalized for token in _DOCUMENT_INTENT)
+    use_graph = not use_documents or any(
+        token in normalized for token in _GRAPH_INTENT
+    )
+    return use_graph, use_documents
+
+
+def _bootstrap_rag_fixtures(
+    service: DocumentRagService,
+    project_root: Path,
+    project_id: str,
+) -> None:
+    if os.getenv("P3_RAG_BOOTSTRAP_FIXTURES", "1").strip().lower() in {
+        "0",
+        "false",
+        "off",
+    }:
+        return
+    manifest_path = project_root / "evaluation" / "rag_fixtures.json"
+    if not manifest_path.exists():
+        return
+    document = json.loads(manifest_path.read_text(encoding="utf-8"))
+    for item in document.get("projects", {}).get(project_id, []):
+        source = project_root / str(item["source_path"])
+        if not source.exists():
+            continue
+        service.ingest(
+            document_id=str(item["document_id"]),
+            title=str(item["title"]),
+            version=str(item["version"]),
+            document_type=str(item["document_type"]),
+            source_filename=source.name,
+            content_base64=None,
+            content=source.read_text(encoding="utf-8"),
+            effective_date=item.get("effective_date"),
+            security_classification=str(
+                item.get("security_classification", "internal")
+            ),
+            allowed_roles=item.get("allowed_roles", []),
+            is_current=bool(item.get("is_current", True)),
+        )
 
 
 @dataclass
@@ -58,6 +133,7 @@ class ServiceBundle:
     feedback: FeedbackService | None = None
     checkpoint_store: RunCheckpointStore | None = None
     tools: ToolRegistry | None = None
+    document_rag: DocumentRagService | None = None
 
     def close(self) -> None:
         self.driver.close()
@@ -76,28 +152,96 @@ class ServiceBundle:
         run_id = str(uuid4())
 
         if self.tools is not None:
-            invocation = self.tools.invoke(
+            project_id = str(
+                (routing_state or {}).get("selected_project_id")
+                or self.query.agent.metadata.get("project_id", "cip-dmd")
+            )
+            context = ToolContext(
+                organization_id=organization_id,
+                user_id=user_id,
+                project_id=project_id,
+                run_id=run_id,
+                roles=tuple(roles),
+                routing=routing_state or {},
+            )
+            use_graph, use_documents = _tool_selection(question)
+            document_invocation = None
+            if use_documents:
+                document_invocation = self.tools.invoke(
+                    "search_docs_tool",
+                    {
+                        "query": question,
+                        "top_k": 5,
+                        "current_only": True,
+                        "document_types": [],
+                    },
+                    context,
+                )
+            if not use_graph and document_invocation is not None:
+                documents = document_invocation.output
+                return {
+                    "question": question,
+                    "answer": documents["answer"],
+                    "status": documents["status"],
+                    "cypher": "",
+                    "rows": [],
+                    "row_count": 0,
+                    "metadata": {
+                        "project_id": project_id,
+                        "rag_index_version": documents["index_version"],
+                    },
+                    "evidence": {
+                        "nodes": [],
+                        "relationships": [],
+                        "node_count": 0,
+                        "relationship_count": 0,
+                        "documents": documents["matches"],
+                    },
+                    "validation": {
+                        "attempts": 1,
+                        "errors": [],
+                        "trace": [
+                            {
+                                "step": "search_docs_tool",
+                                "match_count": len(documents["matches"]),
+                            }
+                        ],
+                        "tool_trace": [document_invocation.trace],
+                        "elapsed_ms": document_invocation.trace["elapsed_ms"],
+                        "execution_verified": bool(documents["matches"]),
+                    },
+                    "usage": {},
+                    "provider": "llamaindex",
+                    "run_id": run_id,
+                    "thread_id": None,
+                    "routing": routing_state or {},
+                }
+
+            graph_invocation = self.tools.invoke(
                 "graph_query_tool",
                 {
                     "question": question,
                     "routing_state": routing_state or {},
                 },
-                ToolContext(
-                    organization_id=organization_id,
-                    user_id=user_id,
-                    project_id=str(
-                        (routing_state or {}).get("selected_project_id")
-                        or self.query.agent.metadata.get("project_id", "cip-dmd")
-                    ),
-                    run_id=run_id,
-                    roles=tuple(roles),
-                    routing=routing_state or {},
-                ),
+                context,
             )
-            result = invocation.output
+            result = graph_invocation.output
             validation = dict(result.get("validation", {}))
+            tool_trace = [graph_invocation.trace]
+            if document_invocation is not None:
+                documents = document_invocation.output
+                evidence = dict(result.get("evidence", {}))
+                evidence["documents"] = documents["matches"]
+                result["evidence"] = evidence
+                tool_trace.append(document_invocation.trace)
+                if documents["matches"]:
+                    result["answer"] = (
+                        result["answer"]
+                        + "\n\n문서 근거\n"
+                        + documents["answer"]
+                    )
             validation["tool_trace"] = [
-                invocation.trace,
+                *tool_trace,
                 *validation.get("tool_trace", []),
             ]
             result["validation"] = validation
@@ -383,10 +527,30 @@ def build_service_bundle(
             )
             return fallback
 
+    document_rag = DocumentRagService(
+        project_root,
+        project_id,
+        similarity_cutoff=float(os.getenv("P3_RAG_SIMILARITY_CUTOFF", "0.04")),
+    )
+    _bootstrap_rag_fixtures(document_rag, project_root, project_id)
+
+    def search_docs_handler(
+        payload: SearchDocsInput,
+        context: ToolContext,
+    ) -> dict[str, Any]:
+        return document_rag.search(
+            payload.query,
+            roles=context.roles,
+            top_k=payload.top_k,
+            current_only=payload.current_only,
+            document_types=payload.document_types,
+        )
+
     tools = build_project_tool_registry(
         project_root=project_root,
         project_id=project_id,
         graph_query_handler=graph_query_handler,
+        search_docs_handler=search_docs_handler,
         audit_log_path=project_processed_root / "tool_audit.jsonl",
         graph_timeout_seconds=agent_timeout_seconds + 5.0,
     )
@@ -403,4 +567,5 @@ def build_service_bundle(
         model_name=resolved_model_name,
         checkpoint_store=checkpoint_store,
         tools=tools,
+        document_rag=document_rag,
     )

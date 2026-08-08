@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict
 from backend.app.api.main import ServiceRegistry, create_app
 from backend.app.projects import ProjectRegistry
 from backend.app.tools import ToolRegistry, ToolSpec
+from backend.app.tools.capabilities import SearchDocsInput, SearchDocsOutput
 
 
 class FakeToolInput(BaseModel):
@@ -167,6 +168,34 @@ class FakeRunQuery:
         }
 
 
+class FakeDocumentRag:
+    def __init__(self):
+        self.documents = [{"document_id": "manual", "title": "정비 매뉴얼", "version": "2.0", "is_current": True}]
+
+    def list_documents(
+        self,
+        include_superseded=True,
+        roles=(),
+        include_restricted=False,
+    ):
+        return list(self.documents)
+
+    def readiness(self, roles=(), include_restricted=False):
+        return {"project_id": "cip-dmd", "ready": True, "document_count": len(self.documents), "current_document_count": len(self.documents), "index_version": "llamaindex-rag-v1"}
+
+    def ingest(self, **payload):
+        record = {**payload, "duplicate": False, "chunk_count": 1}
+        self.documents.append(record)
+        return record
+
+    def rebuild(self):
+        return {"project_id": "cip-dmd", "index_version": "llamaindex-rag-v1", "chunk_count": len(self.documents), "document_chunks": {}}
+
+    def search(self, query, roles=(), top_k=5, current_only=True, document_types=()):
+        match = {"document_id": "manual", "title": "정비 매뉴얼", "version": "2.0", "document_type": "maintenance_manual", "page_number": 1, "section_title": "점검 절차", "text": "압력 안정화 시험을 수행한다.", "score": 0.9, "is_current": True, "citation_id": "manual@2.0:p1"}
+        return {"project_id": "cip-dmd", "query": query, "status": "success", "answer": "[manual@2.0:p1] 압력 안정화 시험을 수행한다.", "framework": "LlamaIndex", "framework_version": "0.14.23", "index_version": "llamaindex-rag-v1", "top_k": top_k, "matches": [match], "citations": [{"citation_id": match["citation_id"]}]}
+
+
 class FakeBundle:
     provider = "gold"
     model_name = "gold-lookup"
@@ -176,6 +205,7 @@ class FakeBundle:
         self.graph = FakeGraph()
         self.feedback = FakeFeedback()
         self.query = FakeRunQuery()
+        self.document_rag = FakeDocumentRag()
         self.closed = False
         self.query_calls = []
         self.tools = ToolRegistry()
@@ -187,6 +217,21 @@ class FakeBundle:
                 output_model=FakeToolOutput,
                 handler=lambda payload, context: {"value": payload.value},
                 allowed_roles=frozenset({"Analyst"}),
+            )
+        )
+        self.tools.register(
+            ToolSpec(
+                name="search_docs_tool",
+                description="Search documents.",
+                input_model=SearchDocsInput,
+                output_model=SearchDocsOutput,
+                handler=lambda payload, context: self.document_rag.search(
+                    payload.query,
+                    roles=context.roles,
+                    top_k=payload.top_k,
+                    current_only=payload.current_only,
+                    document_types=payload.document_types,
+                ),
             )
         )
 
@@ -508,6 +553,69 @@ class ApiContractTest(unittest.TestCase):
         self.assertEqual(invoked.status_code, 200)
         self.assertEqual(invoked.json()["output"], {"value": "hello"})
         self.assertEqual(invoked.json()["trace"]["run_id"], "run-tool-1")
+
+    def test_document_rag_api_contract_and_permissions(self):
+        listing = self.client.get("/api/v1/projects/cip-dmd/documents")
+        self.assertEqual(listing.status_code, 200)
+        self.assertEqual(
+            listing.json()["documents"][0]["document_id"],
+            "manual",
+        )
+
+        readiness = self.client.get(
+            "/api/v1/projects/cip-dmd/rag/readiness"
+        )
+        self.assertEqual(readiness.status_code, 200)
+        self.assertTrue(readiness.json()["ready"])
+
+        denied = self.client.post(
+            "/api/v1/projects/cip-dmd/documents",
+            json={
+                "document_id": "new-sop",
+                "title": "New SOP",
+                "version": "1.0",
+                "document_type": "sop",
+                "source_filename": "new.md",
+                "content": "새 절차",
+            },
+            headers={"X-User-Roles": "Viewer"},
+        )
+        self.assertEqual(denied.status_code, 403)
+
+        created = self.client.post(
+            "/api/v1/projects/cip-dmd/documents",
+            json={
+                "document_id": "new-sop",
+                "title": "New SOP",
+                "version": "1.0",
+                "document_type": "sop",
+                "source_filename": "new.md",
+                "content": "새 절차",
+            },
+            headers={"X-User-Roles": "Data Steward"},
+        )
+        self.assertEqual(created.status_code, 201)
+        self.assertEqual(created.json()["document_id"], "new-sop")
+
+        search = self.client.post(
+            "/api/v1/rag/search",
+            json={
+                "project_id": "cip-dmd",
+                "query": "압력 안정화 시험 절차",
+                "top_k": 3,
+            },
+            headers={"X-User-Roles": "Analyst"},
+        )
+        self.assertEqual(search.status_code, 200)
+        self.assertEqual(search.json()["status"], "success")
+        self.assertEqual(
+            search.json()["citations"][0]["citation_id"],
+            "manual@2.0:p1",
+        )
+        self.assertEqual(
+            search.json()["tool_trace"]["tool"],
+            "search_docs_tool",
+        )
 
     def test_query_rejects_empty_input(self):
         response = self.client.post(

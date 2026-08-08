@@ -44,6 +44,7 @@ class FactoryGraphApiClient:
         *,
         params: dict[str, Any] | None = None,
         json: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         try:
             response = self.client.request(
@@ -51,6 +52,7 @@ class FactoryGraphApiClient:
                 path,
                 params=params,
                 json=json,
+                headers=headers,
             )
             response.raise_for_status()
         except httpx.HTTPStatusError as error:
@@ -126,6 +128,79 @@ class FactoryGraphApiClient:
             "POST",
             "/api/v1/query",
             json={"question": question, "project_id": project_id},
+        )
+
+    def project_documents(
+        self,
+        project_id: str,
+        *,
+        include_superseded: bool = True,
+        role: str = "Viewer",
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            f"/api/v1/projects/{project_id}/documents",
+            params={"include_superseded": include_superseded},
+            headers={"X-User-Roles": role},
+        )
+
+    def document_rag_readiness(
+        self,
+        project_id: str,
+        *,
+        role: str = "Viewer",
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            f"/api/v1/projects/{project_id}/rag/readiness",
+            headers={"X-User-Roles": role},
+        )
+
+    def ingest_project_document(
+        self,
+        project_id: str,
+        payload: dict[str, Any],
+        *,
+        role: str = "Data Steward",
+    ) -> dict[str, Any]:
+        return self._request(
+            "POST",
+            f"/api/v1/projects/{project_id}/documents",
+            json=payload,
+            headers={"X-User-Roles": role},
+        )
+
+    def rebuild_document_index(
+        self,
+        project_id: str,
+        *,
+        role: str = "Data Steward",
+    ) -> dict[str, Any]:
+        return self._request(
+            "POST",
+            f"/api/v1/projects/{project_id}/documents/index",
+            headers={"X-User-Roles": role},
+        )
+
+    def search_documents(
+        self,
+        project_id: str,
+        query: str,
+        *,
+        top_k: int = 5,
+        current_only: bool = True,
+        role: str = "Analyst",
+    ) -> dict[str, Any]:
+        return self._request(
+            "POST",
+            "/api/v1/rag/search",
+            json={
+                "project_id": project_id,
+                "query": query,
+                "top_k": top_k,
+                "current_only": current_only,
+            },
+            headers={"X-User-Roles": role},
         )
 
     def projects(self) -> list[dict[str, Any]]:

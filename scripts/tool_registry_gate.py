@@ -36,6 +36,18 @@ def evaluate(root: Path = PROJECT_ROOT) -> dict:
                 "validation": {},
                 "evidence": {},
             },
+            search_docs_handler=lambda payload, context: {
+                "project_id": context.project_id,
+                "query": payload.query,
+                "status": "success",
+                "answer": "document evidence",
+                "framework": "LlamaIndex",
+                "framework_version": "0.14.23",
+                "index_version": "llamaindex-rag-v1",
+                "top_k": payload.top_k,
+                "matches": [{"citation_id": "doc@1:p1"}],
+                "citations": [{"citation_id": "doc@1:p1"}],
+            },
             audit_log_path=Path(directory) / "tool_audit.jsonl",
             graph_timeout_seconds=5.0,
         )

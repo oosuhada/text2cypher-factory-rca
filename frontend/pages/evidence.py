@@ -28,8 +28,8 @@ def render_evidence_tab() -> None:
         "검증 시도", result.get("validation", {}).get("attempts", 0)
     )
 
-    table_tab, graph_tab, cypher_tab, trace_tab = st.tabs(
-        ["결과표", "부분 그래프", "Cypher", "검증 이력"]
+    table_tab, graph_tab, document_tab, cypher_tab, trace_tab = st.tabs(
+        ["결과표", "부분 그래프", "문서 근거", "Cypher", "검증 이력"]
     )
     with table_tab:
         rows = result.get("rows", [])
@@ -152,6 +152,29 @@ def render_evidence_tab() -> None:
             st.info(
                 "이 질의는 집계 결과이거나 경로 ID가 없어 관계를 추측해 표시하지 않습니다."
             )
+
+    with document_tab:
+        documents = evidence.get("documents", [])
+        if documents:
+            for document in documents:
+                current_label = (
+                    "Current" if document.get("is_current", True) else "Superseded"
+                )
+                with st.container(border=True):
+                    st.markdown(
+                        f"**{document.get('title', '문서')}**  "
+                        f"`{document.get('citation_id', '')}`"
+                    )
+                    st.caption(
+                        f"v{document.get('version', '-')} · {current_label} · "
+                        f"Page {document.get('page_number', 1)} · "
+                        f"{document.get('section_title') or 'section 미지정'}"
+                    )
+                    st.write(document.get("text", ""))
+                    if document.get("score") is not None:
+                        st.caption(f"retrieval score {document['score']:.3f}")
+        else:
+            st.info("이 답변에는 검색된 문서 근거가 없습니다.")
 
     with cypher_tab:
         if result.get("cypher"):

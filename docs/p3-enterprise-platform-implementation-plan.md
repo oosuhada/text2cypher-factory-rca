@@ -18,7 +18,8 @@
 | 3-1 LangGraph State·Checkpoint foundation | `IMPLEMENTED · AUTOMATION PASS` |
 | 3-2 자연어 Project Router | `IMPLEMENTED · EVALUATION PASS` |
 | 3-3 Tool Registry | `IMPLEMENTED · TOOL GATE PASS` |
-| 3-4 이후 Agentic AI 기본 여정 병합 | `HOLD` |
+| 3-4 LlamaIndex 문서 RAG | `IMPLEMENTED · RAG GATE PASS` |
+| 3-5 이후 Agentic AI 기본 여정 병합 | `HOLD` |
 
 각 세부 단계는 다음 Gate를 통과한 뒤 다음 단계로 이동한다.
 
@@ -37,9 +38,9 @@
 
 원칙적으로 3단계는 2.9 전체 Gate가 통과된 뒤 시작한다. 다만 사용자의 명시적
 결정으로 `p3-stage2-9-pre-stage3-v1` 복원 tag를 원격에 먼저 고정한 뒤,
-기존 제품 동선을 바꾸지 않는 3-1 공통 state·checkpoint foundation만 선행했다.
-2.9 수동 검토가 끝나기 전에는 Router, 문서 RAG, 권고, 실제 HITL, 알림을
-기본 사용자 여정에 추가하지 않는다.
+기존 제품 기준선으로 돌아갈 수 있도록 원격 tag를 단계별로 고정한 뒤 3-1부터
+3-4까지 선행했다. 2.9 수동 검토는 여전히 `PENDING`이며, 이 선행 구현이
+최종 사용자 서비스의 `READY` 판정을 대신하지 않는다.
 
 ---
 
@@ -886,13 +887,16 @@ transport
 - 실제 사용자 1인 이상 무설명 검토: **PENDING**
 - P3 최종 사용자 서비스: **NOT READY — MANUAL USER REVIEW PENDING**
 - 3-1 foundation: **IMPLEMENTED · AUTOMATIC VALIDATION PASS**
-- 3-2 이후 진입: **HOLD**
+- 3-2 Project Router: **IMPLEMENTED · EVALUATION PASS**
+- 3-3 Tool Registry: **IMPLEMENTED · TOOL GATE PASS**
+- 3-4 LlamaIndex 문서 RAG: **IMPLEMENTED · RAG GATE PASS**
+- 3-5 이후 진입: **HOLD**
 
 ---
 
 ## 3단계 — 프로젝트 4 차용 Agentic AI 버전
 
-진입 상태: **3-1·3-2·3-3 COMPLETE · 3-4 이후 HOLD**
+진입 상태: **3-1·3-2·3-3·3-4 COMPLETE · 3-5 이후 HOLD**
 
 ### 3-1. LangGraph State와 Checkpoint 재설계
 
@@ -965,7 +969,7 @@ transport
 - Pydantic 입력·출력 schema 검증: PASS
 - 권한·timeout·retry·error taxonomy: PASS
 - Tool별 append-only audit trace: PASS
-- 내장 Tool 5개 등록: PASS
+- 내장 Tool 6개 등록: PASS
 - 기존 Query 경로의 `graph_query_tool` 전환: PASS
 
 목표:
@@ -986,7 +990,21 @@ transport
 - timeout·재시도·권한 실패 테스트
 - Tool 호출 trace 재현
 
-### 3-4. 문서 RAG Tool
+### 3-4. LlamaIndex 문서 RAG Tool
+
+상태: **구현·자동 RAG Gate 완료**
+
+상세 기록:
+
+- [3-4 LlamaIndex 문서 RAG Tool](./enterprise-stage3-4-llamaindex-document-rag.md)
+- `llama-index-core==0.14.23` Python 3.14 실행: PASS
+- 문서 ingestion·chunk·metadata·version·persist/reload: PASS
+- `search_docs_tool` 등록과 graph/document/hybrid 선택: PASS
+- source citation·current/superseded 구분: PASS
+- 프로젝트·문서 역할 격리: PASS
+- React·Streamlit 문서 근거 UI: PASS
+- Recall@5·citation precision: 100%
+- fabricated/cross-project/unauthorized citation: 0건
 
 목표:
 

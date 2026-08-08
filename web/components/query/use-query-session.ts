@@ -13,11 +13,17 @@ import type {
 import type { EvidenceTab } from "@/components/query/query-config";
 import { QUERY_PROGRESS } from "@/components/query/query-config";
 
+function defaultEvidenceTab(response: QueryResponse): EvidenceTab {
+  return response.row_count === 0 && (response.evidence.documents?.length ?? 0) > 0
+    ? "documents"
+    : "table";
+}
+
 export function useQuerySession(
   projectId: string,
   conversationId: string | null,
 ) {
-  const [question, setQuestion] = useState("");
+  const [question, setQuestionState] = useState("");
   const [submittedQuestion, setSubmittedQuestion] = useState("");
   const [response, setResponse] = useState<QueryResponse | null>(null);
   const [history, setHistory] = useState<StoredConversation[]>([]);
@@ -33,6 +39,12 @@ export function useQuerySession(
   const [reviewLoading, setReviewLoading] = useState(false);
   const [reviewError, setReviewError] = useState("");
   const requestInFlightRef = useRef(false);
+  const questionTouchedRef = useRef(false);
+
+  const setQuestion = useCallback((value: string) => {
+    questionTouchedRef.current = true;
+    setQuestionState(value);
+  }, []);
 
   const resetReview = useCallback(() => {
     setReviewDecision(null);
@@ -41,18 +53,20 @@ export function useQuerySession(
   }, []);
 
   const loadConversation = useCallback((item: StoredConversation) => {
-    setQuestion(item.question);
+    setQuestionState(item.question);
     setSubmittedQuestion(item.question);
     setResponse(item.response);
-    setActiveTab("table");
+    setActiveTab(defaultEvidenceTab(item.response));
     resetReview();
   }, [resetReview]);
 
   useEffect(() => {
+    questionTouchedRef.current = false;
     const timer = window.setTimeout(() => {
+      const preserveTypedQuestion = questionTouchedRef.current;
       const stored = readHistory(projectId);
       setHistory(stored);
-      setQuestion("");
+      if (!preserveTypedQuestion) setQuestionState("");
       setSubmittedQuestion("");
       setResponse(null);
       setError("");
@@ -80,7 +94,7 @@ export function useQuerySession(
     if (!normalized || requestInFlightRef.current) return;
     requestInFlightRef.current = true;
     setLoading(true);
-    setQuestion("");
+    setQuestionState("");
     setProgressIndex(0);
     setError("");
     setResponse(null);
@@ -89,7 +103,7 @@ export function useQuerySession(
     try {
       const result = await queryFactoryGraph(normalized, projectId);
       setResponse(result);
-      setActiveTab("table");
+      setActiveTab(defaultEvidenceTab(result));
       const now = new Date().toISOString();
       const item: StoredConversation = {
         id: createClientId(),
