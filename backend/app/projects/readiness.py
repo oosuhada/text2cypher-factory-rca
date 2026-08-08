@@ -83,25 +83,41 @@ class ProjectReadinessService:
         checks: dict[str, dict[str, Any]] = {}
 
         source_artifact = artifacts.get("source")
+        graph_projection = artifacts.get("graph_projection")
+        graph_projection_verified = bool(
+            graph_projection
+            and graph_projection.get("status") == "verified"
+            and (graph_projection.get("metadata") or {}).get(
+                "dataset_version_id"
+            )
+        )
         source_version = (
             str(project.get("source_version") or "")
             or str((source_artifact or {}).get("version") or "")
         )
         source_connected = bool(source_version) and (
             project["source_type"] == "neo4j"
-            and "connector" in artifacts
+            and (
+                "connector" in artifacts
+                or graph_projection_verified
+            )
             or project["source_type"] == "file"
             and (bool(uploads) or project_id == "cip-dmd")
+        )
+        source_detail = (
+            (
+                f"typed graph projection {graph_projection['version']}"
+                if graph_projection_verified
+                else f"{project['source_type']} source {source_version}"
+            )
+            if source_connected
+            else "검증된 파일 업로드, Neo4j connector 또는 typed graph projection이 필요합니다."
         )
         self._check(
             checks,
             "source",
             source_connected,
-            (
-                f"{project['source_type']} source {source_version}"
-                if source_connected
-                else "검증된 파일 업로드 또는 Neo4j connector가 필요합니다."
-            ),
+            source_detail,
             version=source_version or None,
         )
 
@@ -155,11 +171,15 @@ class ProjectReadinessService:
             connector = artifacts.get("connector")
             mapping_approved = bool(
                 connector and connector["status"] == "verified"
-            )
+            ) or graph_projection_verified
             access_detail = (
-                "외부 Neo4j connector가 검증되었습니다."
+                (
+                    "typed graph projection의 Dataset Version scope와 provider receipt가 검증되었습니다."
+                    if graph_projection_verified
+                    else "외부 Neo4j connector가 검증되었습니다."
+                )
                 if mapping_approved
-                else "외부 Neo4j connector 검증이 필요합니다."
+                else "외부 Neo4j connector 또는 typed graph projection 검증이 필요합니다."
             )
         self._check(
             checks,
@@ -288,6 +308,25 @@ class ProjectReadinessService:
                 counts = self.graph_counter(project_id)
             except Exception as error:  # readiness must remain observable
                 graph_error = str(error)
+        projection_counts = (
+            (graph_projection or {}).get("metadata") or {}
+        ).get("counts") or {}
+        projected_nodes = int(
+            projection_counts.get("nodes_written")
+            or projection_counts.get("nodes")
+            or 0
+        )
+        projected_relationships = int(
+            projection_counts.get("relationships_written")
+            or projection_counts.get("relationships")
+            or 0
+        )
+        if graph_projection_verified and projected_nodes > 0:
+            counts = {
+                "nodes": projected_nodes,
+                "relationships": projected_relationships,
+            }
+            graph_error = None
         graph_available = int(counts.get("nodes", 0)) > 0
         self._check(
             checks,

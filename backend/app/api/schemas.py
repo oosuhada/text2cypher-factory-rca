@@ -304,6 +304,7 @@ class NodeSearchResponse(BaseModel):
     label: str
     query: str
     identity_property: str
+    dataset_version_id: str | None = None
     nodes: list[dict[str, Any]]
     count: int
 
@@ -359,5 +360,6 @@ class SubgraphResponse(BaseModel):
     relationships: list[dict[str, Any]]
     node_count: int
     relationship_count: int
+    dataset_version_id: str | None = None
     depth: int
     truncated: bool

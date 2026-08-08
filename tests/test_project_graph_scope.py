@@ -87,6 +87,29 @@ class ProjectGraphScopeTest(unittest.TestCase):
             self.assertIn("project_id", query)
             self.assertEqual(parameters["project_id"], "equipment-history")
 
+    def test_search_and_subgraph_include_dataset_version_scope(self):
+        driver = FakeDriver()
+        graph = GraphCatalogService(driver)
+        graph.search_nodes(
+            "Equipment",
+            "CNC-001",
+            project_id="predictive-maintenance-v2",
+            dataset_version_id="dsv-v3-1",
+            identity_property="source_identity",
+            search_properties=("source_identity", "asset_id"),
+        )
+        graph.subgraph(
+            "Equipment",
+            "CNC-001",
+            project_id="predictive-maintenance-v2",
+            dataset_version_id="dsv-v3-1",
+            identity_property="source_identity",
+        )
+        self.assertEqual(len(driver.calls), 2)
+        for query, parameters in driver.calls:
+            self.assertIn("dataset_version_id", query)
+            self.assertEqual(parameters["dataset_version_id"], "dsv-v3-1")
+
     def test_direct_streamlit_adapter_cannot_drop_project_scope(self):
         class RecordingGraph:
             def __init__(self):

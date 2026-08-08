@@ -188,3 +188,86 @@ class ProjectReadinessServiceTest(unittest.TestCase):
         self.assertEqual(report["checks"]["source"]["status"], "PASS")
         self.assertEqual(report["checks"]["data_access"]["status"], "PASS")
         self.assertTrue(report["eligible_for_ready"])
+
+    def test_typed_graph_projection_is_source_and_count_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            projects = ProjectRegistry(root / "projects.sqlite3")
+            projects.create(
+                project_id="predictive-maintenance-v2",
+                name="Predictive Maintenance",
+                domain_type="predictive-maintenance",
+                dataset_name="Predictive Maintenance Canonical V3.1",
+                schema_version="predictive-maintenance-v3.1",
+                source_type="neo4j",
+                source_version="canonical-ai4i-physics-v3.1",
+                status="ready",
+                _bootstrap=True,
+            )
+            schemas = SchemaRegistry(root / "schemas")
+            schemas.save(
+                "predictive-maintenance-v2",
+                {
+                    "project_id": "predictive-maintenance-v2",
+                    "version": "predictive-maintenance-v3.1",
+                    "source_version": "canonical-ai4i-physics-v3.1",
+                    "title": "Predictive Maintenance V3.1",
+                    "nodes": [
+                        {
+                            "label": "Equipment",
+                            "identity": "source_identity",
+                            "required_properties": ["source_identity"],
+                            "properties": {
+                                "source_identity": "STRING",
+                                "dataset_version_id": "STRING",
+                            },
+                        }
+                    ],
+                    "relationships": [],
+                },
+            )
+            projects.record_artifact(
+                "predictive-maintenance-v2",
+                "graph_projection",
+                version="dsv-1914858a-cc17-57d8-819c-d8a2435fd805",
+                status="verified",
+                metadata={
+                    "dataset_version_id": (
+                        "dsv-1914858a-cc17-57d8-819c-d8a2435fd805"
+                    ),
+                    "counts": {
+                        "nodes_written": 1_984,
+                        "relationships_written": 2_160,
+                    },
+                },
+            )
+            for artifact_type in ("integrity", "read_only"):
+                projects.record_artifact(
+                    "predictive-maintenance-v2",
+                    artifact_type,
+                    version="dsv-1914858a-cc17-57d8-819c-d8a2435fd805",
+                    status="verified",
+                )
+            datasets = DatasetWorkspace(root / "uploads")
+            mappings = MappingWorkspace(root / "mappings", datasets, schemas)
+            service = ProjectReadinessService(
+                PROJECT_ROOT,
+                projects,
+                schemas,
+                datasets,
+                mappings,
+                graph_counter=lambda _project_id: (_ for _ in ()).throw(
+                    RuntimeError("connector intentionally unavailable")
+                ),
+            )
+
+            report = service.inspect("predictive-maintenance-v2")
+
+        self.assertEqual(report["checks"]["source"]["status"], "PASS")
+        self.assertEqual(report["checks"]["data_access"]["status"], "PASS")
+        self.assertEqual(report["checks"]["graph_runtime"]["status"], "PASS")
+        self.assertEqual(report["node_count"], 1_984)
+        self.assertEqual(report["relationship_count"], 2_160)
+        self.assertTrue(report["mapping_approved"])
+        self.assertFalse(report["can_query"])
+        self.assertEqual(report["next_action"], "evaluate")
