@@ -2,6 +2,24 @@
 
 CiP-DMD의 완제품·구성품·공정·품질 관계를 Neo4j로 구조화하고, 자연어 질문을 읽기 전용 Cypher로 변환해 RCA 후보와 근거 경로를 보여주는 MVP다.
 
+## English Executive Summary
+
+This project is a manufacturing knowledge-graph and **Text-to-Cypher root-cause-analysis platform**. It models finished products, components, processes, equipment, and quality relationships in Neo4j, then turns natural-language questions into guarded read-only Cypher and returns explainable RCA candidates with evidence paths.
+
+### What it demonstrates
+
+- **Industrial knowledge graph:** project-scoped schemas, repeatable ETL, integrity checks, and reusable domain intake.
+- **Agentic query workflow:** natural-language routing, Text-to-Cypher generation, `EXPLAIN` validation, correction/retry, and read-only execution.
+- **Explainable RCA:** answers are paired with tables, Cypher, evidence paths, and partial graph views rather than opaque LLM prose.
+- **Product architecture:** FastAPI backend, Neo4j, LangGraph/LlamaIndex integration, React/Next.js product UI, Streamlit operations console, Docker Compose, and automated release gates.
+- **Evaluation:** gold questions, regression tests, blind evaluation, lineage, audit logs, and human-in-the-loop review contracts.
+
+The repository intentionally keeps the implementation history and validation documents because the main portfolio value is not only the final UI: it is the progression from a manufacturing MVP into a governed, testable AI/knowledge-graph product.
+
+**Portfolio status:** implemented end-to-end product and evaluation stack; a public sanitized demo endpoint is maintained separately from internal/local data when available.
+
+**Public demo:** [https://text2cypher.oosu.dev](https://text2cypher.oosu.dev)
+
 구현 순서와 완료 조건은 [MVP_단계별_구현_계획.md](./MVP_단계별_구현_계획.md)를 따른다.
 PPT 대조 후 수정 근거는 [방향 수정 기록](./docs/direction-correction-2026-07-27.md)에 정리했다.
 
