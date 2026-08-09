@@ -399,6 +399,16 @@ Docker Compose 제품 스택은 보안을 위해 기본적으로 loopback에만 
 `Home → Projects → Query Studio → Evidence / Graph → History`이며,
 Streamlit은 데이터·평가·운영 증적을 추가로 설명할 때만 연다.
 
-## Topics
+## Architecture & Topics / 아키텍처 및 주제
 
-[`fastapi`](https://github.com/topics/fastapi) · [`knowledge-graph`](https://github.com/topics/knowledge-graph) · [`langgraph`](https://github.com/topics/langgraph) · [`manufacturing`](https://github.com/topics/manufacturing) · [`neo4j`](https://github.com/topics/neo4j) · [`root-cause-analysis`](https://github.com/topics/root-cause-analysis) · [`streamlit`](https://github.com/topics/streamlit) · [`text-to-cypher`](https://github.com/topics/text-to-cypher) · [`llm`](https://github.com/topics/llm) · [`rag`](https://github.com/topics/rag) · [`graph-database`](https://github.com/topics/graph-database) · [`cypher`](https://github.com/topics/cypher) · [`industrial-ai`](https://github.com/topics/industrial-ai) · [`python`](https://github.com/topics/python) · [`natural-language-processing`](https://github.com/topics/natural-language-processing) · [`knowledge-graph-rag`](https://github.com/topics/knowledge-graph-rag)
+**Architecture / 아키텍처**<br>
+[`knowledge-graph-rag`](https://github.com/topics/knowledge-graph-rag) · [`graph-query-generation`](https://github.com/topics/graph-query-generation) · [`retrieval-augmented-generation`](https://github.com/topics/retrieval-augmented-generation) · [`agentic-workflow`](https://github.com/topics/agentic-workflow) · [`evidence-grounding`](https://github.com/topics/evidence-grounding) · [`semantic-layer`](https://github.com/topics/semantic-layer) · [`query-validation`](https://github.com/topics/query-validation) · [`human-in-the-loop`](https://github.com/topics/human-in-the-loop)
+
+**Core technologies / 핵심 기술**<br>
+[`neo4j`](https://github.com/topics/neo4j) · [`langgraph`](https://github.com/topics/langgraph)
+
+**Project context / 프로젝트 맥락**<br>
+[`cypher`](https://github.com/topics/cypher) · [`graph-database`](https://github.com/topics/graph-database) · [`industrial-ai`](https://github.com/topics/industrial-ai) · [`knowledge-graph`](https://github.com/topics/knowledge-graph) · [`llm`](https://github.com/topics/llm) · [`manufacturing`](https://github.com/topics/manufacturing) · [`natural-language-processing`](https://github.com/topics/natural-language-processing) · [`rag`](https://github.com/topics/rag) · [`root-cause-analysis`](https://github.com/topics/root-cause-analysis) · [`streamlit`](https://github.com/topics/streamlit) · [`text-to-cypher`](https://github.com/topics/text-to-cypher)
+
+**Implementation stack / 구현 스택**<br>
+[`fastapi`](https://github.com/topics/fastapi) · [`python`](https://github.com/topics/python)
