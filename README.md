@@ -2,13 +2,11 @@
 
 CiP-DMD의 완제품·구성품·공정·품질 관계를 Neo4j로 구조화하고, 자연어 질문을 읽기 전용 Cypher로 변환해 RCA 후보와 근거 경로를 보여주는 MVP다.
 
-## 왜 만들었나 / Why I built it
+## Why I Built It / 만든 이유
 
-이 프로젝트는 독립적인 아이디어라기보다 **Agentic Ontology Dashboard를 만들기 전에 핵심 가정을 검증하기 위한 선행 MVP**로 시작했다. 역할별로 LLM이 결론을 요약해 주는 동적 대시보드를 만들려면, 그 전에 제조 데이터에서 자연어 질문을 받아도 실제 근거를 따라가며 답을 만들 수 있는지가 먼저 증명되어야 했다.
+Before building the Ontology Dashboard, I needed to prove one thing first: can a natural-language question actually trace root causes through a manufacturing knowledge graph and return real evidence — not just unsupported LLM prose? This MVP answered that question and shaped the grounded-report design of the main dashboard.
 
-그래서 완제품·부품·공정·설비·품질 관계를 Neo4j에 연결하고, 사용자의 질문을 guarded read-only Cypher로 바꿔 **답변뿐 아니라 어떤 데이터와 경로를 근거로 RCA 후보를 제시했는지** 같이 보여주는 흐름을 MVP로 만들었다. 이 실험이 이후 Ontology Dashboard의 grounded report와 역할별 의사결정 화면으로 이어졌다.
-
-This project started as a precursor MVP for the Agentic Ontology Dashboard. Before asking an LLM to generate role-specific manufacturing reports, I wanted to prove that a natural-language question could be translated into a safe graph query and answered with traceable evidence rather than unsupported prose.
+Ontology Dashboard를 본격적으로 만들기 전에 먼저 확인해야 할 게 있었습니다. 자연어 질문이 제조 지식그래프를 따라 실제 근거까지 추적할 수 있는지, LLM이 근거 없이 답변을 지어내는 게 아닌지. 이 선행 MVP로 그 가정을 검증했고, 결과가 본 대시보드의 grounded report 설계로 이어졌습니다.
 
 ## English Executive Summary
 
