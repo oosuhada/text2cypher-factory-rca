@@ -6,7 +6,7 @@ pypdf==6.14.2
 langchain-openai==1.4.1
 PyYAML==6.0.3
 streamlit==1.60.0
-neo4j-viz[streamlit] @ https://github.com/neo4j/python-graph-visualization/archive/04de65d809b5a91fe973e00c6071b9f42bf02009.zip#subdirectory=python-wrapper
+neo4j-viz[streamlit]==1.8.0
 google-genai==2.14.0
 fastapi==0.140.1
 uvicorn==0.51.0

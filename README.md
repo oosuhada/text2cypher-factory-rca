@@ -22,9 +22,11 @@ This project is a manufacturing knowledge-graph and **Text-to-Cypher root-cause-
 
 The repository intentionally keeps the implementation history and validation documents because the main portfolio value is not only the final UI: it is the progression from a manufacturing MVP into a governed, testable AI/knowledge-graph product.
 
-**Portfolio status:** implemented end-to-end product and evaluation stack; a public sanitized demo endpoint is maintained separately from internal/local data when available.
+**Portfolio status:** implemented end-to-end product and evaluation stack with a public sanitized interactive demo backed by the same Next.js, FastAPI, Neo4j, and evidence contracts used by the local product stack.
 
 **Public demo:** [https://text2cypher.oosu.dev](https://text2cypher.oosu.dev)
+
+**Public internal-console demo:** [https://text2cypher-console.oosu.dev](https://text2cypher-console.oosu.dev) — sanitized demo mode only; graph loading remains disabled by default.
 
 ## Prototype lineage / 연결된 실험과 후속 구현
 
@@ -36,7 +38,7 @@ The repository intentionally keeps the implementation history and validation doc
 | **Agentic Dashboard Week 1 framework experiment** | 같은 제조 기능을 FastAPI와 Flask에 구현해 API 계약·검증·구조를 비교 | [FastAPI vs Flask](https://fastapi-flask.oosu.dev) | [`agentic-ontology-dashboard` experiment branch](https://github.com/oosuhada/agentic-ontology-dashboard/tree/experiment/week1-streamlit-plotly-framework-comparison) |
 | **KOSA / Bistel team adaptive dashboard** | 엔지니어·매니저·임원 역할에 따라 같은 제조 근거를 다른 화면과 결론으로 전달하는 동적 대시보드 방향을 팀 제품으로 확장 | [Adaptive story](https://dashboard.oosu.dev/team-share-adaptive) · [Blueprint compare](https://dashboard.oosu.dev/app/projects/manufacturing-demo-project/blueprint-compare) · [Blueprint v4](https://dashboard.oosu.dev/app/projects/manufacturing-demo-project/blueprint-v4) | [`Biz-CollabCraft/ontology_dashboard`](https://github.com/Biz-CollabCraft/ontology_dashboard) |
 
-현재 `text2cypher.oosu.dev`는 내부 제조 데이터와 Neo4j credential을 노출하지 않기 위해 sanitized portfolio landing으로 운영한다. 위의 별도 공개 실험 화면들은 실제 제품을 만들면서 어떤 UI·framework·dashboard 방향을 비교했는지 확인하기 위한 보조 자료다.
+현재 `text2cypher.oosu.dev`는 sanitized CiP-DMD 데이터로 동작하는 실제 React/Next.js 제품 UI와 FastAPI 질의 API를 공개한다. Query Studio의 검증된 Gold 질문, Evidence Graph, Projects/History 흐름을 직접 실행할 수 있으며 Neo4j credential과 쓰기 포트는 공개하지 않는다. 운영·평가 화면은 `text2cypher-console.oosu.dev`의 Streamlit demo mode로 분리하고, 그래프 적재 API는 기본 비활성화한다. 위의 별도 공개 실험 화면들은 실제 제품을 만들면서 어떤 UI·framework·dashboard 방향을 비교했는지 확인하기 위한 보조 자료다.
 
 구현 순서와 완료 조건은 [MVP_단계별_구현_계획.md](./MVP_단계별_구현_계획.md)를 따른다.
 PPT 대조 후 수정 근거는 [방향 수정 기록](./docs/direction-correction-2026-07-27.md)에 정리했다.

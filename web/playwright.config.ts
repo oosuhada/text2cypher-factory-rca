@@ -28,7 +28,7 @@ export default defineConfig({
     {
       command:
         "P3_UI_MODE=demo P3_UI_ROLE='Data Steward' " +
-        "../.venv/bin/streamlit run ../frontend/streamlit_app.py " +
+        "python -m streamlit run ../frontend/streamlit_app.py " +
         "--server.address 127.0.0.1 --server.port 18502 --server.headless true",
       url: internalConsoleUrl,
       reuseExistingServer: true,
