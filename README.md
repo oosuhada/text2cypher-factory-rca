@@ -398,3 +398,7 @@ Docker Compose 제품 스택은 보안을 위해 기본적으로 loopback에만 
 `http://<HOST_LAN_IP>:3000`을 사용한다. 기본 동선은
 `Home → Projects → Query Studio → Evidence / Graph → History`이며,
 Streamlit은 데이터·평가·운영 증적을 추가로 설명할 때만 연다.
+
+## Topics
+
+[`fastapi`](https://github.com/topics/fastapi) · [`knowledge-graph`](https://github.com/topics/knowledge-graph) · [`langgraph`](https://github.com/topics/langgraph) · [`manufacturing`](https://github.com/topics/manufacturing) · [`neo4j`](https://github.com/topics/neo4j) · [`root-cause-analysis`](https://github.com/topics/root-cause-analysis) · [`streamlit`](https://github.com/topics/streamlit) · [`text-to-cypher`](https://github.com/topics/text-to-cypher)
