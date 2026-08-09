@@ -1,5 +1,6 @@
 import unittest
 import tempfile
+import os
 from pathlib import Path
 from unittest.mock import patch
 
@@ -456,6 +457,43 @@ class ApiContractTest(unittest.TestCase):
         self.assertTrue(body["cypher"].startswith("MATCH"))
         self.assertIn("evidence", body)
 
+    def test_public_query_rate_limit_returns_structured_429(self):
+        limited_bundle = FakeBundle()
+        limited_projects = ProjectRegistry(
+            Path(self.temp.name) / "limited-projects.sqlite3"
+        )
+        with patch.dict(
+            os.environ,
+            {
+                "P3_QUERY_RATE_LIMIT_PER_MINUTE": "1",
+                "P3_QUERY_GLOBAL_LIMIT_PER_HOUR": "10",
+            },
+        ):
+            with TestClient(
+                create_app(
+                    bundle_factory=lambda: limited_bundle,
+                    project_registry=limited_projects,
+                    project_graph_loader=FakeProjectGraphLoader(),
+                )
+            ) as client:
+                headers = {"CF-Connecting-IP": "203.0.113.10"}
+                first = client.post(
+                    "/api/v1/query",
+                    json={"question": "완제품 300002를 보여줘."},
+                    headers=headers,
+                )
+                second = client.post(
+                    "/api/v1/query",
+                    json={"question": "완제품 300002를 다시 보여줘."},
+                    headers=headers,
+                )
+
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 429)
+        self.assertEqual(second.json()["error"]["code"], "RATE_LIMITED")
+        self.assertTrue(second.json()["error"]["retryable"])
+        self.assertGreaterEqual(int(second.headers["retry-after"]), 1)
+
     def test_agent_run_state_and_resume_contract(self):
         state_response = self.client.get(
             "/api/v1/agent/runs/run-1",
@@ -644,6 +682,7 @@ class ApiContractTest(unittest.TestCase):
         ]
         self.assertIn("409", query_responses)
         self.assertIn("422", query_responses)
+        self.assertIn("429", query_responses)
         self.assertIn("502", query_responses)
 
     def test_metrics_and_bounded_subgraph_contracts(self):

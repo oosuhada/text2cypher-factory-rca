@@ -80,6 +80,7 @@ from .schemas import (
     ToolInvocationResponse,
     ToolInvokeRequest,
 )
+from .rate_limit import SlidingWindowRateLimiter
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -178,6 +179,36 @@ def _cors_origins() -> list[str]:
         "http://localhost:3000,http://127.0.0.1:3000",
     )
     return [origin.strip() for origin in configured.split(",") if origin.strip()]
+
+
+def _optional_rate_limiter(
+    env_name: str,
+    *,
+    window_seconds: int,
+) -> SlidingWindowRateLimiter | None:
+    raw = os.getenv(env_name, "0").strip()
+    try:
+        limit = int(raw)
+    except ValueError as error:
+        raise RuntimeError(f"{env_name} must be an integer") from error
+    if limit <= 0:
+        return None
+    return SlidingWindowRateLimiter(
+        limit=limit,
+        window_seconds=window_seconds,
+    )
+
+
+def _query_client_key(request: Request) -> str:
+    connecting_ip = request.headers.get("CF-Connecting-IP", "").strip()
+    if connecting_ip:
+        return connecting_ip
+    forwarded_for = request.headers.get("X-Forwarded-For", "").strip()
+    if forwarded_for:
+        return forwarded_for.split(",", 1)[0].strip()
+    if request.client is not None:
+        return request.client.host
+    return "unknown"
 
 
 def create_app(
@@ -332,6 +363,14 @@ def create_app(
             os.getenv("P3_PROJECT_ROUTER_MARGIN_THRESHOLD", "0.04")
         ),
         top_k=int(os.getenv("P3_PROJECT_ROUTER_TOP_K", "3")),
+    )
+    query_client_limiter = _optional_rate_limiter(
+        "P3_QUERY_RATE_LIMIT_PER_MINUTE",
+        window_seconds=60,
+    )
+    query_global_limiter = _optional_rate_limiter(
+        "P3_QUERY_GLOBAL_LIMIT_PER_HOUR",
+        window_seconds=60 * 60,
     )
 
     def require_projection_scope(
@@ -515,6 +554,7 @@ def create_app(
                 (404, "Not found"),
                 (409, "Lifecycle or readiness conflict"),
                 (422, "Request validation failed"),
+                (429, "Rate limit exceeded"),
                 (500, "Internal error"),
                 (502, "Upstream dependency error"),
                 (503, "Dependency unavailable"),
@@ -1023,6 +1063,32 @@ def create_app(
 
     @application.post("/api/v1/query", response_model=QueryResponse)
     def query_graph(payload: QueryRequest, request: Request) -> dict:
+        if query_client_limiter is not None:
+            decision = query_client_limiter.check(_query_client_key(request))
+            if not decision.allowed:
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail=(
+                        "공개 데모의 분당 질의 한도를 초과했습니다. "
+                        "잠시 후 다시 시도해 주세요."
+                    ),
+                    headers={
+                        "Retry-After": str(decision.retry_after_seconds)
+                    },
+                )
+        if query_global_limiter is not None:
+            decision = query_global_limiter.check("public-demo")
+            if not decision.allowed:
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail=(
+                        "공개 데모의 시간당 전체 질의 한도에 도달했습니다. "
+                        "잠시 후 다시 시도해 주세요."
+                    ),
+                    headers={
+                        "Retry-After": str(decision.retry_after_seconds)
+                    },
+                )
         try:
             routing_decision = project_router.route(
                 payload.question.strip(),

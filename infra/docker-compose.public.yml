@@ -1,0 +1,26 @@
+services:
+  initialize:
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/vertex-service-account.json
+    volumes:
+      - ${P3_VERTEX_CREDENTIALS_FILE:?Set P3_VERTEX_CREDENTIALS_FILE}:/run/secrets/vertex-service-account.json:ro
+
+  api:
+    environment:
+      P3_API_PROVIDER: ${P3_PUBLIC_API_PROVIDER:-gemini}
+      P3_QUERY_RATE_LIMIT_PER_MINUTE: ${P3_PUBLIC_QUERY_RATE_LIMIT_PER_MINUTE:-5}
+      P3_QUERY_GLOBAL_LIMIT_PER_HOUR: ${P3_PUBLIC_QUERY_GLOBAL_LIMIT_PER_HOUR:-60}
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/vertex-service-account.json
+      GOOGLE_VERTEX_LOCATION: ${GOOGLE_VERTEX_LOCATION:-us-central1}
+      GOOGLE_VERTEX_MODEL: ${GOOGLE_VERTEX_MODEL:-gemini-2.5-flash}
+    volumes:
+      - ${P3_VERTEX_CREDENTIALS_FILE:?Set P3_VERTEX_CREDENTIALS_FILE}:/run/secrets/vertex-service-account.json:ro
+
+  streamlit:
+    environment:
+      P3_API_PROVIDER: ${P3_PUBLIC_API_PROVIDER:-gemini}
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/vertex-service-account.json
+      GOOGLE_VERTEX_LOCATION: ${GOOGLE_VERTEX_LOCATION:-us-central1}
+      GOOGLE_VERTEX_MODEL: ${GOOGLE_VERTEX_MODEL:-gemini-2.5-flash}
+    volumes:
+      - ${P3_VERTEX_CREDENTIALS_FILE:?Set P3_VERTEX_CREDENTIALS_FILE}:/run/secrets/vertex-service-account.json:ro

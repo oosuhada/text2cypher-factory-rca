@@ -42,6 +42,50 @@ class DeploymentContractTest(unittest.TestCase):
             ["p3_processed:/app/data/processed"],
         )
 
+    def test_public_compose_mounts_vertex_credentials_read_only(self):
+        compose_path = (
+            PROJECT_ROOT / "infra" / "docker-compose.public.yml"
+        )
+        compose = yaml.safe_load(compose_path.read_text(encoding="utf-8"))
+        services = compose["services"]
+        credential_target = "/run/secrets/vertex-service-account.json"
+
+        for service_name in ("initialize", "api", "streamlit"):
+            service = services[service_name]
+            self.assertEqual(
+                service["environment"]["GOOGLE_APPLICATION_CREDENTIALS"],
+                credential_target,
+            )
+            self.assertTrue(
+                any(
+                    volume.endswith(
+                        f":{credential_target}:ro"
+                    )
+                    for volume in service["volumes"]
+                )
+            )
+
+        self.assertEqual(
+            services["api"]["environment"]["P3_API_PROVIDER"],
+            "${P3_PUBLIC_API_PROVIDER:-gemini}",
+        )
+        self.assertEqual(
+            services["api"]["environment"][
+                "P3_QUERY_RATE_LIMIT_PER_MINUTE"
+            ],
+            "${P3_PUBLIC_QUERY_RATE_LIMIT_PER_MINUTE:-5}",
+        )
+        self.assertEqual(
+            services["api"]["environment"][
+                "P3_QUERY_GLOBAL_LIMIT_PER_HOUR"
+            ],
+            "${P3_PUBLIC_QUERY_GLOBAL_LIMIT_PER_HOUR:-60}",
+        )
+        self.assertEqual(
+            services["streamlit"]["environment"]["P3_API_PROVIDER"],
+            "${P3_PUBLIC_API_PROVIDER:-gemini}",
+        )
+
     def test_lan_share_script_configures_public_product_urls(self):
         source = (PROJECT_ROOT / "scripts" / "run_lan.sh").read_text(
             encoding="utf-8"

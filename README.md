@@ -24,7 +24,7 @@ The repository intentionally keeps the implementation history and validation doc
 
 **Portfolio status:** implemented end-to-end product and evaluation stack with a public sanitized interactive demo backed by the same Next.js, FastAPI, Neo4j, and evidence contracts used by the local product stack.
 
-**Public demo:** [https://text2cypher.oosu.dev](https://text2cypher.oosu.dev)
+**Public demo:** [https://text2cypher.oosu.dev](https://text2cypher.oosu.dev) — sanitized CiP-DMD graph with Vertex Gemini Text-to-Cypher and guarded Gold fallback.
 
 **Public internal-console demo:** [https://text2cypher-console.oosu.dev](https://text2cypher-console.oosu.dev) — sanitized demo mode only; graph loading remains disabled by default.
 
@@ -38,7 +38,7 @@ The repository intentionally keeps the implementation history and validation doc
 | **Agentic Dashboard Week 1 framework experiment** | 같은 제조 기능을 FastAPI와 Flask에 구현해 API 계약·검증·구조를 비교 | [FastAPI vs Flask](https://fastapi-flask.oosu.dev) | [`agentic-ontology-dashboard` experiment branch](https://github.com/oosuhada/agentic-ontology-dashboard/tree/experiment/week1-streamlit-plotly-framework-comparison) |
 | **KOSA / Bistel team adaptive dashboard** | 엔지니어·매니저·임원 역할에 따라 같은 제조 근거를 다른 화면과 결론으로 전달하는 동적 대시보드 방향을 팀 제품으로 확장 | [Adaptive story](https://dashboard.oosu.dev/team-share-adaptive) · [Blueprint compare](https://dashboard.oosu.dev/app/projects/manufacturing-demo-project/blueprint-compare) · [Blueprint v4](https://dashboard.oosu.dev/app/projects/manufacturing-demo-project/blueprint-v4) | [`Biz-CollabCraft/ontology_dashboard`](https://github.com/Biz-CollabCraft/ontology_dashboard) |
 
-현재 `text2cypher.oosu.dev`는 sanitized CiP-DMD 데이터로 동작하는 실제 React/Next.js 제품 UI와 FastAPI 질의 API를 공개한다. Query Studio의 검증된 Gold 질문, Evidence Graph, Projects/History 흐름을 직접 실행할 수 있으며 Neo4j credential과 쓰기 포트는 공개하지 않는다. 운영·평가 화면은 `text2cypher-console.oosu.dev`의 Streamlit demo mode로 분리하고, 그래프 적재 API는 기본 비활성화한다. 위의 별도 공개 실험 화면들은 실제 제품을 만들면서 어떤 UI·framework·dashboard 방향을 비교했는지 확인하기 위한 보조 자료다.
+현재 `text2cypher.oosu.dev`는 sanitized CiP-DMD 데이터로 동작하는 실제 React/Next.js 제품 UI와 FastAPI 질의 API를 공개한다. 공개 API는 Vertex Gemini로 자유 질문을 읽기 전용 Cypher로 생성·검증·실행하고, 모델 연결이나 생성 검증이 실패하면 등록된 질문에 한해 Gold fallback으로 안전하게 전환한다. Query Studio의 Evidence Graph, Projects/History 흐름을 직접 실행할 수 있으며 Neo4j credential과 쓰기 포트는 공개하지 않는다. 운영·평가 화면은 `text2cypher-console.oosu.dev`의 Streamlit demo mode로 분리하고, 그래프 적재 API는 기본 비활성화한다. 위의 별도 공개 실험 화면들은 실제 제품을 만들면서 어떤 UI·framework·dashboard 방향을 비교했는지 확인하기 위한 보조 자료다.
 
 구현 순서와 완료 조건은 [MVP_단계별_구현_계획.md](./MVP_단계별_구현_계획.md)를 따른다.
 PPT 대조 후 수정 근거는 [방향 수정 기록](./docs/direction-correction-2026-07-27.md)에 정리했다.
@@ -356,6 +356,27 @@ Docker Compose 제품 스택은 보안을 위해 기본적으로 loopback에만 
 또한 문서 fixture bootstrap은 기본 비활성화되며 Data Steward/Admin이 승인된
 문서를 등록해야 한다. 팀원 공유가 목적이면 위의 `bash scripts/run_lan.sh`를
 사용한다.
+
+공개 서버에서 Vertex Gemini를 사용할 때는 service-account JSON을 이미지나
+Git 저장소에 포함하지 않고 public override에 read-only secret 파일로만
+주입한다.
+
+```bash
+P3_VERTEX_CREDENTIALS_FILE="$HOME/.config/p3-cip-dmd/vertex-service-account.json" \
+docker compose \
+  --env-file .env.public \
+  -f infra/docker-compose.product.yml \
+  -f infra/docker-compose.public.yml \
+  up -d
+```
+
+`infra/docker-compose.product.yml` 단독 실행은 계속 `gold`를 안전 기본값으로
+사용한다. 공개 override의 기본 provider만 `gemini`이며 credential 파일은
+호스트에서 컨테이너의 `/run/secrets/vertex-service-account.json`으로 read-only
+mount된다. 공개 질의는 기본적으로 IP당 분당 5회, 전체 시간당 60회로 제한해
+포트폴리오 데모의 모델 비용과 abuse를 제어한다. 필요하면
+`P3_PUBLIC_QUERY_RATE_LIMIT_PER_MINUTE`와
+`P3_PUBLIC_QUERY_GLOBAL_LIMIT_PER_HOUR`로 조정할 수 있다.
 
 제품 사용자 자동 Gate는 다음 명령으로 확인한다.
 
