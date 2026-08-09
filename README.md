@@ -28,6 +28,18 @@ The repository intentionally keeps the implementation history and validation doc
 
 **Public demo:** [https://text2cypher.oosu.dev](https://text2cypher.oosu.dev)
 
+## Prototype lineage / 연결된 실험과 후속 구현
+
+이 프로젝트의 UI·아키텍처 실험과 이후 동적 대시보드 작업은 여러 공개 화면으로 이어졌다. 아래 링크는 모두 같은 코드라고 묶지 않고, **어느 저장소/브랜치에서 나온 작업인지 provenance를 구분해** 정리한다.
+
+| Stage | What it tested | Live | Source |
+| --- | --- | --- | --- |
+| **Text-to-Cypher visualization experiment** | 동일 Dashboard snapshot을 Plotly Express, Plotly Graph Objects, React + ECharts로 비교하고 최종 사용자 UI와 내부 분석 UI의 경계를 검증 | [Plotly / Streamlit comparison](https://plotly-streamlit.oosu.dev/?compare=plotly-ui) | [`experiment/streamlit-plotly-dashboard`](https://github.com/oosuhada/text2cypher-factory-rca/tree/experiment/streamlit-plotly-dashboard) |
+| **Agentic Dashboard Week 1 framework experiment** | 같은 제조 기능을 FastAPI와 Flask에 구현해 API 계약·검증·구조를 비교 | [FastAPI vs Flask](https://fastapi-flask.oosu.dev) | [`agentic-ontology-dashboard` experiment branch](https://github.com/oosuhada/agentic-ontology-dashboard/tree/experiment/week1-streamlit-plotly-framework-comparison) |
+| **KOSA / Bistel team adaptive dashboard** | 엔지니어·매니저·임원 역할에 따라 같은 제조 근거를 다른 화면과 결론으로 전달하는 동적 대시보드 방향을 팀 제품으로 확장 | [Adaptive story](https://dashboard.oosu.dev/team-share-adaptive) · [Blueprint compare](https://dashboard.oosu.dev/app/projects/manufacturing-demo-project/blueprint-compare) · [Blueprint v4](https://dashboard.oosu.dev/app/projects/manufacturing-demo-project/blueprint-v4) | [`Biz-CollabCraft/ontology_dashboard`](https://github.com/Biz-CollabCraft/ontology_dashboard) |
+
+현재 `text2cypher.oosu.dev`는 내부 제조 데이터와 Neo4j credential을 노출하지 않기 위해 sanitized portfolio landing으로 운영한다. 위의 별도 공개 실험 화면들은 실제 제품을 만들면서 어떤 UI·framework·dashboard 방향을 비교했는지 확인하기 위한 보조 자료다.
+
 구현 순서와 완료 조건은 [MVP_단계별_구현_계획.md](./MVP_단계별_구현_계획.md)를 따른다.
 PPT 대조 후 수정 근거는 [방향 수정 기록](./docs/direction-correction-2026-07-27.md)에 정리했다.
 
