@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
@@ -87,21 +88,27 @@ class DashboardMetricsTest(unittest.TestCase):
         self.assertEqual(events, [{"status": "empty"}])
 
     def test_runtime_filters_share_provider_status_project_and_time_scope(self):
+        recent_timestamp = (
+            datetime.now(timezone.utc) - timedelta(days=10)
+        ).isoformat()
+        stale_timestamp = (
+            datetime.now(timezone.utc) - timedelta(days=60)
+        ).isoformat()
         events = [
             {
-                "timestamp": "2026-07-27T00:00:00+00:00",
+                "timestamp": recent_timestamp,
                 "project_id": "cip-dmd",
                 "provider": "gemini",
                 "status": "success",
             },
             {
-                "timestamp": "2025-01-01T00:00:00+00:00",
+                "timestamp": stale_timestamp,
                 "project_id": "cip-dmd",
                 "provider": "gemini",
                 "status": "success",
             },
             {
-                "timestamp": "2026-07-27T00:00:00+00:00",
+                "timestamp": recent_timestamp,
                 "project_id": "other",
                 "provider": "gemini",
                 "status": "success",
