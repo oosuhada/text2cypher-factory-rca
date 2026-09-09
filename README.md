@@ -28,6 +28,13 @@ The repository intentionally keeps the implementation history and validation doc
 
 **Public internal-console demo:** [https://text2cypher-console.oosu.dev](https://text2cypher-console.oosu.dev) — sanitized demo mode only; graph loading remains disabled by default.
 
+## Product preview / 제품 미리보기
+
+![Text-to-Cypher Factory RCA product overview](.github/assets/portfolio/text2cypher-factory-rca-overview.png)
+
+공개 데모는 자연어 질문, 읽기 전용 Cypher 생성·검증, RCA 후보, 근거 경로, 그래프 탐색을
+하나의 사용자 흐름으로 연결합니다.
+
 ## Prototype lineage / 연결된 실험과 후속 구현
 
 이 프로젝트의 UI·아키텍처 실험과 이후 동적 대시보드 작업은 여러 공개 화면으로 이어졌다. 아래 링크는 모두 같은 코드라고 묶지 않고, **어느 저장소/브랜치에서 나온 작업인지 provenance를 구분해** 정리한다.
