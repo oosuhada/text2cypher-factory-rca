@@ -48,6 +48,13 @@ services:
     volumes:
       - p3_neo4j_data:/data
       - p3_neo4j_logs:/logs
+    # Neo4j 2026.x expands the bundled Browser UI into /tmp on startup and
+    # leaves the extracted directory behind when the container is stopped.
+    # This stack is intentionally sleep/wake managed, so keeping /tmp in the
+    # writable container layer leaks ~92 MB per wake. A bounded tmpfs makes
+    # those files ephemeral without touching the persistent graph volumes.
+    tmpfs:
+      - /tmp:size=256m,mode=1777
     healthcheck:
       test:
         [
